@@ -98,61 +98,61 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "يقرأ Rytivo عدد خطواتك وجلسات الجري وركوب الدراجة والسباحة التي يسجّلها iPhone أو Apple Watch، ليظهر تدريبك هنا دون إدخاله مرتين."
+            "value" : "عند تفعيل المزامنة، يقرأ Rytivo الخطوات والتمارين المكتملة والمسافة والطاقة النشطة ومعدل نبض القلب، ثم يحفظ ملخصات التمارين وإجمالي الخطوات في حسابك. لا تُرفع المسارات أو عينات نبض القلب الفردية."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rytivo liest deine Schrittzahl sowie die Läufe, Radfahrten und Schwimmeinheiten, die dein iPhone oder deine Apple Watch aufgezeichnet hat, damit dein Training hier erscheint, ohne dass du es doppelt eingeben musst."
+            "value" : "Bei aktivierter Synchronisierung liest Rytivo Schritte, abgeschlossene Workouts, Distanz, Aktivitätsenergie und Herzfrequenz und speichert Workout-Zusammenfassungen und Schrittsummen in deinem Konto. Routen und einzelne Herzfrequenzmessungen werden nicht hochgeladen."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rytivo reads your step count and the runs, rides, and swims recorded by your iPhone or Apple Watch, so your training shows up here without entering it twice."
+            "value" : "With sync enabled, Rytivo reads steps, completed workouts, distance, active energy and heart rate, then saves workout summaries and step totals to your account. Routes and individual heart-rate samples are not uploaded."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rytivo lee tu conteo de pasos y las carreras, recorridos en bici y sesiones de natación que registran tu iPhone o tu Apple Watch, para que tu entrenamiento aparezca aquí sin tener que ingresarlo dos veces."
+            "value" : "Con la sincronización activada, Rytivo lee pasos, entrenamientos completados, distancia, energía activa y frecuencia cardíaca, y guarda resúmenes de entrenamiento y totales de pasos en tu cuenta. No se suben rutas ni muestras individuales de frecuencia cardíaca."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rytivo lit votre nombre de pas ainsi que les courses, sorties à vélo et séances de natation enregistrées par votre iPhone ou votre Apple Watch, pour que vos entraînements apparaissent ici sans avoir à les saisir deux fois."
+            "value" : "Lorsque la synchronisation est activée, Rytivo lit les pas, les entraînements terminés, la distance, l’énergie en activité et la fréquence cardiaque, puis enregistre les résumés d’entraînement et les totaux de pas dans votre compte. Aucun itinéraire ni échantillon individuel de fréquence cardiaque n’est envoyé."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rytivo आपके कदमों की गिनती और आपके iPhone या Apple Watch से रिकॉर्ड की गई दौड़, राइड और तैराकी पढ़ता है, ताकि आपकी ट्रेनिंग दो बार दर्ज किए बिना यहाँ दिखे।"
+            "value" : "सिंक चालू होने पर Rytivo कदम, पूरे किए गए वर्कआउट, दूरी, सक्रिय ऊर्जा और हृदय गति पढ़ता है, फिर वर्कआउट के सारांश और कदमों के कुल आँकड़े आपके खाते में सेव करता है। रूट और हृदय गति के अलग-अलग सैंपल अपलोड नहीं होते।"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rytivoは、歩数と、iPhoneまたはApple Watchで記録されたラン、ライド、スイムを読み取ります。これにより、二重に入力しなくてもトレーニングがここに表示されます。"
+            "value" : "同期を有効にすると、Rytivoは歩数、完了したワークアウト、距離、アクティブエネルギー、心拍数を読み取り、ワークアウトの概要と歩数の合計をアカウントに保存します。ルートや個々の心拍数サンプルはアップロードされません。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O Rytivo lê sua contagem de passos e as corridas, pedaladas e natações registradas pelo seu iPhone ou Apple Watch, para que seus treinos apareçam aqui sem precisar inseri-los duas vezes."
+            "value" : "Com a sincronização ativada, o Rytivo lê passos, treinos concluídos, distância, energia ativa e frequência cardíaca e salva resumos dos treinos e totais de passos na sua conta. Rotas e amostras individuais de frequência cardíaca não são enviadas."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rytivo считывает количество шагов, а также пробежки, заезды и заплывы, записанные iPhone или Apple Watch, чтобы ваши тренировки появлялись здесь без повторного ввода."
+            "value" : "При включённой синхронизации Rytivo считывает шаги, завершённые тренировки, дистанцию, активную энергию и пульс, затем сохраняет сводки тренировок и общее число шагов в вашем аккаунте. Маршруты и отдельные измерения пульса не загружаются."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rytivo 会读取你的步数，以及 iPhone 或 Apple Watch 记录的跑步、骑行和游泳，这样你的训练就会显示在这里，无需重复输入。"
+            "value" : "启用同步后，Rytivo 会读取步数、已完成的训练、距离、活动能量和心率，并将训练摘要和步数总计保存到你的账户。不会上传路线或单次心率采样数据。"
           }
         }
       }

@@ -23,6 +23,7 @@ struct FoodTrackingView: View {
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorSchemeContrast) private var contrast
     @State private var selectedDate = Date()
     @State private var isEditingGoals = false
     @State private var isShowingSavedMeals = false
@@ -42,7 +43,6 @@ struct FoodTrackingView: View {
     @State private var isFoodVisible = false
     @State private var isChoosingMeal = false
     @State private var isShowingMealPlan = false
-    @State private var showsDetailedTools = false
     @State private var fuelDisplay: FuelDisplay = .logged
 
     private enum FuelDisplay: String, CaseIterable {
@@ -138,72 +138,55 @@ struct FoodTrackingView: View {
 
     private func screen(timeOfDay: HomeTimeOfDay) -> some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                if showsBackButton {
-                    HStack {
-                        RytivoBrandLockup(size: 24)
-                        Spacer()
-                        Text("Food")
-                            .font(.community(.title3, weight: .bold))
-                            .foregroundStyle(timeOfDay.canvasPrimaryText)
-                    }
-                }
-                foodHeader(timeOfDay: timeOfDay)
-                weekSelector(timeOfDay: timeOfDay)
-                dailySummary(timeOfDay: timeOfDay)
-
-                if let message = store.errorMessage {
-                    syncNotice(message, timeOfDay: timeOfDay)
-                } else if !store.isConnected {
-                    syncNotice(
-                        String(
-                            localized: "Sign in to log food. Meals are kept on your account, not on this phone.",
-                            bundle: .app,
-                            locale: .app
-                        ),
-                        timeOfDay: timeOfDay
-                    )
-                }
-
-                mealsSection(timeOfDay: timeOfDay)
-                DisclosureGroup(isExpanded: $showsDetailedTools) {
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text("Plan ahead or take a closer look at your logged nutrition.")
-                            .font(.community(.subheadline))
-                            .foregroundStyle(.secondary)
-                        Button { isShowingMealPlan = true } label: {
-                            Label("Plan meals", systemImage: "calendar.badge.plus")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .frame(minHeight: 44)
-                        }
-                        nutritionBreakdownLink(timeOfDay: timeOfDay)
-                        Button { isEditingGoals = true } label: {
-                            Label("Calorie & macro targets", systemImage: "slider.horizontal.3")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .frame(minHeight: 44)
+            VStack(alignment: .leading, spacing: -24) {
+                VStack(alignment: .leading, spacing: 14) {
+                    if showsBackButton {
+                        HStack {
+                            RytivoBrandLockup(size: 24)
+                            Spacer()
+                            Text("Food")
+                                .font(.community(.title3, weight: .bold))
+                                .foregroundStyle(timeOfDay.canvasPrimaryText)
                         }
                     }
-                    .padding(.top, 12)
-                } label: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Planning & details")
-                            .font(.community(.headline))
-                        Text("Meal prep, targets and macro sources")
-                            .font(.community(.caption))
-                            .foregroundStyle(.secondary)
+                    foodHeader(timeOfDay: timeOfDay)
+                    weekSelector(timeOfDay: timeOfDay)
                     }
-                    .padding(.vertical, 10)
-                }
-                .tint(timeOfDay.accent)
+                .padding(.horizontal, RepbaseDesign.pageInset)
+                .padding(.top, 16)
+                .padding(.bottom, 44)
+                VStack(alignment: .leading, spacing: 22) {
+                    dailySummary(timeOfDay: timeOfDay)
+
+                    if let message = store.errorMessage {
+                        syncNotice(message, timeOfDay: timeOfDay)
+                    } else if !store.isConnected {
+                        syncNotice(
+                            String(
+                                localized: "Sign in to log food. Meals are kept on your account, not on this phone.",
+                                bundle: .app,
+                                locale: .app
+                            ),
+                            timeOfDay: timeOfDay
+                        )
+                    }
+
+                    mealsSection(timeOfDay: timeOfDay)
+
+                    FoodDailyNutrientsCard(entries: store.meals(on: selectedDate).flatMap(\.entries),
+                                           date: selectedDate)
             }
-            .padding(.horizontal, RepbaseDesign.pageInset)
-            .padding(.top, 16)
-            .padding(.bottom, RepbaseDesign.bottomBarClearance)
+                .padding(.horizontal, RepbaseDesign.pageInset)
+                .padding(.top, 24)
+                .padding(.bottom, RepbaseDesign.bottomBarClearance)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(RepbaseTactileSheetBackground())
+            }
         }
         .scrollIndicators(.hidden)
         .minimizesBottomBarOnScroll()
         .toolbar(.hidden, for: .navigationBar)
-        .background(Color(.systemBackground))
+        .background(HomeSunriseStyle.backdropGradient.ignoresSafeArea(edges: .top))
         .overlay(alignment: .bottom) {
             if let mealSuccessMessage {
                 FoodLogSuccessToast(message: mealSuccessMessage)
@@ -216,7 +199,7 @@ struct FoodTrackingView: View {
     }
 
     private func foodHeader(timeOfDay: HomeTimeOfDay) -> some View {
-        HStack(alignment: .bottom, spacing: 14) {
+        HStack(alignment: .top, spacing: 14) {
             if showsBackButton {
                 Button { dismiss() } label: {
                     Image(systemName: "chevron.backward")
@@ -228,10 +211,6 @@ struct FoodTrackingView: View {
                 .foregroundStyle(timeOfDay.canvasPrimaryText)
                 .accessibilityLabel("Back")
                 .padding(.trailing, 2)
-                // The header aligns on its bottom edge, which would put the
-                // chevron level with the third line of text rather than where
-                // a back control is looked for.
-                .frame(maxHeight: .infinity, alignment: .top)
             }
 
             VStack(alignment: .leading, spacing: 3) {
@@ -241,30 +220,77 @@ struct FoodTrackingView: View {
                     .foregroundStyle(timeOfDay.accent)
                 Button { isShowingMonth = true } label: {
                     Text("Good food. Your rhythm.")
-                        .font(.community(.title, weight: .bold))
+                        .font(.community(.title2, weight: .bold))
                         .tracking(-0.5)
                         .foregroundStyle(timeOfDay.canvasPrimaryText)
                 }
                 .buttonStyle(.plain)
-                Text(selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day().locale(.app)))
-                    .font(.community(.subheadline))
-                    .foregroundStyle(timeOfDay.canvasSecondaryText)
+                foodHeaderDateAndGoals(timeOfDay: timeOfDay)
+                    .padding(.top, 4)
             }
-
-            Spacer(minLength: 0)
-
-            Button {
-                isEditingGoals = true
-            } label: {
-                Text("Goals")
-                    .frame(minWidth: 44, minHeight: 44)
-            }
-            .font(.community(.caption, weight: .semibold))
-            .buttonStyle(.plain)
-            .foregroundStyle(timeOfDay.accent)
-            .accessibilityHint("Change calorie and macronutrient targets")
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.bottom, 4)
+    }
+
+    private func foodHeaderDateAndGoals(timeOfDay: HomeTimeOfDay) -> some View {
+        // The title keeps its full width. Long dates/translations and larger
+        // text move the action below the date rather than shrinking either.
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 16) {
+                foodHeaderDate(timeOfDay: timeOfDay)
+                    .fixedSize(horizontal: true, vertical: true)
+                Spacer(minLength: 0)
+                goalsButton
+                    .fixedSize(horizontal: true, vertical: true)
+            }
+            VStack(alignment: .leading, spacing: 12) {
+                foodHeaderDate(timeOfDay: timeOfDay)
+                goalsButton
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+        }
+    }
+
+    private func foodHeaderDate(timeOfDay: HomeTimeOfDay) -> some View {
+        Text(selectedDate.formatted(.dateTime.weekday(.wide).month(.abbreviated).day().locale(.app)))
+            .font(.community(.subheadline))
+            .foregroundStyle(timeOfDay.canvasSecondaryText)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var goalsButton: some View {
+        Button {
+            isEditingGoals = true
+        } label: {
+            HStack(spacing: 8) {
+                // Exact vector from the approved Figma target icon. Its
+                // intrinsic size stays inside the design's 16-point slot.
+                Image("FoodGoalsTarget")
+                    .renderingMode(.template)
+                    .frame(width: 16, height: 16)
+                    .accessibilityHidden(true)
+                Text("Goals")
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .font(.community(.footnote, weight: .semibold))
+            .foregroundStyle(RepbaseTactileDesign.accentText)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .frame(minWidth: 104, minHeight: 44)
+            .background(RepbaseTactileDesign.surface, in: Capsule())
+            .overlay {
+                Capsule().strokeBorder(
+                    RepbaseTactileDesign.accentText.opacity(contrast == .increased ? 1 : 0.55),
+                    lineWidth: contrast == .increased ? 2 : 1.25
+                )
+            }
+            .contentShape(Capsule())
+        }
+        .buttonStyle(RepbaseTactilePressStyle())
+        .accessibilityLabel("Goals")
+        .accessibilityHint("Change calorie and macronutrient targets")
+        .accessibilityIdentifier("food.goals")
     }
 
     private func weekSelector(timeOfDay: HomeTimeOfDay) -> some View {
@@ -424,7 +450,7 @@ struct FoodTrackingView: View {
                     endPoint: .bottomTrailing
                 )
                 : LinearGradient(
-                    colors: [timeOfDay.surfaceRaised, timeOfDay.surfaceRaised],
+                    colors: [RytivoSunriseDesign.surface, HomeSunriseStyle.heroTint],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 ),
@@ -502,13 +528,22 @@ struct FoodTrackingView: View {
                     NavigationLink {
                         MealDetailView(date: selectedDate, mealID: nextMeal.id)
                     } label: {
-                        Text("Log \(nextMeal.displayNameInSentence)").frame(maxWidth: .infinity)
+                        HStack {
+                            Text("Log \(nextMeal.displayNameInSentence)")
+                            Spacer(minLength: 8)
+                            Image(systemName: "arrow.forward")
+                        }
+                        .font(.community(.footnote, weight: .semibold))
+                        .foregroundStyle(Color.white)
+                        .padding(.horizontal, 16)
+                        .frame(minHeight: 44)
+                        .background(Color(hex: 0x38664E), in: Capsule())
                     }
-                    .buttonStyle(WorkoutPrimaryButtonStyle(phase: visualPhase))
+                    .buttonStyle(RepbaseTactilePressStyle())
                 }
                 .padding(20)
-                .foregroundStyle(RepbaseDesign.onInk)
-                .background(RepbaseDesign.ink, in: RoundedRectangle(cornerRadius: 24))
+                .foregroundStyle(RytivoSunriseDesign.ink)
+                .sunriseCard(tint: RytivoSunriseDesign.sageTint)
             } else {
                 Button { isChoosingMeal = true } label: {
                     Label("Log food", systemImage: "plus").frame(maxWidth: .infinity)
@@ -517,16 +552,10 @@ struct FoodTrackingView: View {
                 .disabled(meals.isEmpty)
             }
 
-            HStack {
-                Text("Your meals")
-                    .font(.community(.caption2, weight: .bold))
-                    .tracking(1)
-                    .foregroundStyle(timeOfDay.canvasPrimaryText)
-                Spacer()
-                Button("Plan your week →") { isShowingMealPlan = true }
-                    .font(.community(.caption, weight: .semibold))
-                    .foregroundStyle(timeOfDay.accent)
-            }
+            Text("Your meals")
+                .font(.community(.caption2, weight: .bold))
+                .tracking(1)
+                .foregroundStyle(timeOfDay.canvasPrimaryText)
 
             VStack(spacing: 0) {
                 ForEach(Array(meals.enumerated()), id: \.element.id) { index, meal in
@@ -549,11 +578,13 @@ struct FoodTrackingView: View {
             }
             .padding(.horizontal, 6)
 
+            FoodMealPlannerCard { isShowingMealPlan = true }
+
             HStack(spacing: 9) {
                 Button {
                     isShowingSavedMeals = true
                 } label: {
-                    Label("Saved foods", systemImage: "bookmark")
+                    Label("Cookbooks", systemImage: "books.vertical")
                         .font(.community(.subheadline, weight: .semibold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 11)
@@ -605,34 +636,6 @@ struct FoodTrackingView: View {
                 .repbaseControlSurface(cornerRadius: 15)
             }
         }
-    }
-
-    private func nutritionBreakdownLink(timeOfDay: HomeTimeOfDay) -> some View {
-        NavigationLink {
-            ScrollView {
-                NutritionBreakdownView(meals: store.meals(on: selectedDate))
-                    .padding()
-                    // Pushed inside the tab, so the bottom bar overlays it.
-                    .padding(.bottom, RepbaseDesign.bottomBarClearance)
-            }
-            .navigationTitle("Nutrition Breakdown")
-            .navigationBarTitleDisplayMode(.inline)
-            .homeTimeScreen(timeOfDay)
-        } label: {
-            HStack(spacing: 11) {
-                Image(systemName: "chart.pie")
-                    .font(.community(.title3))
-                    .foregroundStyle(timeOfDay.accent)
-                Text("Nutrition breakdown")
-                    .font(.community(.headline))
-                Spacer()
-                Image(systemName: "chevron.forward")
-                    .font(.community(.caption, weight: .bold))
-                    .foregroundStyle(.secondary)
-            }
-            .repbaseCard(contentPadding: 14, cornerRadius: 17)
-        }
-        .buttonStyle(.plain)
     }
 
     /// Named for the day being looked at, not for today. The week strip can

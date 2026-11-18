@@ -1,5 +1,296 @@
 # TestFlight development workflow
 
+## Connected watch workouts — November 12, 2026
+
+The testing candidate adds Connected apps in Training and Settings, explicit
+account/device Health consent, private source-aware workout summaries, bounded
+imports and retryable pause/status controls. Watch-only strength sessions remain
+visible without invented sets. Garmin direct access is not configured; the
+dashboard supports clearly labelled Garmin-via-Apple-Health records while the
+owner applies for program access. See [WEARABLES_TESTING.md](WEARABLES_TESTING.md).
+Requires backend migration 0094 and the matching testing API. Main, live and
+TestFlight are untouched. Exact-head Mac/CI and physical-watch validation remain
+required; do not treat the generated client or source tests as device proof.
+
+## Durable per-set planning — November 12, 2026
+
+The testing candidate adds a set-by-set target table to Review workout, using
+the approved design with the later active-workout-only unit control decision.
+Reps, canonical kilogram weight, set type and stable row identity persist with
+the template. Starting a workout reads the backend's immutable target snapshot;
+actual logged weights/reps never silently overwrite planned targets. Existing
+legacy plans remain readable. The app checks server capability before any
+planned-set write and verifies saved targets on readback.
+
+This requires the matching backend testing branch and additive migration 0093.
+Neither live backend nor main is updated. See
+[WORKOUT_PER_SET_TESTING.md](WORKOUT_PER_SET_TESTING.md) for the implementation
+and checks, and [WORKOUT_LOCAL_TESTING.md](WORKOUT_LOCAL_TESTING.md) for a real,
+durable, isolated local backend and simulator setup (not sample-data previews).
+Generated client, build and native results must be checked on the exact current
+head before promotion; prior branch successes are not evidence for this change.
+
+## Exercise-only units during training — November 12, 2026
+
+Refines the previous unit UI after simulator feedback. The builder/review and
+completed-workout pages no longer offer a kg/lb switch. The existing visual
+control now appears only inside active exercise cards, labelled "Only this
+exercise." There is no account-default checkbox on an exercise. Each choice
+is local to the session exercise, checkpointed on this device, and never
+changes canonical kilogram values or another exercise's input. The account
+default remains in Settings and seeds new sessions. No API/schema change,
+backend deployment, main merge or TestFlight upload is included.
+
+See [WORKOUT_ORDER_UNITS_TESTING.md](WORKOUT_ORDER_UNITS_TESTING.md) for updated
+mixed-equipment and recovery checks. The earlier `4077f14` builds and pure
+tests passed, but native validation exposed test lookup/scroll issues and is
+not recorded as a full pass. This revision requires its own Mac validation.
+The revision adds 17 exercise-unit model/wiring tests and a control-scope
+regression, plus four required native workout-flow cases. Local shell syntax,
+stable-ID checks, catalog parsing/ten-language coverage for the new caption,
+and diff checks passed; Swift compilation and native execution remain pending
+until the exact testing-branch head completes CI.
+
+## Inline exercise order and visible weight units — November 12, 2026
+
+The approved workout flow moves press-and-hold reordering onto the selected
+exercise cards in Add exercises and removes the separate reorder sheet.
+Native list movement preserves complete exercise records and supports edge
+scrolling; accessible move actions remain available. Review retains the same
+draft and existing save path. The first unit design placed controls beside
+entry with an explicit default-saving action. The exercise-only revision
+above supersedes that scope; stored values still remain kilograms.
+
+See [WORKOUT_ORDER_UNITS_TESTING.md](WORKOUT_ORDER_UNITS_TESTING.md) for the
+Mac real-app command, privacy/scope boundaries and manual checks. Only this
+client testing branch is in scope. Per-set planning and watch integrations
+remain separate work; no API change, main merge or backend deployment is part
+of this candidate. Prior rest-fix CI run `42869563280` passed at `54ecd2e`;
+new changes require their own exact-head checks before promotion.
+
+## Superset timing and rest completion — November 10, 2026
+
+This client-only candidate fixes reverse-order superset logging: every member
+owing a set in the current round is checked before automatic rest starts.
+Only a successful set save advances the round; editing a field or a failed save
+does not. Unequal set counts and independent exercises keep their behavior.
+
+The approved compact rest-complete notice expires ten seconds after the stored
+timer end date, not ten seconds after opening the screen. A cancellable store
+task, foreground reconciliation and a date-based display guard prevent stale
+notices from returning. Snapshot/session/account checks stop delayed callbacks
+or taps from clearing a newer timer. Existing pause, reset, adjustment, manual
+start and early dismissal remain available. No API or backend change is needed.
+
+See [WORKOUT_REST_TESTING.md](WORKOUT_REST_TESTING.md) for real-app Mac build
+commands and the manual verification checklist. The scope deliberately excludes
+reordering, per-set planning, units and watch connections from the other Figma
+previews. Main, live deployments and TestFlight uploads remain untouched.
+
+## Calendar month and followers-only sharing — November 4, 2026
+
+See [CALENDAR_SHARING.md](CALENDAR_SHARING.md) for the new contract, privacy
+boundaries, recurring-event migration, design reference, exact staging scope
+and validation checklist. Sharing is a separate read-only projection, never
+part of own task progress, Home Next up or reminder state. The old design's
+Following tab is intentionally omitted: only current followers can be invited.
+These changes require the matching backend test branch and fresh generated
+client. A testing-branch push is not a main merge, deployment or TestFlight release.
+
+## Food search and results — November 3, 2026
+
+The approved [food-search proposal](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=369-14533)
+is implemented on the shared iOS testing branch. A warm adaptive search area
+has a labeled Search action and visible barcode/manual-entry choices. Compact,
+outlined food cards open nutrition/portion review rather than instantly adding
+a food. Recent calories are labeled as the last logged portion; discovery
+identities show Details until authoritative nutrition is known. The main
+results heading no longer carries the provider name. Source attribution and
+ODbL links remain available through the info button and Food data & sources.
+
+The provider/API, explicit-submit policy, stale-response fences, detail lookup,
+portion calculations, retry-safe save snapshot and recovery key are unchanged.
+No backend deployment, main merge, TestFlight upload or API regeneration is
+part of this presentation change. Existing ten-language copy is retained and
+new copy is translated in the catalog.
+
+Mac CI builds both configurations, runs the account-safety suite and captures
+initial/results/empty/error/loading/large-text states in light and dark, plus
+Arabic results. DEBUG-only fixtures cannot make catalogue requests, save diary
+entries, or read/write an account's recovered picker draft. These fixtures
+are illustrative, not live product data. Source-wiring tests do not replace
+rendered review or interaction tests. Before promotion, check a real search,
+barcode (device), manual entry, portion edit, save/retry, back/cancel, source
+links, VoiceOver, large text, RTL and reduced motion against a test account.
+
+## Home photo clarity — November 3, 2026
+
+The Home workout (including completed), movement and food focus cards opt into
+a lighter photographic scrim: the small top label and lower text/actions keep
+stronger shading while the image's middle is more visible. Increase Contrast
+and accessibility text use stronger protection. Other Training/Profile photo
+cards retain their original scrim, and an unknown activity keeps its neutral
+fallback. Image interpolation is high quality; no blur, raster upscaling,
+network images, data/store changes or extra image copies are introduced.
+
+The existing approved Figma originals replace reduced exports for strength
+(577 × 1024 → 941 × 1672) and outdoors (1024 × 683 → 1536 × 1024). Food already
+uses its 1152 × 928 image. Assets remain under the existing per-image 3 MiB and
+total 16 MiB budgets; the asset check guards against smaller replacements.
+Originals came from the existing [category photo sources](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=248-8078),
+not newly generated artwork. The prior images remain in integration history.
+
+Mac CI captures the real Home focus cards in light/dark and larger text. Review
+all three cards, completed workout, bright portions of each photo, neutral
+fallback, narrow width, Increase Contrast, and RTL before promotion. A source
+wiring test or a higher pixel count does not establish rendered readability.
+Main, TestFlight and the live backend remain outside this testing-only change.
+
+## Food Goals button — November 3, 2026
+
+The approved [Goals proposal](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=352-14502)
+replaces the small text-only action with an outlined pill, the exact local
+target vector, and a 104 × 44-point minimum tap area. The headline keeps its
+width; the date and Goals share a row that stacks when text needs more room.
+Existing adaptive surface/accent-text tokens provide light and dark colors;
+Increase Contrast strengthens the outline and shared press feedback respects
+Reduce Motion. The existing goals full-screen editor, month action, date
+selection, stores, goal values, API and backend are unchanged. Existing copy
+and its ten-language translations are reused.
+
+Source-wiring tests guard these destinations, dimensions and the local asset.
+Mac CI also captures Food in both appearances, larger text, German and Arabic;
+the preview script captures a narrow Food page when that runtime is available.
+These fixture captures do not prove a signed-in save. Before promotion, tap
+Goals from Training and Home's pushed Food page, change/save/cancel targets,
+return to Food, and verify its date and totals remain correct. Check VoiceOver,
+large text, narrow widths, RTL, Increase Contrast and Reduce Motion. Main,
+TestFlight and the backend must remain unchanged until release approval.
+
+## Food page follow-up
+
+The [reviewed Meal planner card](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=339-14270)
+replaces the small Plan your week link. It sits after the meal list, directly
+above Cookbooks and Add meal, and opens the existing selected-day planner.
+Daily nutrients remains the final card. Planning & details is removed;
+Nutrition breakdown is available inside Daily nutrients and Goals keeps its
+existing entry point. These changes preserve the stores, API and save behavior.
+Native CI captures the real planning card in both themes and with larger text.
+
+## Cookbook library: duplicate action and live 404 diagnosis — November 2, 2026
+
+The library now has one **New cookbook** action in its content. The duplicate
+navigation-bar plus, its unused presentation state, and its duplicate editor
+sheet are removed. Inside an individual cookbook, the existing plus still
+creates a recipe and remains disabled when that cookbook is full.
+
+Read-only verification against `https://rytivo.app` found the live backend at
+`faac069`, healthy at `/health/` (200), but missing
+`/api/v1/food/cookbooks/` (404). Its deployed `core/urls.py` has no cookbook
+registration. The existing saved-meal endpoint returns the expected 401 without
+credentials. The iOS generated client uses the documented cookbook path with
+its trailing slash; this is an undeployed backend feature, not an empty library
+or an authentication failure. Pulling/building iOS does not deploy repbase.
+
+Cookbooks remain on repbase's `work/testflight-calendar-sync-2026-10-28` branch.
+Before a coordinated rollout, reconcile its cookbook migration chain with
+main's `0087_link_workout_calendar_tasks`, validate the merged candidate, and
+handle older clients that omit the now-required cookbook destination. Follow
+repbase's `COOKBOOKS_TESTING.md` for the database backup and migration procedure.
+No live server, database, API contract, or synchronization behavior is changed
+by this UI fix. A simulator build alone will continue to receive the live 404.
+
+## Portion screen: simple macro summary — November 3, 2026
+
+The approved [Portion review](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=329-14182)
+uses one calorie ring and a carbs/fat/protein legend, the raised Your portion
+field, and a pinned Add to meal action. Native segmented pickers and the
+decimal text field retain their original bindings. The Portion view is moved
+out of FoodPickerView into its own file; its initializer, reference detection,
+quantity parsing, six-decimal multiplier, unit conversion and onAdd payload
+are preserved. Stores, models, API contracts and backend files are unchanged.
+The previous presentation is available in integration history at `7c5f7ff`.
+
+Only the chart's presentation is derived: its shares normalize 4/9/4 macro
+energy, with visible percentages reconciled to 100%. The calorie total remains
+the food's supplied value. Zero/invalid macro energy produces a neutral ring,
+not a complete progress indicator. Invalid quantity, save errors, a locked
+retry and the disabled Saving state retain their existing behavior. Large
+text moves the heading into the scroll area and shows a vertical text summary.
+
+The native CI build, catalog checks and regression suite include seven macro
+presentation checks and the existing portion-conversion/recovery coverage.
+Debug-only captures exercise servings, larger servings, grams, millilitres,
+zero macros, saving, retry and accessibility text in both appearances. Run
+`FOOD_PREVIEW_SCREENS='portion portion-weight portion-accessibility' bash Scripts/capture-cookbooks-preview.sh /path/to/Rytivo.app`
+to capture these locally after a Debug simulator build.
+
+Before promotion, use the signed-in simulator to edit fractional quantities,
+switch grams/ounces/servings without changing the selected amount, choose
+millilitres, expand nutrients, dismiss the keyboard, and add a food. Also
+check an invalid amount, a failed/locked retry, a narrow screen, Arabic RTL
+and VoiceOver. Preview captures use fixtures and do not verify a live save.
+
+## Meal workspace: gentle depth — November 2, 2026
+
+The approved [Meal review](https://www.figma.com/design/FbMNgG8cuZfrRFzQTtIVCy?node-id=308-14257)
+adds a Sunrise heading with a decorative plate, raised Search/Cookbooks/manual
+controls, recent-food portion cards, meal totals, and explicit Edit labels.
+Done stays above the shell's floating navigation instead of inside the scroll.
+The prior UI is preserved in integration history at `e08be05`.
+
+This changes presentation only. Meal IDs, date/slot selection, stores, API
+requests, autosave, food deletion, rename/remove, nutrition disclosure, and
+all four existing full-screen destinations are retained. Recent cards still
+open portion selection; their labels are not additional nested buttons.
+Large text reflows controls vertically, Reduce Motion uses the shared press
+style, and new copy is translated in all ten languages, including food counts.
+
+On the Mac, use `INSTALL_SIMULATOR=1 bash Scripts/validate-sunrise-refresh.sh`.
+The script reads the installed app's HTTPS API configuration when the environment
+does not supply one. It installs over the existing app without erasing data.
+CI also captures illustrative empty/populated Meal screens in both themes
+through the existing debug-only food preview harness. To capture them locally:
+`FOOD_PREVIEW_SCREENS='meal meal-empty' bash Scripts/capture-cookbooks-preview.sh /path/to/Rytivo.app`.
+
+Before promotion, check both themes in the signed-in Training tab, a narrow
+screen, large text, VoiceOver and Arabic RTL. Open each source of food, choose
+a recent portion, edit an entry, expand nutrition, rename/remove a meal and
+return with Done/back. Scroll the last entry clear of the footer, and confirm
+Done remains above the full and minimized app bar. Preview screenshots use
+fixtures and do not verify a live save or the signed-in shell.
+
+## Rotation workout names and saved-plan selection — November 1, 2026
+
+Creating a different workout named `Push Day` when that exact name is already
+saved previously submitted a duplicate create and showed only HTTP 400. New
+plans now offer an available name such as `Push Day (2)` before saving. The
+action changes only the name: the selected exercises, their order and targets,
+and the draft's operation identity stay intact. Copying a saved workout also
+starts with an available name. The server's per-account name uniqueness stays
+in place; no existing workout is overwritten or substituted by its name.
+
+An unconfirmed create keeps its original idempotent retry available, including
+after relaunch. A definitive 400 still clears the rejected request snapshot so
+the corrected draft can save, while preserving the server's readable reason.
+Rotation days separately offer saved workouts by server ID or Create new;
+choosing a saved plan writes no template or calendar entry.
+
+Regression coverage includes name suggestions/length limits, pending-save and
+account isolation, readable validation errors, repeated rotation templates,
+and stale rotation days. On a Mac, run `bash Scripts/test-account-safety.sh`
+and build the simulator app. Interactive checks before promotion:
+
+1. Build a new `Push Day` with different exercises from the saved one. Use the
+   suggested distinct name and save it into a rotation day. Verify both saved
+   plans keep their own exercises, set kinds, targets, rests and order.
+2. Choose one saved workout for multiple rotation days. Verify selection does
+   not create a duplicate template or schedule any date until the rotation saves.
+3. Cancel a new workout and return to the picker; cancel the picker and verify
+   the rotation is unchanged. Saving a new workout returns to its rotation day.
+4. Interrupt a save after its server write, relaunch and continue the draft.
+   Save again to confirm the original operation without creating another plan.
+
 ## Branches
 
 Notification-center testing work is documented in

@@ -13,44 +13,12 @@
 //
 
 import Foundation
-import HealthKit
+@preconcurrency import HealthKit
 import Observation
-
-/// One day's step count, as Health reports it.
-nonisolated struct DailyStepCount: Identifiable, Hashable, Sendable {
-    /// Midnight local, the day the steps were taken.
-    let day: Date
-    let steps: Int
-
-    var id: Date { day }
-}
-
-/// One workout Health holds, reduced to what Repbase can use.
-nonisolated struct HealthWorkout: Identifiable, Hashable, Sendable {
-    /// Health's own identifier. Carried through to the server so importing the
-    /// same workout twice updates one row rather than making a second.
-    let externalID: String
-    let activity: WorkoutType
-    let startedAt: Date
-    let endedAt: Date
-    let distanceKilometres: Double?
-    let energyKilocalories: Double?
-
-    var id: String { externalID }
-
-    /// Whether this overlaps something Repbase recorded itself.
-    ///
-    /// A run tracked in the app and by the Watch is one run. The app's own
-    /// recording wins, because it has the route and the barometric climb, and
-    /// this one is skipped rather than counted a second time.
-    func overlaps(start: Date, end: Date) -> Bool {
-        startedAt < end && start < endedAt
-    }
-}
 
 @Observable
 @MainActor
-final class HealthKitService {
+final class HealthKitService: HealthDataReading {
     /// Whether the user has ever been shown Apple's permission sheet.
     ///
     /// HealthKit will not say whether a read was allowed. That would leak the
@@ -86,6 +54,7 @@ final class HealthKitService {
             .distanceSwimming,
             .distanceCycling,
             .activeEnergyBurned,
+            .heartRate,
         ] {
             if let type = HKQuantityType.quantityType(forIdentifier: identifier) {
                 types.insert(type)
@@ -121,10 +90,11 @@ final class HealthKitService {
     /// `HKStatisticsCollectionQuery` with `.cumulativeSum` is the query that
     /// already knows this and de-duplicates by source, and it buckets by day
     /// in one pass rather than being asked once per day.
-    func dailySteps(since start: Date) async -> [DailyStepCount] {
+    func dailySteps(since start: Date) async throws -> [DailyStepCount] {
+        try Task.checkCancellation()
         guard isSupported,
               let stepType = HKQuantityType.quantityType(forIdentifier: .stepCount)
-        else { return [] }
+        else { throw HealthIntegrationFailure.unsupportedDevice }
 
         let calendar = Calendar.current
         let anchor = calendar.startOfDay(for: start)
@@ -143,12 +113,14 @@ final class HealthKitService {
             intervalComponents: DateComponents(day: 1)
         )
 
-        let collection: HKStatisticsCollection? = await withCheckedContinuation { continuation in
-            query.initialResultsHandler = { _, results, _ in
-                continuation.resume(returning: results)
+        let collection: HKStatisticsCollection? = try await withCheckedThrowingContinuation { continuation in
+            query.initialResultsHandler = { _, results, error in
+                if let error { continuation.resume(throwing: error) }
+                else { continuation.resume(returning: results) }
             }
             store.execute(query)
         }
+        try Task.checkCancellation()
 
         guard let collection else { return [] }
 
@@ -157,7 +129,7 @@ final class HealthKitService {
             // A day with no samples is a day Health was not asked about, not a
             // day nobody walked. Sending a zero would be a claim.
             guard let sum = statistics.sumQuantity()?.doubleValue(for: .count()),
-                  sum > 0
+                  sum.isFinite, sum > 0, sum < Double(Int.max)
             else { return }
             days.append(
                 DailyStepCount(
@@ -169,65 +141,114 @@ final class HealthKitService {
         return days
     }
 
-    /// Finished workouts Health holds since a date, newest first.
-    ///
-    /// Only the four kinds Repbase understands. A tennis match in Health is
-    /// not something this app can draw, and inventing a workout type for it
-    /// would put a row in the training history that no screen can explain.
-    func workouts(since: Date) async -> [HealthWorkout] {
-        guard isSupported else { return [] }
-
+    /// Bounded anchored pages from a fixed window. Anchors are opaque, local,
+    /// and never sent to the server. Replaying the window safely backfills
+    /// late Watch syncs and corrections using the server's external identity.
+    func workoutPage(since: Date, until: Date, cursor: Data?) async throws -> HealthWorkoutPage {
+        try Task.checkCancellation()
+        guard isSupported else { throw HealthIntegrationFailure.unsupportedDevice }
         let predicate = HKQuery.predicateForSamples(
             withStart: since,
-            end: Date(),
+            end: until,
             options: .strictStartDate
         )
-        let newestFirst = NSSortDescriptor(
-            key: HKSampleSortIdentifierStartDate,
-            ascending: false
-        )
-
-        let samples: [HKSample] = await withCheckedContinuation { continuation in
-            let query = HKSampleQuery(
-                sampleType: HKObjectType.workoutType(),
-                predicate: predicate,
-                limit: HKObjectQueryNoLimit,
-                sortDescriptors: [newestFirst]
-            ) { _, samples, _ in
-                continuation.resume(returning: samples ?? [])
+        let anchor: HKQueryAnchor?
+        if let cursor {
+            anchor = try NSKeyedUnarchiver.unarchivedObject(ofClass: HKQueryAnchor.self, from: cursor)
+        } else { anchor = nil }
+        if cursor != nil && anchor == nil { throw HealthIntegrationFailure.malformedPage }
+        let result: ([HKSample], Int, HKQueryAnchor?) = try await withCheckedThrowingContinuation { continuation in
+            let query = HKAnchoredObjectQuery(type: HKObjectType.workoutType(), predicate: predicate,
+                                            anchor: anchor, limit: HealthSyncPolicy.batchSize) {
+                _, samples, deleted, nextAnchor, error in
+                if let error { continuation.resume(throwing: error) }
+                else { continuation.resume(returning: (samples ?? [], deleted?.count ?? 0, nextAnchor)) }
             }
             store.execute(query)
         }
-
-        return samples.compactMap { sample in
+        try Task.checkCancellation()
+        let hasMore = result.0.count + result.1 >= HealthSyncPolicy.batchSize
+        let next: Data?
+        if hasMore, let nextAnchor = result.2 {
+            next = try NSKeyedArchiver.archivedData(withRootObject: nextAnchor, requiringSecureCoding: true)
+        } else { next = nil }
+        if hasMore && (next == nil || next == cursor) { throw HealthIntegrationFailure.malformedPage }
+        let workouts = result.0.compactMap { sample -> HealthWorkout? in
             guard let workout = sample as? HKWorkout,
-                  let activity = Self.workoutType(from: workout.workoutActivityType)
-            else { return nil }
-
+                  workout.endDate > workout.startDate,
+                  workout.endDate <= until,
+                  workout.duration.isFinite, workout.duration > 0 else { return nil }
+            let activity = Self.workoutActivity(from: workout.workoutActivityType)
+            let heartRate = workout.statistics(for: HKQuantityType(.heartRate))
+            let beatsPerMinute = HKUnit.count().unitDivided(by: .minute())
             return HealthWorkout(
                 externalID: workout.uuid.uuidString,
-                activity: activity,
+                activity: activity.family,
+                workoutActivity: activity,
                 startedAt: workout.startDate,
                 endedAt: workout.endDate,
-                distanceKilometres: Self.distance(of: workout, activity: activity),
+                distanceKilometres: Self.distance(of: workout, activity: activity.family),
                 energyKilocalories: workout.statistics(
                     for: HKQuantityType(.activeEnergyBurned)
-                )?.sumQuantity()?.doubleValue(for: .kilocalorie())
+                )?.sumQuantity()?.doubleValue(for: .kilocalorie()),
+                durationSeconds: workout.duration,
+                averageHeartRateBPM: heartRate?.averageQuantity()?.doubleValue(for: beatsPerMinute),
+                maxHeartRateBPM: heartRate?.maximumQuantity()?.doubleValue(for: beatsPerMinute),
+                sourceName: workout.sourceRevision.source.name,
+                sourceBundleID: workout.sourceRevision.source.bundleIdentifier,
+                deviceName: workout.device?.name
             )
         }
+        return HealthWorkoutPage(workouts: workouts, nextCursor: next)
     }
 
-    /// Maps Health's activity types onto the four Repbase records. Anything
-    /// else returns nil and is left in Health.
-    private static func workoutType(
+    /// Specific sport, not a guessed lifting session. Unknown future types are
+    /// still usable summaries under Other, with their measured time and data.
+    private static func workoutActivity(
         from activity: HKWorkoutActivityType
-    ) -> WorkoutType? {
+    ) -> WorkoutActivity {
         switch activity {
         case .running: .running
-        case .cycling: .biking
+        case .walking: .walking
+        case .hiking: .hiking
+        case .cycling: .cycling
         case .swimming: .swimming
-        case .traditionalStrengthTraining, .functionalStrengthTraining: .lifting
-        default: nil
+        case .traditionalStrengthTraining: .weightlifting
+        case .functionalStrengthTraining: .functionalTraining
+        case .crossTraining: .functionalTraining
+        case .highIntensityIntervalTraining: .hiit
+        case .rowing: .rowing
+        case .elliptical: .elliptical
+        case .stairClimbing, .stairs: .stairClimbing
+        case .jumpRope: .jumpRope
+        case .tennis: .tennis
+        case .badminton: .badminton
+        case .tableTennis: .tableTennis
+        case .squash: .squash
+        case .pickleball: .pickleball
+        case .soccer: .soccer
+        case .americanFootball: .americanFootball
+        case .basketball: .basketball
+        case .volleyball: .volleyball
+        case .rugby: .rugby
+        case .hockey: .hockey
+        case .baseball: .baseball
+        case .handball: .handball
+        case .cricket: .cricket
+        case .boxing: .boxing
+        case .kickboxing: .kickboxing
+        case .martialArts, .wrestling: .martialArts
+        case .yoga: .yoga
+        case .pilates: .pilates
+        case .flexibility: .stretching
+        case .dance, .danceInspiredTraining, .socialDance, .cardioDance: .dance
+        case .climbing: .climbing
+        case .downhillSkiing, .crossCountrySkiing: .skiing
+        case .snowboarding: .snowboarding
+        case .surfingSports: .surfing
+        case .paddleSports: .paddling
+        case .golf: .golf
+        default: .other
         }
     }
 

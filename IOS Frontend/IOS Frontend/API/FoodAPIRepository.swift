@@ -17,10 +17,26 @@ import RepbaseAPI
 /// out and another way on the way back.
 nonisolated enum FoodDecimal {
     static func string(_ value: Decimal) -> String {
+        string(value, scale: 2)
+    }
+
+    static func servingsString(_ value: Decimal, snapshotVersion: Int = 2) -> String {
+        string(value, scale: snapshotVersion < 2 ? 2 : 6)
+    }
+
+    static func referenceString(_ value: Decimal) -> String {
+        string(value, scale: 4)
+    }
+
+    static func nutrientString(_ value: Decimal) -> String {
+        string(value, scale: 6)
+    }
+
+    private static func string(_ value: Decimal, scale: Int16) -> String {
         NSDecimalNumber(decimal: value)
             .rounding(accordingToBehavior: NSDecimalNumberHandler(
                 roundingMode: .plain,
-                scale: 2,
+                scale: scale,
                 raiseOnExactness: false,
                 raiseOnOverflow: false,
                 raiseOnUnderflow: false,
@@ -54,7 +70,70 @@ actor FoodAPIRepository {
         )
     }
 
+    /// Exercises the production mapping/write paths with an isolated generated
+    /// transport in tests. It does not construct or store credentials.
+    init(configuration: APIConfiguration, client: Client) {
+        self.configuration = configuration
+        self.client = client
+        recoveryScope = nil
+    }
+
     // MARK: - Reading
+
+    func cookbooks() async throws -> [Cookbook] {
+        var page: Int?
+        var visited: Set<Int> = []
+        var values: [Cookbook] = []
+        repeat {
+            switch try await client.foodCookbooksList(query: .init(page: page)) {
+            case .ok(let response):
+                let body = try response.body.json
+                values.append(contentsOf: body.results.map(Self.cookbook(from:)))
+                page = try nextPage(body.next, visited: &visited)
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+        } while page != nil
+        return values.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    func createCookbook(name: String, key: UUID) async throws -> Cookbook {
+        switch try await client.foodCookbooksCreate(
+            headers: .init(idempotencyKey: key.uuidString), body: .json(.init(name: name))
+        ) {
+        case .created(let response): return Self.cookbook(from: try response.body.json)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload, unlabeled: ["name", "cookbook"])
+        }
+    }
+
+    func renameCookbook(_ id: Int, name: String) async throws -> Cookbook {
+        switch try await client.foodCookbooksUpdate(path: .init(id: id), body: .json(.init(name: name))) {
+        case .ok(let response): return Self.cookbook(from: try response.body.json)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload, unlabeled: ["name", "cookbook"])
+        }
+    }
+
+    func deleteCookbook(_ id: Int) async throws {
+        switch try await client.foodCookbooksDestroy(path: .init(id: id)) {
+        case .noContent: return
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload, unlabeled: ["cookbook"])
+        }
+    }
+
+    func moveRecipe(_ id: Int, to cookbookID: Int) async throws -> SavedFoodMeal {
+        switch try await client.foodSavedMealsPartialUpdate(path: .init(id: id), body: .json(.init(cookbook: Int64(cookbookID)))) {
+        case .ok(let response): return Self.savedMeal(from: try response.body.json)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload, unlabeled: ["cookbook"])
+        }
+    }
+
+    static func cookbook(from value: Components.Schemas.Cookbook) -> Cookbook {
+        Cookbook(id: value.id, name: value.name, recipeCount: value.recipeCount, capacity: value.capacity)
+    }
 
     /// Every meal between two dates, grouped by the day it belongs to.
     ///
@@ -139,7 +218,7 @@ actor FoodAPIRepository {
         switch output {
         case .ok(let response):
             return try response.body.json.map { payload in
-                FoodEntry(
+                FoodSnapshotPolicy.attaching(to: FoodEntry(
                     name: payload.name,
                     servings: FoodDecimal.value(payload.servings),
                     nutritionPerServing: NutritionAmount(
@@ -148,19 +227,21 @@ actor FoodAPIRepository {
                         carbohydrateGrams: FoodDecimal.value(payload.carbohydrateGrams),
                         fatGrams: FoodDecimal.value(payload.fatGrams)
                     )
-                )
+                ), sourceID: payload.sourceId, servingDescription: payload.servingDescription,
+                   referenceQuantity: payload.referenceQuantity, referenceUnit: payload.referenceUnit,
+                   nutrients: payload.nutrients?.additionalProperties)
             }
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
         }
     }
 
-    func savedMeals() async throws -> [SavedFoodMeal] {
+    func savedMeals(cookbookID: Int? = nil) async throws -> [SavedFoodMeal] {
         var page: Int?
         var visited: Set<Int> = []
         var values: [SavedFoodMeal] = []
         repeat {
-            let output = try await client.foodSavedMealsList(query: .init(page: page))
+            let output = try await client.foodSavedMealsList(query: .init(cookbook: cookbookID, page: page))
             let response: Components.Schemas.PaginatedSavedFoodMealList
             switch output {
             case .ok(let success):
@@ -235,20 +316,22 @@ actor FoodAPIRepository {
     @discardableResult
     func saveFood(_ entry: FoodEntry, inMeal mealID: Int) async throws -> FoodEntry {
         if let serverID = entry.serverID {
+            var body = Components.Schemas.PatchedFoodEntryRequest(
+                name: entry.name,
+                servings: FoodDecimal.servingsString(entry.servings),
+                calories: FoodDecimal.string(entry.nutritionPerServing.calories),
+                proteinGrams: FoodDecimal.string(entry.nutritionPerServing.proteinGrams),
+                carbohydrateGrams: FoodDecimal.string(entry.nutritionPerServing.carbohydrateGrams),
+                fatGrams: FoodDecimal.string(entry.nutritionPerServing.fatGrams)
+            )
+            body.sourceId = entry.sourceID ?? ""
+            body.servingDescription = entry.servingDescription ?? ""
+            body.referenceQuantity = entry.referenceQuantity.map(FoodDecimal.referenceString)
+            body.referenceUnit = entry.referenceUnit ?? ""
+            body.nutrients = .init(additionalProperties: entry.nutrients.mapValues(FoodDecimal.nutrientString))
             let output = try await client.foodEntriesPartialUpdate(
                 path: .init(id: serverID),
-                body: .json(
-                    Components.Schemas.PatchedFoodEntryRequest(
-                        name: entry.name,
-                        servings: FoodDecimal.string(entry.servings),
-                        calories: FoodDecimal.string(entry.nutritionPerServing.calories),
-                        proteinGrams: FoodDecimal.string(entry.nutritionPerServing.proteinGrams),
-                        carbohydrateGrams: FoodDecimal.string(
-                            entry.nutritionPerServing.carbohydrateGrams
-                        ),
-                        fatGrams: FoodDecimal.string(entry.nutritionPerServing.fatGrams)
-                    )
-                )
+                body: .json(body)
             )
             switch output {
             case .ok(let response):
@@ -264,21 +347,28 @@ actor FoodAPIRepository {
         if let recoveryScope {
             submitted = try await EditorDraftRecovery.shared.capture(entry, key: operationKey, scope: recoveryScope)
         }
+        var body = Components.Schemas.FoodEntryRequest(
+            meal: mealID,
+            name: submitted.name,
+            servings: FoodDecimal.servingsString(submitted.servings, snapshotVersion: submitted.snapshotVersion),
+            calories: FoodDecimal.string(submitted.nutritionPerServing.calories),
+            proteinGrams: FoodDecimal.string(submitted.nutritionPerServing.proteinGrams),
+            carbohydrateGrams: FoodDecimal.string(submitted.nutritionPerServing.carbohydrateGrams),
+            fatGrams: FoodDecimal.string(submitted.nutritionPerServing.fatGrams)
+        )
+        // An old captured create must keep its original payload fingerprint
+        // when retried after upgrading. Omit unknown new metadata rather than
+        // adding empty fields to an already submitted idempotency key.
+        if submitted.hasSourceDetails {
+            body.sourceId = submitted.sourceID ?? ""
+            body.servingDescription = submitted.servingDescription ?? ""
+            body.referenceQuantity = submitted.referenceQuantity.map(FoodDecimal.referenceString)
+            body.referenceUnit = submitted.referenceUnit ?? ""
+            body.nutrients = .init(additionalProperties: submitted.nutrients.mapValues(FoodDecimal.nutrientString))
+        }
         let output = try await client.foodEntriesCreate(
             headers: .init(idempotencyKey: submitted.id.uuidString),
-            body: .json(
-                Components.Schemas.FoodEntryRequest(
-                    meal: mealID,
-                    name: submitted.name,
-                    servings: FoodDecimal.string(submitted.servings),
-                    calories: FoodDecimal.string(submitted.nutritionPerServing.calories),
-                    proteinGrams: FoodDecimal.string(submitted.nutritionPerServing.proteinGrams),
-                    carbohydrateGrams: FoodDecimal.string(
-                        submitted.nutritionPerServing.carbohydrateGrams
-                    ),
-                    fatGrams: FoodDecimal.string(submitted.nutritionPerServing.fatGrams)
-                )
-            )
+            body: .json(body)
         )
         switch output {
         case .created(let response):
@@ -317,9 +407,9 @@ actor FoodAPIRepository {
             recipe = try await EditorDraftRecovery.shared.capture(recipe, key: operationKey, scope: recoveryScope)
         }
         let ingredients = recipe.ingredients.map { ingredient in
-            Components.Schemas.SavedFoodIngredientRequest(
+            var body = Components.Schemas.SavedFoodIngredientRequest(
                 name: ingredient.name,
-                servings: FoodDecimal.string(ingredient.servings),
+                servings: FoodDecimal.servingsString(ingredient.servings, snapshotVersion: ingredient.snapshotVersion),
                 calories: FoodDecimal.string(ingredient.nutritionPerServing.calories),
                 proteinGrams: FoodDecimal.string(ingredient.nutritionPerServing.proteinGrams),
                 carbohydrateGrams: FoodDecimal.string(
@@ -327,6 +417,14 @@ actor FoodAPIRepository {
                 ),
                 fatGrams: FoodDecimal.string(ingredient.nutritionPerServing.fatGrams)
             )
+            if ingredient.hasSourceDetails {
+                body.sourceId = ingredient.sourceID ?? ""
+                body.servingDescription = ingredient.servingDescription ?? ""
+                body.referenceQuantity = ingredient.referenceQuantity.map(FoodDecimal.referenceString)
+                body.referenceUnit = ingredient.referenceUnit ?? ""
+                body.nutrients = .init(additionalProperties: ingredient.nutrients.mapValues(FoodDecimal.nutrientString))
+            }
+            return body
         }
 
         if let serverID = recipe.serverID {
@@ -335,6 +433,7 @@ actor FoodAPIRepository {
                 body: .json(
                     Components.Schemas.SavedFoodMealRequest(
                         name: recipe.name,
+                        cookbook: recipe.cookbookID.map { Int64($0) },
                         ingredients: ingredients,
                         cookingInstructions: recipe.cookingInstructions
                     )
@@ -343,8 +442,9 @@ actor FoodAPIRepository {
             switch output {
             case .ok(let response):
                 return Self.savedMeal(from: try response.body.json)
-            case .undocumented(let statusCode, _):
-                throw APIServiceError.undocumentedStatus(statusCode)
+            case .undocumented(let statusCode, let payload):
+                throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload,
+                    unlabeled: ["cookbook", "name", "ingredients", "cooking_instructions"])
             }
         }
 
@@ -353,6 +453,7 @@ actor FoodAPIRepository {
             body: .json(
                 Components.Schemas.SavedFoodMealRequest(
                     name: recipe.name,
+                    cookbook: recipe.cookbookID.map { Int64($0) },
                     ingredients: ingredients,
                     cookingInstructions: recipe.cookingInstructions
                 )
@@ -368,9 +469,10 @@ actor FoodAPIRepository {
             }
             if let recoveryScope { try await EditorDraftRecovery.shared.remove(key: operationKey, scope: recoveryScope) }
             return saved
-        case .undocumented(let statusCode, _):
+        case .undocumented(let statusCode, let payload):
             if statusCode == 400, let recoveryScope { try await EditorDraftRecovery.shared.remove(key: operationKey, scope: recoveryScope) }
-            throw APIServiceError.undocumentedStatus(statusCode)
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload,
+                unlabeled: ["cookbook", "name", "ingredients", "cooking_instructions"])
         }
     }
 
@@ -447,7 +549,7 @@ actor FoodAPIRepository {
     }
 
     private static func entry(from payload: Components.Schemas.FoodEntry) -> FoodEntry {
-        FoodEntry(
+        FoodSnapshotPolicy.attaching(to: FoodEntry(
             // Held by the food editor as a sheet item: a new id mid-edit
             // closes the sheet out from under whoever is typing in it.
             id: .stable(forServerID: payload.id),
@@ -460,7 +562,9 @@ actor FoodAPIRepository {
                 carbohydrateGrams: FoodDecimal.value(payload.carbohydrateGrams),
                 fatGrams: FoodDecimal.value(payload.fatGrams)
             )
-        )
+        ), sourceID: payload.sourceId, servingDescription: payload.servingDescription,
+           referenceQuantity: payload.referenceQuantity, referenceUnit: payload.referenceUnit,
+           nutrients: payload.nutrients?.additionalProperties)
     }
 
     private static func savedMeal(
@@ -474,7 +578,7 @@ actor FoodAPIRepository {
             serverID: payload.id,
             name: payload.name,
             ingredients: payload.ingredients.map { ingredient in
-                FoodEntry(
+                FoodSnapshotPolicy.attaching(to: FoodEntry(
                     // The saved-meal ingredient row, so editing a recipe
                     // does not renumber the lines under the cursor.
                     id: .stable(forServerID: ingredient.id),
@@ -487,9 +591,12 @@ actor FoodAPIRepository {
                         carbohydrateGrams: FoodDecimal.value(ingredient.carbohydrateGrams),
                         fatGrams: FoodDecimal.value(ingredient.fatGrams)
                     )
-                )
+                ), sourceID: ingredient.sourceId, servingDescription: ingredient.servingDescription,
+                   referenceQuantity: ingredient.referenceQuantity, referenceUnit: ingredient.referenceUnit,
+                   nutrients: ingredient.nutrients?.additionalProperties)
             },
-            cookingInstructions: payload.cookingInstructions ?? ""
+            cookingInstructions: payload.cookingInstructions ?? "",
+            cookbookID: payload.cookbook.map { Int($0) }
         )
     }
 
@@ -534,74 +641,4 @@ actor FoodAPIRepository {
         if let port = url.port { return port }
         return url.scheme?.lowercased() == "https" ? 443 : 80
     }
-}
-
-// MARK: - Public food catalogue
-
-/// Explicit food searches and product barcodes go through Rytivo, not directly
-/// to Open Food Facts. The backend normalizes and caches public product data;
-/// saved entries remain independent nutrition snapshots.
-actor FoodDatabaseRepository {
-    private let client: Client
-
-    init(configuration: APIConfiguration, token: String) throws {
-        client = try RepbaseAPIClientFactory.makeAuthenticated(
-            serverURL: configuration.serverURL,
-            token: token,
-            allowInsecureLocalhost: configuration.allowsInsecureLocalhost
-        )
-    }
-
-    func search(_ query: String) async throws -> [FoodDatabaseResult] {
-        let term = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard term.count >= 2 else { return [] }
-
-        let output = try await client.foodSearchList(query: .init(q: term))
-        switch output {
-        case .ok(let response):
-            return try response.body.json.map { payload in
-                FoodDatabaseResult(
-                    sourceID: payload.sourceId,
-                    servingDescription: payload.servingDescription,
-                    entry: FoodEntry(
-                        name: Self.title(payload.name, brand: payload.brand),
-                        servings: 1,
-                        nutritionPerServing: NutritionAmount(
-                            calories: FoodDecimal.value(payload.calories),
-                            proteinGrams: FoodDecimal.value(payload.proteinGrams),
-                            carbohydrateGrams: FoodDecimal.value(
-                                payload.carbohydrateGrams
-                            ),
-                            fatGrams: FoodDecimal.value(payload.fatGrams)
-                        )
-                    )
-                )
-            }
-        case .undocumented(let statusCode, let payload):
-            throw await RepbaseAPIHTTPError.decode(
-                statusCode: statusCode,
-                payload: payload
-            )
-        }
-    }
-
-    private static func title(_ name: String, brand: String) -> String {
-        let brand = brand.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !brand.isEmpty,
-              !name.localizedCaseInsensitiveContains(brand) else { return name }
-        return "\(name) · \(brand)"
-    }
-}
-
-/// A catalogue row: the food, and what the figures are measured against.
-///
-/// The serving is carried beside the entry rather than pushed into its name.
-/// It is the one thing a person has to read before agreeing to the numbers --
-/// nearly everything here is per 100 g -- and a name is not where that belongs.
-nonisolated struct FoodDatabaseResult: Identifiable, Hashable, Sendable {
-    let sourceID: String
-    let servingDescription: String
-    let entry: FoodEntry
-
-    var id: String { sourceID }
 }

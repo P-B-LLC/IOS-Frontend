@@ -12,7 +12,7 @@ struct WorkoutCompletionSummary: View {
     @Environment(WorkoutStore.self) private var store
     private let phase = WorkoutVisualPhase.recover
     private var session: ActiveWorkoutSession { completed.session }
-    private var unit: WorkoutWeightUnit { store.preferences.weightUnit }
+    private var unit: WorkoutWeightUnit { store.preferences.defaultWeightUnit }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -35,7 +35,6 @@ struct WorkoutCompletionSummary: View {
             HStack {
                 Text("Your effort, logged.").font(.community(.title3, weight: .bold))
                 Spacer()
-                WeightUnitToggle(compact: true)
             }
             ForEach(session.exercises) { exercise in
                 let count = exercise.sets.filter(\.isLogged).count
@@ -43,7 +42,13 @@ struct WorkoutCompletionSummary: View {
                     Image(systemName: count == exercise.sets.count && count > 0 ? "checkmark.circle.fill" : "circle.lefthalf.filled")
                         .foregroundStyle(count == exercise.sets.count && count > 0 ? RepbaseDesign.success : phase.secondaryText)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(exercise.displayName).font(.community(.headline))
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(exercise.displayName).font(.community(.headline))
+                            Spacer(minLength: 8)
+                            Text(exercise.weightUnit(default: store.preferences.defaultWeightUnit).label)
+                                .font(.community(.caption, weight: .semibold))
+                                .foregroundStyle(phase.secondaryText)
+                        }
                         Text("\(count) of \(exercise.sets.count) sets logged").font(.community(.caption)).foregroundStyle(phase.secondaryText)
                         if let line = loggedLine(exercise) {
                             Text(line)
@@ -64,6 +69,7 @@ struct WorkoutCompletionSummary: View {
 
     /// "W 40 × 10 · 60 × 8 · 60 × 8", the logged sets in the unit shown.
     private func loggedLine(_ exercise: SessionExerciseDraft) -> String? {
+        let unit = exercise.weightUnit(default: store.preferences.defaultWeightUnit)
         let parts = exercise.sets.filter(\.isLogged).compactMap { set -> String? in
             let weight = Decimal(string: set.weightKilograms)
             let summary = PreviousSet(setNumber: set.setNumber, weightKilograms: weight, reps: Int(set.reps)).summary(in: unit)

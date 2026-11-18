@@ -73,17 +73,41 @@ struct TrainingDashboardContent: View {
                         .workoutCard()
                 } else {
                     workoutPlanCard
-                    focusCard
-                    StepsWidget(explainsWhenEmpty: true, compact: true)
-                    if metrics != .empty || (store.isConnected && store.persistenceError == nil) {
-                        momentumSection
+                    VStack(alignment: .leading, spacing: 20) {
+                        focusCard
+                        NavigationLink { ConnectedAppsView() } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "applewatch").font(.title2)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Connected apps").font(.community(.headline))
+                                    Text("Apple Watch, Health and Garmin")
+                                        .font(.community(.caption)).foregroundStyle(.secondary)
+                                }
+                                Spacer(minLength: 8)
+                                Image(systemName: "chevron.forward").font(.caption.weight(.semibold))
+                            }
+                            .padding(16)
+                            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20))
+                            .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(Color.primary.opacity(0.12)))
+                        }
+                        .buttonStyle(.plain)
+                        StepsWidget(explainsWhenEmpty: true, compact: true)
+                        if metrics != .empty || (store.isConnected && store.persistenceError == nil) {
+                            momentumSection
+                        }
                     }
+                    .padding(.horizontal, RepbaseDesign.pageInset)
+                    .padding(.top, 24)
+                    .padding(.bottom, RepbaseDesign.bottomBarClearance)
+                    .background(RepbaseTactileSheetBackground())
+                    .padding(.horizontal, -RepbaseDesign.pageInset)
                 }
             }
             .padding(.horizontal, RepbaseDesign.pageInset)
             .padding(.top, 10)
-            .padding(.bottom, RepbaseDesign.bottomBarClearance)
+            .padding(.bottom, 0)
         }
+        .background(HomeSunriseStyle.backdropGradient.ignoresSafeArea(edges: .top))
         .minimizesBottomBarOnScroll()
         .task { await store.retryPendingWorkoutSaves() }
         .overlay(alignment: .bottom) {
@@ -182,8 +206,7 @@ struct TrainingDashboardContent: View {
             Divider()
             cycleRow
         }
-        .padding(16)
-        .dashboardSurface(radius: 22)
+        .padding(.vertical, 4)
         // Asked about, unlike the per-day controls: this empties the whole
         // calendar at once and there is nothing to undo it with.
         .confirmationDialog(
@@ -294,7 +317,8 @@ struct TrainingDashboardContent: View {
                         : String(localized: "\(session.loggedSetCount) of \(session.totalSetCount) sets logged", bundle: .app, locale: .app),
                     completed: metrics.completedThisWeek,
                     goal: metrics.weeklyGoal,
-                    symbol: session.activity.symbol
+                    symbol: session.activity.symbol,
+                    photo: TrainingPhoto.asset(for: session.activity)
                 )
             }
             .buttonStyle(.plain)
@@ -309,6 +333,7 @@ struct TrainingDashboardContent: View {
                     completed: completedThisWeek,
                     goal: metrics.weeklyGoal,
                     symbol: store.workout(on: day)?.activity.symbol ?? WorkoutActivity.weightlifting.symbol,
+                    photo: TrainingPhoto.asset(for: store.workout(on: day)?.activity),
                     isDayComplete: hiddenCompletedDay != day && store.workout(on: day).map {
                         store.isCompleted(
                             workoutName: $0.name,
@@ -351,16 +376,15 @@ struct TrainingDashboardContent: View {
     }
 
     private var totalsCard: some View {
-        HStack(spacing: 0) {
+        HStack(alignment: .top, spacing: 12) {
             metric(
                 eyebrow: "TOTAL WORKOUTS",
                 value: "\(totalWorkouts)",
                 detail: metrics.monthDetail,
                 color: RepbaseDesign.warning
             )
-            Rectangle()
-                .fill(RepbasePalette.oatmeal)
-                .frame(width: 1, height: 76)
+            .padding(.vertical, 17)
+            .sunriseCard()
             metric(
                 eyebrow: "CURRENT STREAK",
                 value: metrics.currentStreakText,
@@ -369,10 +393,9 @@ struct TrainingDashboardContent: View {
                     : String(localized: "Best: \(metrics.bestStreakWeeks) weeks", bundle: .app, locale: .app),
                 color: phase.secondaryText
             )
+            .padding(.vertical, 17)
+            .sunriseCard(tint: RytivoSunriseDesign.sageTint)
         }
-        .padding(.vertical, 17)
-        .overlay(alignment: .top) { Divider() }
-        .overlay(alignment: .bottom) { Divider() }
     }
 
     private func metric(eyebrow: LocalizedStringKey, value: String, detail: String, color: Color) -> some View {
@@ -425,7 +448,7 @@ struct TrainingDashboardContent: View {
                                 .fill(phase.secondaryText.opacity(0.08))
                                 .frame(height: 86)
                             Capsule()
-                                .fill(index == 5 ? HomeTimeOfDay.current.accent : phase.secondaryText.opacity(0.6))
+                                .fill(index == 5 ? RepbaseTactileDesign.accent : RytivoSunriseDesign.sage)
                                 .frame(height: metrics.barHeight(for: count))
                         }
                         Text(index == 5 ? "NOW" : "−\(5 - index)W", comment: "Week chart label: NOW is this week, −2W is two weeks ago")
@@ -444,8 +467,8 @@ struct TrainingDashboardContent: View {
             Text("Completed sessions, not weight lifted. This week is still in progress.")
                 .font(.community(.caption)).foregroundStyle(phase.secondaryText)
         }
-        .padding(.vertical, 18)
-        .overlay(alignment: .bottom) { Divider() }
+        .padding(18)
+        .sunriseCard()
     }
 
     private var milestoneCard: some View {
@@ -468,7 +491,8 @@ struct TrainingDashboardContent: View {
                     .foregroundStyle(phase.secondaryText)
             }
         }
-        .padding(.vertical, 14)
+        .padding(16)
+        .sunriseCard(tint: RytivoSunriseDesign.sageTint)
     }
 
     private func isCompleted(_ day: Weekday) -> Bool {
@@ -533,6 +557,9 @@ struct TrainingDashboardContent: View {
         guard let workout = store.workout(on: day) else {
             return String(localized: "Add a name, exercises, and target sets.", bundle: .app, locale: .app)
         }
+        guard workout.activity.usesSets else {
+            return workout.activity.title
+        }
         let exercises = workout.exercises.count == 1
             ? String(localized: "1 exercise", bundle: .app, locale: .app)
             : String(localized: "\(workout.exercises.count) exercises", bundle: .app, locale: .app)
@@ -581,7 +608,7 @@ private struct DashboardDayItem: View {
                 .frame(height: 16)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 10)
+        .padding(.vertical, 8)
         .background(dayFill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -635,6 +662,7 @@ private struct WorkoutFocusCard: View {
     let completed: Int
     let goal: Int
     let symbol: String
+    var photo: String?
     var isDayComplete = false
     var celebratesCompletion = false
 
@@ -644,9 +672,10 @@ private struct WorkoutFocusCard: View {
                 Text(eyebrow).font(.community(.caption2, weight: .bold))
                 Spacer()
                 Image(systemName: symbol).font(.system(size: 20))
-            }.foregroundStyle(RepbaseDesign.warning)
+            }.foregroundStyle(.white)
+            Spacer(minLength: 24)
             Text(title).font(.community(.title, weight: .bold))
-            Text(detail).font(.community(.caption)).foregroundStyle(.secondary)
+            Text(detail).font(.community(.caption)).foregroundStyle(.white.opacity(0.90))
             HStack {
                 // Compares keys, which are the same whatever the language.
                 Text(eyebrow == "SESSION IN PROGRESS" ? "Resume workout" : isDayComplete ? "View workout" : "Open workout")
@@ -654,10 +683,19 @@ private struct WorkoutFocusCard: View {
                 Image(systemName: "arrow.forward")
             }
             .font(.community(.subheadline, weight: .bold))
-            .foregroundStyle(WorkoutVisualPhase.prepare.onPrimaryAction)
-            .padding(14)
-            .background(WorkoutVisualPhase.prepare.primaryActionSurface, in: RoundedRectangle(cornerRadius: 12))
-        }.padding(20).workoutOutline(radius: 24)
+            .foregroundStyle(Color(hex: 0x292421))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .frame(minHeight: 44)
+            .background(RepbaseTactileDesign.accent, in: Capsule())
+        }
+        .foregroundStyle(.white)
+        .padding(20)
+        .frame(minHeight: 248, alignment: .bottomLeading)
+        .background(RytivoPhotoBackground(asset: photo))
+        // The photo ignores touches, so without this only the text and the
+        // capsule opened the day; a tap on the picture did nothing.
+        .contentShape(RoundedRectangle(cornerRadius: 24))
     }
 }
 
@@ -697,31 +735,8 @@ private struct TrainingRewardToast: View {
 }
 
 private extension View {
-    /// The dashboard's own card.
-    ///
-    /// It was RepbasePalette.paper at 94%, with a white hairline over it --
-    /// and paper is Color.white, flatly, at every appearance. In dark mode
-    /// that drew a white card on a black page and then wrote Color.primary on
-    /// it, which is white after dark: the card was legible only by its edges,
-    /// and everything printed on it disappeared.
+    /// Dashboard-only surfaces, after the Sunrise review.
     func dashboardSurface(radius: CGFloat) -> some View {
-        background(
-            Color.repbaseDynamic(
-                light: Color.white.opacity(0.94),
-                dark: Color(hex: 0x252220)
-            ),
-            in: RoundedRectangle(cornerRadius: radius, style: .continuous)
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: radius, style: .continuous)
-                .strokeBorder(
-                    Color.repbaseDynamic(
-                        light: Color.white.opacity(0.78),
-                        dark: Color.white.opacity(0.10)
-                    ),
-                    lineWidth: 1
-                )
-        }
-        .shadow(color: RepbaseDesign.deepShadow, radius: 22, x: 0, y: 10)
+        sunriseCard(radius: radius)
     }
 }

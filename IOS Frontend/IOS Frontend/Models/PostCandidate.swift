@@ -31,10 +31,15 @@ nonisolated struct PostableSession: Identifiable, Hashable, Sendable {
     /// Effort, entered values and details. Empty from a server that predates
     /// them, and for a lifting session nobody rated.
     var activitySummary: SessionActivitySummary
+    /// Private, owner-only measurements read back from an imported workout.
+    /// These are never copied into a post; social requests still carry only
+    /// the selected session ID and the server controls its public snapshot.
+    let healthSummary: HealthWorkoutSummary?
 
     /// The activity, from the server when it says, else the type's own.
     var activity: WorkoutActivity? {
-        activitySummary.activity ?? workoutType.map(WorkoutActivity.legacyDefault(for:))
+        activitySummary.activity ?? healthSummary?.activity
+            ?? workoutType.map(WorkoutActivity.legacyDefault(for:))
     }
 
     init(
@@ -46,7 +51,8 @@ nonisolated struct PostableSession: Identifiable, Hashable, Sendable {
         routeDistanceKilometers: Double?,
         workoutType: WorkoutType?,
         loggedSetCount: Int,
-        activitySummary: SessionActivitySummary = SessionActivitySummary()
+        activitySummary: SessionActivitySummary = SessionActivitySummary(),
+        healthSummary: HealthWorkoutSummary? = nil
     ) {
         self.sessionID = sessionID
         self.workoutServerID = workoutServerID
@@ -57,9 +63,16 @@ nonisolated struct PostableSession: Identifiable, Hashable, Sendable {
         self.workoutType = workoutType
         self.loggedSetCount = loggedSetCount
         self.activitySummary = activitySummary
+        self.healthSummary = healthSummary
     }
 
     var id: Int { sessionID }
+
+    /// A watch records a strength workout's time and sensors, not the person's
+    /// exercise/set table. Show those measurements without inventing zero sets.
+    var isImportedWithoutSets: Bool {
+        healthSummary != nil && loggedSetCount == 0
+    }
 
     /// Whether the session recorded any training at all.
     ///
@@ -77,7 +90,10 @@ nonisolated struct PostableSession: Identifiable, Hashable, Sendable {
     /// Every activity that is not sets-based is judged the same way: a tennis
     /// match or a yoga class logged with its length happened.
     var recordedSomething: Bool {
-        SessionTraining.recordedSomething(
+        if let healthSummary, healthSummary.hasRecordedDuration {
+            return true
+        }
+        return SessionTraining.recordedSomething(
             activity: activity,
             loggedSetCount: loggedSetCount,
             durationSeconds: durationSeconds,

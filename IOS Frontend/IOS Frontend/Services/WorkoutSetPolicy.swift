@@ -89,17 +89,21 @@ nonisolated enum WorkoutSetPolicy {
 
         if let group = current.supersetGroup {
             let members = exercises.filter { $0.supersetGroup == group }
-            // The next exercise in this round: later in the group, still
-            // owing a set, and behind the one just logged.
+            // A round can be logged in any order. Search the entire group,
+            // wrapping back to earlier cards: logging B before A must not
+            // start a rest while A still owes its set. Members with no sets
+            // left do not hold up longer partners' remaining rounds.
             if let position = members.firstIndex(where: { $0.id == exerciseID }),
-               let next = members[(position + 1)...].first(where: {
+               let next = (Array(members[(position + 1)...]) + Array(members[..<position])).first(where: {
                    !$0.pendingTypes.isEmpty && $0.loggedCount < current.loggedCount
                }) {
                 return .move(to: next.id)
             }
-            // The round is over. Back to the first exercise of the group that
-            // still owes a set, after the rest.
-            let first = members.first { !$0.pendingTypes.isEmpty }?.id
+            // The round is over. Prefer the partner with the fewest logged
+            // sets, keeping plan order for ties. If A was logged twice before
+            // B's first set, the next set belongs to B, not A's third round.
+            let first = members.filter { !$0.pendingTypes.isEmpty }
+                .min { $0.loggedCount < $1.loggedCount }?.id
             return rest(after: current, focus: first ?? nextFocus(after: index, in: exercises),
                         defaultRestSeconds: defaultRestSeconds, autoStartRest: autoStartRest)
         }

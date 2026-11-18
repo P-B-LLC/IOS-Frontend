@@ -30,13 +30,49 @@ actor SocialAPIRepository {
 
     // MARK: - Reading
 
+    func cookbook(postID: Int) async throws -> PublishedCookbook {
+        switch try await client.socialPostsCookbookRetrieve(path: .init(id: postID)) {
+        case .ok(let response):
+            let body = try response.body.json
+            return PublishedCookbook(name: body.name, recipes: body.recipes.map { recipe in
+                SavedFoodMeal(name: recipe.name, ingredients: recipe.ingredients.map { item in
+                    FoodSnapshotPolicy.attaching(to: FoodEntry(name: item.name, servings: FoodDecimal.value(item.servings),
+                              nutritionPerServing: NutritionAmount(calories: FoodDecimal.value(item.calories),
+                                proteinGrams: FoodDecimal.value(item.proteinGrams),
+                                carbohydrateGrams: FoodDecimal.value(item.carbohydrateGrams),
+                                fatGrams: FoodDecimal.value(item.fatGrams))),
+                        sourceID: item.sourceId, servingDescription: item.servingDescription,
+                        referenceQuantity: item.referenceQuantity, referenceUnit: item.referenceUnit,
+                        nutrients: item.nutrients?.additionalProperties)
+                }, cookingInstructions: recipe.cookingInstructions)
+            })
+        case .undocumented(let statusCode, _): throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    func saveCookbook(postID: Int) async throws -> Cookbook {
+        let value: Components.Schemas.Cookbook
+        switch try await client.socialPostsSaveCookbookCreate(path: .init(id: postID)) {
+        case .created(let response): value = try response.body.json
+        case .ok(let response): value = try response.body.json
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload, unlabeled: ["cookbook"])
+        }
+        return Cookbook(id: value.id, name: value.name, recipeCount: value.recipeCount, capacity: value.capacity)
+    }
+
     /// A page of what the people you follow have posted, newest first.
     ///
     /// Paged by cursor rather than by number because the feed is written to
     /// while it is read: someone posts, everything slides down one, and a
     /// numbered page two would repeat a post page one already showed.
-    func feed(after cursor: String? = nil) async throws -> FeedPage {
-        let output = try await client.socialFeedList(query: .init(cursor: cursor))
+    ///
+    /// With `summaries`, workouts and recipes arrive with their totals and
+    /// without their rows; `post(withID:)` has the rows when one is opened.
+    func feed(after cursor: String? = nil, summaries: Bool = false) async throws -> FeedPage {
+        let output = try await client.socialFeedList(
+            query: .init(attachments: summaries ? .summary : nil, cursor: cursor)
+        )
         switch output {
         case .ok(let response):
             let body = try response.body.json
@@ -58,8 +94,10 @@ actor SocialAPIRepository {
     /// reflects what the reader just did. Each later page is ranked from what
     /// the first left, re-scored for whatever the reader liked, dismissed or
     /// scrolled past since -- and never repeats a post an earlier page served.
-    func forYou(after cursor: String? = nil) async throws -> FeedPage {
-        let output = try await client.socialForYouList(query: .init(cursor: cursor))
+    func forYou(after cursor: String? = nil, summaries: Bool = false) async throws -> FeedPage {
+        let output = try await client.socialForYouList(
+            query: .init(attachments: summaries ? .summary : nil, cursor: cursor)
+        )
         switch output {
         case .ok(let response):
             let body = try response.body.json
@@ -76,26 +114,67 @@ actor SocialAPIRepository {
     /// call -- the tracker batches them -- and posts the reader can no longer
     /// see are ignored by the server rather than refused, so a batch never
     /// fails because something in it was deleted meanwhile.
-    func recordImpressions(_ events: [ImpressionEvent]) async throws {
-        guard !events.isEmpty else { return }
-        let output = try await client.socialImpressionsCreate(
-            body: .json(Components.Schemas.ImpressionBatchRequest(
-                events: events.map { event in
+    func recordAttention(_ batch: AttentionBatch, measured: Bool = true) async throws {
+        guard !batch.summaries.isEmpty else { return }
+        let body: Components.Schemas.ImpressionBatchRequest
+        if measured {
+            body = Self.summaries(batch)
+        } else {
+            // Version 1: what was on screen and for how long, and how far a
+            // clip got. No batch id, as it never had one.
+            body = Components.Schemas.ImpressionBatchRequest(
+                events: batch.summaries.map { summary in
                     Components.Schemas.ImpressionRequest(
-                        post: event.postID,
-                        dwellMs: event.dwellMilliseconds,
-                        watchMs: event.watchMilliseconds,
-                        completed: event.completed,
-                        surface: .init(value1: .forYou)
+                        post: summary.postID,
+                        dwellMs: summary.dwellMilliseconds,
+                        watchMs: summary.coverageMilliseconds,
+                        completed: summary.completed,
+                        surface: Self.surface(summary.surface)
                     )
                 }
-            ))
-        )
+            )
+        }
+        let output = try await client.socialImpressionsCreate(body: .json(body))
         switch output {
         case .accepted:
             return
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    private static func summaries(_ batch: AttentionBatch) -> Components.Schemas.ImpressionBatchRequest {
+        Components.Schemas.ImpressionBatchRequest(
+                events: batch.summaries.map { summary in
+                    Components.Schemas.ImpressionRequest(
+                        post: summary.postID,
+                        dwellMs: summary.dwellMilliseconds,
+                        completed: summary.completed,
+                        surface: Self.surface(summary.surface),
+                        sequence: summary.sequence,
+                        observedAt: summary.observedAt,
+                        activeDwellMs: summary.activeDwellMilliseconds,
+                        playbackMs: summary.playbackMilliseconds,
+                        coverageMs: summary.coverageMilliseconds,
+                        rewatchMs: summary.rewatchMilliseconds,
+                        playbackFailed: summary.playbackFailed,
+                        attachmentOpened: summary.attachmentOpened,
+                        attachmentReadMs: summary.attachmentReadMilliseconds
+                    )
+                },
+                schemaVersion: 2,
+                batchId: batch.id.uuidString.lowercased(),
+                sessionId: batch.sessionID.uuidString.lowercased()
+        )
+    }
+
+    private static func surface(_ name: String) -> Components.Schemas.ImpressionRequest.SurfacePayload {
+        switch name {
+        case "following": .init(value1: .following)
+        case "discover": .init(value1: .discover)
+        case "profile": .init(value1: .profile)
+        case "for_you": .init(value1: .forYou)
+        default: .init(value1: .other)
         }
     }
 
@@ -157,6 +236,24 @@ actor SocialAPIRepository {
 
     /// What For You has picked up about the reader, the topics they hid, and
     /// whether it is personalised at all.
+    /// Which parts of the new Social the server has given this account. A
+    /// part the server leaves out is off.
+    func features() async throws -> SocialFeatures {
+        switch try await client.socialFeaturesRetrieve() {
+        case .ok(let response):
+            let payload = try response.body.json
+            return SocialFeatures(
+                newFeed: payload.newFeed ?? false,
+                autoplay: payload.autoplay ?? false,
+                measurement: payload.measurementV2 ?? false,
+                sounds: payload.sounds ?? false,
+                takes: payload.takes ?? false
+            )
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     func forYouPreferences() async throws -> ForYouPreferences {
         switch try await client.socialForYouPreferencesRetrieve() {
         case .ok(let response):
@@ -321,7 +418,9 @@ actor SocialAPIRepository {
         // A clip goes up next, to the post this makes. Says so, because a
         // media post with no photo is otherwise refused as empty -- and it
         // stays its author's alone until the clip is ready.
-        expectsVideo: Bool = false
+        expectsVideo: Bool = false,
+        // The post this is a take of. The server decides whether it may be.
+        takeOf sourcePostID: Int? = nil
     ) async throws -> FeedPost {
         guard let kindPayload = Components.Schemas.CreatePostKindEnum(
             rawValue: kind.apiValue
@@ -360,7 +459,8 @@ actor SocialAPIRepository {
                     cookingInstructions: cookingInstructions.isEmpty
                         ? nil
                         : cookingInstructions,
-                    expectsVideo: expectsVideo ? true : nil
+                    expectsVideo: expectsVideo ? true : nil,
+                    sourcePostId: sourcePostID.map(Int64.init)
                 )
             )
         )
@@ -378,7 +478,7 @@ actor SocialAPIRepository {
 
     /// Fields whose refusals are already sentences about the post being made.
     private static let postRefusalFields: Set<String> = [
-        "image_base64", "source_id", "video", "caption", "kind",
+        "image_base64", "source_id", "video", "caption", "kind", "source_post_id",
     ]
 
     /// The caption and who can see it. The snapshot is a record of what
@@ -451,6 +551,25 @@ actor SocialAPIRepository {
         }
     }
 
+    /// Says "I tried this" about a post, or takes it back, and answers with
+    /// the card as it now stands. Idempotent in both directions.
+    func setTried(_ tried: Bool, postID: Int) async throws -> FeedPost {
+        if tried {
+            switch try await client.socialPostsTriedCreate(path: .init(id: postID)) {
+            case .ok(let response):
+                return Self.post(from: try response.body.json)
+            case .undocumented(let statusCode, _):
+                throw APIServiceError.undocumentedStatus(statusCode)
+            }
+        }
+        switch try await client.socialPostsTriedDestroy(path: .init(id: postID)) {
+        case .ok(let response):
+            return Self.post(from: try response.body.json)
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
     /// Passes the post on to the reader's followers, or takes it back.
     ///
     /// Answers with the **original**, which is not always the post asked
@@ -511,9 +630,10 @@ actor SocialAPIRepository {
     /// Returns the name for the same reason the workout call does: saved meal
     /// names are unique per person and everyone has a "Meal 1", so the copy
     /// very often lands under a different one.
-    func saveMeal(fromPost postID: Int) async throws -> SavedMealOutcome {
+    func saveMeal(fromPost postID: Int, cookbookID: Int) async throws -> SavedMealOutcome {
         let output = try await client.socialPostsSaveMealCreate(
-            path: .init(id: postID)
+            path: .init(id: postID),
+            body: .json(.init(cookbook: Int64(cookbookID)))
         )
         switch output {
         case .created(let response):
@@ -532,8 +652,8 @@ actor SocialAPIRepository {
                 wasRenamed: result.renamed,
                 wasAlreadySaved: true
             )
-        case .undocumented(let statusCode, _):
-            throw APIServiceError.undocumentedStatus(statusCode)
+        case .undocumented(let statusCode, let payload):
+            throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload, unlabeled: ["cookbook", "post"])
         }
     }
 
@@ -979,6 +1099,7 @@ actor SocialAPIRepository {
             workout: payload.workout.map { workout(from: $0.value1) },
             meal: payload.meal.map { meal(from: $0.value1) },
             planner: payload.planner.map { planner(from: $0.value1) },
+            cookbook: payload.cookbook.map { CookbookPostSummary(name: $0.value1.name, recipeCount: $0.value1.recipeCount) },
             likeCount: payload.likeCount,
             commentCount: payload.commentCount,
             repostCount: payload.repostCount,
@@ -990,7 +1111,13 @@ actor SocialAPIRepository {
             repostOf: payload.repostOf.map { reposted(from: $0.value1) },
             video: payload.video.map { video(from: $0.value1) },
             publishedAt: payload.publishedAt,
-            moderationStatus: payload.moderationStatus
+            moderationStatus: payload.moderationStatus,
+            source: payload.isTake == true ? credit(payload.source?.value1) : nil,
+            takeCount: payload.takeCount ?? 0,
+            viewerCanTake: payload.viewerCanTake ?? false,
+            triedCount: payload.triedCount ?? 0,
+            viewerHasTried: payload.viewerHasTried ?? false,
+            sound: (payload.sound?.value1).map(sound)
         )
     }
 
@@ -1015,6 +1142,7 @@ actor SocialAPIRepository {
             workout: payload.workout.map { workout(from: $0.value1) },
             meal: payload.meal.map { meal(from: $0.value1) },
             planner: payload.planner.map { planner(from: $0.value1) },
+            cookbook: payload.cookbook.map { CookbookPostSummary(name: $0.value1.name, recipeCount: $0.value1.recipeCount) },
             likeCount: payload.likeCount,
             commentCount: payload.commentCount,
             repostCount: payload.repostCount,
@@ -1030,7 +1158,13 @@ actor SocialAPIRepository {
                 label: payload.recommendation.value1.label
             ),
             publishedAt: payload.publishedAt,
-            moderationStatus: payload.moderationStatus
+            moderationStatus: payload.moderationStatus,
+            source: payload.isTake == true ? credit(payload.source?.value1) : nil,
+            takeCount: payload.takeCount ?? 0,
+            viewerCanTake: payload.viewerCanTake ?? false,
+            triedCount: payload.triedCount ?? 0,
+            viewerHasTried: payload.viewerHasTried ?? false,
+            sound: (payload.sound?.value1).map(sound)
         )
     }
 
@@ -1070,6 +1204,41 @@ actor SocialAPIRepository {
         )
     }
 
+    private static func sound(_ payload: Components.Schemas.PostSound) -> PostSoundCredit {
+        let owner = payload.owner.value1
+        let name = "\(owner.firstName) \(owner.lastName)".trimmingCharacters(in: .whitespaces)
+        return PostSoundCredit(id: payload.id, title: payload.title, ownerName: name.isEmpty ? owner.username : name)
+    }
+
+    /// The takes posted of a post that the reader may see, newest first, a
+    /// page at a time. Summaries: this is a list of cards.
+    func takes(ofPost postID: Int, after cursor: String? = nil) async throws -> FeedPage {
+        let output = try await client.socialPostsTakesList(
+            path: .init(id: postID), query: .init(attachments: .summary, cursor: cursor)
+        )
+        switch output {
+        case .ok(let response):
+            let body = try response.body.json
+            return FeedPage(posts: body.results.map(Self.post(from:)), nextCursor: try nextCursor(body.next))
+        case .undocumented(let statusCode, _):
+            throw APIServiceError.undocumentedStatus(statusCode)
+        }
+    }
+
+    /// The credit on a take. A take whose source the reader may not see
+    /// still has one, saying only that.
+    private static func credit(_ payload: Components.Schemas.PostSource?) -> PostSourceCredit {
+        guard let payload, payload.available, let author = payload.author?.value1 else {
+            return PostSourceCredit()
+        }
+        let name = "\(author.firstName) \(author.lastName)".trimmingCharacters(in: .whitespaces)
+        return PostSourceCredit(
+            postID: payload.postId,
+            authorName: name.isEmpty ? author.username : name,
+            title: payload.title
+        )
+    }
+
     private static func reposted(
         from payload: Components.Schemas.RepostedPost
     ) -> RepostedPost {
@@ -1085,6 +1254,7 @@ actor SocialAPIRepository {
             workout: payload.workout.map { workout(from: $0.value1) },
             meal: payload.meal.map { meal(from: $0.value1) },
             planner: payload.planner.map { planner(from: $0.value1) },
+            cookbook: payload.cookbook.map { CookbookPostSummary(name: $0.value1.name, recipeCount: $0.value1.recipeCount) },
             video: payload.video.map { video(from: $0.value1) },
             publishedAt: payload.publishedAt
         )
@@ -1153,7 +1323,8 @@ actor SocialAPIRepository {
                     topSetWeightKg: exercise.topSetWeightKg.flatMap { Decimal(string: $0) },
                     topSetReps: exercise.topSetReps
                 )
-            }
+            },
+            detailsIncluded: payload.detailsIncluded ?? true
         )
     }
 
@@ -1175,7 +1346,9 @@ actor SocialAPIRepository {
                     totalCalories: FoodDecimal.value(entry.totalCalories)
                 )
             },
-            cookingInstructions: payload.cookingInstructions ?? ""
+            cookingInstructions: payload.cookingInstructions ?? "",
+            entryCount: payload.entryCount,
+            detailsIncluded: payload.detailsIncluded ?? true
         )
     }
 

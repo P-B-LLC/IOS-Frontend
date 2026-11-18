@@ -7,26 +7,41 @@
 
 import SwiftUI
 
+/// The approved lowercase brand wordmark, not translatable interface copy.
+/// Its typeface and tracking match the Figma identity rather than a headline.
+struct RytivoWordmark: View {
+    var fontSize: CGFloat = 24
+
+    var body: some View {
+        Text(verbatim: "rytivo")
+            .font(.community(size: fontSize, weight: .semibold))
+            .tracking(-fontSize * 0.01)
+            .foregroundStyle(Color("RytivoBrandInk"))
+            .lineLimit(1)
+            .fixedSize()
+            .typeSizeCeiling(.large)
+            .environment(\.layoutDirection, .leftToRight)
+            .accessibilityLabel(Text(verbatim: "Rytivo"))
+    }
+}
+
 /// A small product signature for destination and workflow headers.
 /// Authentication may use the mark as a hero; utility pages keep it compact
 /// so Rytivo remains recognizable without competing with the page title.
 struct RytivoBrandLockup: View {
     var size: CGFloat = 24
 
-    @Environment(\.homeTimeOfDay) private var timeOfDay
-
     var body: some View {
-        HStack(spacing: max(7, size * 0.28)) {
+        // Approved lockup: 112-point mark, 8-point gap, 66-point wordmark.
+        // Scale the identity as a unit instead of independently resizing text.
+        HStack(spacing: size * 8 / 112) {
             Image("RytivoLogoMark")
                 .resizable()
                 .scaledToFit()
                 .frame(width: size, height: size)
                 .accessibilityHidden(true)
 
-            Text("Rytivo")
-                .font(.community(size: max(15, size * 0.67), weight: .bold))
-                .tracking(-0.35)
-                .foregroundStyle(timeOfDay.canvasPrimaryText)
+            RytivoWordmark(fontSize: size * 66 / 112)
         }
         // A signature next to a logo, sized against that logo, and read by
         // VoiceOver from the label below rather than from the glyphs. Letting
@@ -35,8 +50,11 @@ struct RytivoBrandLockup: View {
         // beside it broke into "Calenda / r". The name of the page is the
         // content here; the wordmark is decoration.
         .typeSizeCeiling(.large)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Rytivo")
+        // The brand's Latin wordmark remains logo-then-name in RTL interfaces;
+        // only this decorative signature has a fixed reading direction.
+        .environment(\.layoutDirection, .leftToRight)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: "Rytivo"))
     }
 }
 

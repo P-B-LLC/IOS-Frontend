@@ -120,7 +120,7 @@ struct RepbaseRootView: View {
         ProcessInfo.processInfo.environment["REPBASE_BAR_MINIMIZED"] != nil
 #endif
 
-    init(initialTab: RepbaseTab = .home) {
+    init(initialTab: RepbaseTab = .social) {
 #if DEBUG
         // Lands on a named tab, so a screen several taps in can be looked at
         // in the real app rather than only in a preview harness.
@@ -145,6 +145,9 @@ struct RepbaseRootView: View {
             // Each tab hides the system bar for itself. Asking the TabView to
             // hide it does nothing, which left iOS 26's own floating bar
             // sitting under this one and reading as a duplicate.
+            NavigationStack { SocialFeedView() }
+                .toolbar(.hidden, for: .tabBar)
+                .tag(RepbaseTab.social)
             NavigationStack { ContentView() }
                 .toolbar(.hidden, for: .tabBar)
                 .tag(RepbaseTab.home)
@@ -159,12 +162,9 @@ struct RepbaseRootView: View {
             }
             .toolbar(.hidden, for: .tabBar)
             .tag(RepbaseTab.training)
-            NavigationStack { PlannerView() }
+            NavigationStack { CalendarWorkspaceView() }
                 .toolbar(.hidden, for: .tabBar)
                 .tag(RepbaseTab.planner)
-            NavigationStack { SocialFeedView() }
-                .toolbar(.hidden, for: .tabBar)
-                .tag(RepbaseTab.social)
             NavigationStack { ProfileDestinationView() }
                 .toolbar(.hidden, for: .tabBar)
                 .tag(RepbaseTab.account)

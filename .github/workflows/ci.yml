@@ -138,6 +138,57 @@ jobs:
             ARCHS=arm64 \
             build
 
+      # API/GeneratedSources is committed, and the client is generated from
+      # API/openapi.yaml. A contract updated without regenerating leaves the
+      # app talking to a server it no longer matches -- which is how a saved
+      # meal came back as a number the client had been told was a string.
+      # The contract check builds swift-openapi-generator from source, which
+      # was about a minute of every run for a tool that changes only when
+      # Package.resolved does. Keyed on that file, so a dependency bump
+      # rebuilds and nothing else does.
+      - name: Cache the OpenAPI generator
+        if: steps.scope.outputs.code == 'true'
+        uses: actions/cache@v4
+        with:
+          path: .swiftpm-build
+          key: swiftpm-${{ runner.os }}-${{ hashFiles('Package.resolved', '**/Package.resolved') }}
+          restore-keys: swiftpm-${{ runner.os }}-
+
+      - name: Generated client matches the contract
+        if: steps.scope.outputs.code == 'true'
+        run: |
+          bash Scripts/generate-api-client.sh
+          if ! git diff --quiet -- API/GeneratedSources; then
+            echo "API/GeneratedSources is stale. Regenerate and commit:"
+            echo "  bash Scripts/generate-api-client.sh"
+            git diff --stat -- API/GeneratedSources
+            exit 1
+          fi
+
+      # Models carrying a client-side UUID must be given one when decoded,
+      # not handed a fresh one. A refetch otherwise renames every row in a
+      # collection, and whatever was holding an id loses what it pointed at.
+      # That shipped as "Meal Not Found" over a meal that was still there,
+      # and as flicker everywhere else it happened.
+      - name: Decoded models have stable ids
+        if: steps.scope.outputs.code == 'true'
+        run: |
+          python3 Scripts/check-stable-ids.py
+          python3 Scripts/check-sunrise-assets.py
+          python3 Scripts/check-brand-assets.py
+
+      # The catalog tests only see strings already in the catalog, and
+      # xcodebuild never adds new ones, so a string written from the command
+      # line shows in English in every language while every test passes.
+      # Reads what the Build step's compiler extracted.
+      - name: Every string the app looks up is in the catalog
+        if: steps.scope.outputs.code == 'true'
+        run: python3 Scripts/check-localization-coverage.py .build/DerivedData
+
+      - name: Account safety regression tests
+        if: steps.scope.outputs.code == 'true'
+        run: bash Scripts/test-account-safety.sh
+
       # A release build reads its server from REPBASE_API_URL in the bundle
       # and refuses to run without an https one. That plumbing was broken and
       # nothing noticed, because nothing here had ever built Release: the key
@@ -182,53 +233,129 @@ jobs:
             exit 1
           fi
 
-      # API/GeneratedSources is committed, and the client is generated from
-      # API/openapi.yaml. A contract updated without regenerating leaves the
-      # app talking to a server it no longer matches -- which is how a saved
-      # meal came back as a number the client had been told was a string.
-      # The contract check builds swift-openapi-generator from source, which
-      # was about a minute of every run for a tool that changes only when
-      # Package.resolved does. Keyed on that file, so a dependency bump
-      # rebuilds and nothing else does.
-      - name: Cache the OpenAPI generator
+      - name: Cookbook simulator previews when related screens change
         if: steps.scope.outputs.code == 'true'
-        uses: actions/cache@v4
-        with:
-          path: .swiftpm-build
-          key: swiftpm-${{ runner.os }}-${{ hashFiles('Package.resolved', '**/Package.resolved') }}
-          restore-keys: swiftpm-${{ runner.os }}-
-
-      - name: Generated client matches the contract
-        if: steps.scope.outputs.code == 'true'
+        timeout-minutes: 25
+        env:
+          DOWNLOAD_COOKBOOK_RUNTIME: '1'
         run: |
-          bash Scripts/generate-api-client.sh
-          if ! git diff --quiet -- API/GeneratedSources; then
-            echo "API/GeneratedSources is stale. Regenerate and commit:"
-            echo "  bash Scripts/generate-api-client.sh"
-            git diff --stat -- API/GeneratedSources
-            exit 1
+          if git diff --name-only HEAD^ HEAD | grep -Eq 'Cookbook|cookbook|SavedMealsView|FoodTrackingStore'; then
+            bash Scripts/capture-cookbooks-preview.sh
+          fi
+          if git diff --name-only HEAD^ HEAD | grep -Eq 'MealDetailView|MealSunriseStyle'; then
+            FOOD_PREVIEW_SCREENS='meal meal-empty' bash Scripts/capture-cookbooks-preview.sh
+          fi
+          if git diff --name-only HEAD^ HEAD | grep -Eq 'FoodPortion|PortionMacro'; then
+            FOOD_PREVIEW_SCREENS='portion portion-large portion-weight portion-liquid portion-zero portion-saving portion-retry portion-accessibility' bash Scripts/capture-cookbooks-preview.sh
+          fi
+          if git diff --name-only HEAD^ HEAD | grep -Eq 'FoodMealPlannerCard'; then
+            FOOD_PREVIEW_SCREENS='meal-planner meal-planner-accessibility' bash Scripts/capture-cookbooks-preview.sh
+          fi
+          if git diff --name-only HEAD^ HEAD | grep -Eq 'FoodPicker|capture-cookbooks-preview'; then
+            FOOD_PREVIEW_SCREENS='picker picker-results picker-empty picker-error picker-loading picker-accessibility' bash Scripts/capture-cookbooks-preview.sh
+            for preview in picker-light picker-dark picker-results-light picker-results-dark picker-error-light picker-error-dark picker-loading-light picker-loading-dark picker-empty-light picker-empty-dark picker-accessibility-light picker-accessibility-dark picker-results-arabic-light picker-results-arabic-dark; do
+              test -s ".build/cookbook-previews/$preview.png" || {
+                echo "Missing Food picker simulator preview: $preview"
+                exit 1
+              }
+            done
           fi
 
-      # Models carrying a client-side UUID must be given one when decoded,
-      # not handed a fresh one. A refetch otherwise renames every row in a
-      # collection, and whatever was holding an id loses what it pointed at.
-      # That shipped as "Meal Not Found" over a meal that was still there,
-      # and as flicker everywhere else it happened.
-      - name: Decoded models have stable ids
-        if: steps.scope.outputs.code == 'true'
-        run: python3 Scripts/check-stable-ids.py
+      - name: Save cookbook simulator previews
+        if: always() && steps.scope.outputs.code == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cookbook-previews
+          path: .build/cookbook-previews/*.png
+          if-no-files-found: ignore
 
-      # The catalog tests only see strings already in the catalog, and
-      # xcodebuild never adds new ones, so a string written from the command
-      # line shows in English in every language while every test passes.
-      # Reads what the Build step's compiler extracted.
-      - name: Every string the app looks up is in the catalog
+      - name: Home simulator previews when its presentation changes
         if: steps.scope.outputs.code == 'true'
-        run: python3 Scripts/check-localization-coverage.py .build/DerivedData
+        # Took 19.6 min and then timed out at 20 on macos-26 runners (2026-11-18).
+        timeout-minutes: 35
+        env:
+          DOWNLOAD_HOME_RUNTIME: '1'
+        run: |
+          # Invitation components and translated copy need the same native
+          # light/dark, large-text and RTL review as the surrounding calendar.
+          if git diff --name-only HEAD^ HEAD | grep -Eq 'GuidedHomeView|FoodTrackingView|FoodGoalsTarget|PlannerView|PlannerMonthCalendar|PlannerDaySchedule|CalendarMonth|CalendarSharing|CalendarShare|CalendarInvitation|CalendarWorkspace|PlannerItemColor|Localizable.xcstrings|RytivoSunriseDesign|Training.*imageset|SunriseFoodPhoto|RepbaseTactileDesign|HomeSunrise|Sunrise.*colorset|Tactile.*colorset|capture-home-preview|RytivoLogoMark|RytivoBrandInk|AppIcon.appiconset|EditorialFormComponents|AuthenticationView'; then
+            bash Scripts/capture-home-preview.sh
+            for preview in home-light home-dark workouts-page-light workouts-page-dark food-page-light food-page-dark food-page-large-text food-page-german food-page-arabic calendar-page-light calendar-page-dark calendar-month-light calendar-month-dark calendar-day-light calendar-day-dark calendar-shared-month-light calendar-shared-month-dark calendar-shared-day-light calendar-shared-day-dark calendar-invitations-light calendar-invitations-dark calendar-shared-large-text calendar-shared-arabic profile-page-light profile-page-dark; do
+              test -s ".build/home-previews/$preview.png" || {
+                echo "Missing simulator preview: $preview"
+                exit 1
+              }
+            done
+          fi
 
-      - name: Account safety regression tests
+      - name: Save Home simulator previews
+        if: always() && steps.scope.outputs.code == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: home-previews
+          path: .build/home-previews/*.png
+          if-no-files-found: ignore
+
+      - name: Workout rest simulator previews when timing or presentation changes
+        id: workout_rest_previews
         if: steps.scope.outputs.code == 'true'
-        run: bash Scripts/test-account-safety.sh
+        timeout-minutes: 20
+        env:
+          DOWNLOAD_WORKOUT_RUNTIME: '1'
+        run: |
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then base=HEAD^; fi
+          capture=false
+          if ! changes=$(git diff --name-only "$base" HEAD); then
+            capture=true
+          elif printf '%s\n' "$changes" | grep -Eq 'RestTimer|WorkoutSetPolicy|WorkoutStore|DayWorkoutView|capture-workout-rest-preview'; then
+            capture=true
+          fi
+          if [ "$capture" = true ]; then
+            echo 'requested=true' >> "$GITHUB_OUTPUT"
+            bash Scripts/capture-workout-rest-preview.sh
+          fi
+
+      - name: Save workout rest simulator previews
+        if: always() && steps.workout_rest_previews.outputs.requested == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: workout-rest-previews
+          path: .build/workout-rest-previews/*.png
+          if-no-files-found: warn
+
+      - name: Workout reordering and unit controls in the native simulator
+        id: workout_flow_previews
+        if: steps.scope.outputs.code == 'true'
+        timeout-minutes: 40
+        env:
+          DOWNLOAD_WORKOUT_RUNTIME: '1'
+          RUN_WORKOUT_FLOW_UI_TESTS: '1'
+        run: |
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then base=HEAD^; fi
+          capture=false
+          # A final generator-only commit must not skip the UI being validated
+          # by an explicit full testing-head run.
+          if [ "${{ github.event_name }}" = workflow_dispatch ]; then
+            capture=true
+          elif ! changes=$(git diff --name-only "$base" HEAD); then
+            capture=true
+          elif printf '%s\n' "$changes" | grep -Eq 'GuidedWorkoutBuilder|WorkoutPlannedSet|WorkoutExerciseOrder|WorkoutWeightUnit|WorkoutUnitControls|WorkoutPreferences|ActiveLiftingSessionView|SessionExerciseCard|WorkoutFlowPreviewScreen|WorkoutFlowUITests|capture-workout-flow-preview'; then
+            capture=true
+          fi
+          if [ "$capture" = true ]; then
+            echo 'requested=true' >> "$GITHUB_OUTPUT"
+            bash Scripts/capture-workout-flow-preview.sh
+          fi
+
+      - name: Save workout flow previews and native interaction results
+        if: always() && steps.workout_flow_previews.outputs.requested == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: workout-flow-previews
+          path: .build/workout-flow-previews/
+          if-no-files-found: warn
 
       # Legal/*.html is generated from the Swift the app renders, so the two
       # can drift, and one of them is published. The privacy policy is what

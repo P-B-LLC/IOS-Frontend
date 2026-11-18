@@ -107,6 +107,7 @@ struct PlanUpdatePrompt: View {
             case .removed(let name): line = String(localized: "Removed \(ExerciseLibrary.displayName(name))", bundle: .app, locale: .app, comment: "A change to a workout: an exercise was removed")
             case .reordered: line = String(localized: "Changed the order of exercises", bundle: .app, locale: .app)
             case .sets(let name): line = String(localized: "Changed the number of sets for \(ExerciseLibrary.displayName(name))", bundle: .app, locale: .app)
+            case .targets(let name): line = String(localized: "Changed planned targets for \(ExerciseLibrary.displayName(name))", bundle: .app, locale: .app)
             case .setTypes(let name): line = String(localized: "Changed set kinds for \(ExerciseLibrary.displayName(name))", bundle: .app, locale: .app, comment: "Set kinds are warm-up, drop, failure and normal sets")
             case .rest(let name): line = String(localized: "Changed the rest for \(ExerciseLibrary.displayName(name))", bundle: .app, locale: .app)
             case .superset(let name): line = String(localized: "Changed the superset for \(ExerciseLibrary.displayName(name))", bundle: .app, locale: .app)

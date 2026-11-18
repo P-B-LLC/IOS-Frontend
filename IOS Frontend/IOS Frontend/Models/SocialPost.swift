@@ -17,6 +17,7 @@ import Foundation
 nonisolated enum PostKind: Equatable, Hashable, Sendable {
     case workout
     case meal
+    case cookbook
     case planner
     /// Someone else's post, passed on. Carries no snapshot of its own: what
     /// it shows is the post it points at.
@@ -30,6 +31,7 @@ nonisolated enum PostKind: Equatable, Hashable, Sendable {
         switch raw {
         case "workout": self = .workout
         case "meal": self = .meal
+        case "cookbook": self = .cookbook
         case "planner": self = .planner
         case "repost": self = .repost
         case "media": self = .media
@@ -41,6 +43,7 @@ nonisolated enum PostKind: Equatable, Hashable, Sendable {
         switch self {
         case .workout: "workout"
         case .meal: "meal"
+        case .cookbook: "cookbook"
         case .planner: "planner"
         case .repost: "repost"
         case .media: "media"
@@ -118,6 +121,10 @@ nonisolated struct PostWorkoutSnapshot: Equatable, Hashable, Sendable {
     var totalVolumeKg: Decimal?
     var routeDistanceKm: Decimal?
     var exercises: [PostExerciseLine]
+    /// False when this came from a page asked for in summary: the figures
+    /// above are right, and `exercises` is empty because it was not sent,
+    /// not because there are none. The post's own read has them.
+    var detailsIncluded: Bool = true
 }
 
 nonisolated struct PostFoodLine: Identifiable, Equatable, Hashable, Sendable {
@@ -140,6 +147,32 @@ nonisolated struct PostMealSnapshot: Equatable, Hashable, Sendable {
     /// Empty for most posts. A meal is a list of foods; this is what somebody
     /// did with them, and only the ones actually cooked have anything to say.
     var cookingInstructions: String = ""
+    /// How many foods are in it, from the server. Nil from one that does not
+    /// say, where the rows themselves are the count.
+    var entryCount: Int? = nil
+    /// False when this came from a page asked for in summary; see
+    /// `PostWorkoutSnapshot.detailsIncluded`.
+    var detailsIncluded: Bool = true
+
+    var foodCount: Int { entryCount ?? entries.count }
+}
+
+/// The sound a clip is set to, as its credit line.
+nonisolated struct PostSoundCredit: Equatable, Hashable, Sendable {
+    let id: Int
+    var title: String
+    var ownerName: String
+}
+
+/// The post a take answers, as its credit line. `author` is nil when the
+/// reader may not see the source -- deleted, taken down, made private -- and
+/// the card then says only that the original is unavailable.
+nonisolated struct PostSourceCredit: Equatable, Hashable, Sendable {
+    var postID: Int?
+    var authorName: String?
+    var title: String?
+
+    var isAvailable: Bool { postID != nil }
 }
 
 nonisolated struct PostPlannerSnapshot: Equatable, Hashable, Sendable {
@@ -186,6 +219,23 @@ nonisolated struct PostVideoMedia: Equatable, Hashable, Sendable {
     var failed: Bool { processingState == "failed" }
 }
 
+extension FeedPost {
+    /// The length of this post's clip, when it has one a reader can play.
+    /// Nil is what makes a photo report no playback at all rather than none
+    /// watched.
+    var playableClipMilliseconds: Int? {
+        guard let video, video.canPlay, video.durationMilliseconds > 0 else { return nil }
+        return video.durationMilliseconds
+    }
+
+    /// The id the feed's player knows this post's clip by: the post that
+    /// owns the clip, which for a repost is the one it passes on.
+    var playableClipID: Int? {
+        guard isPublished, displayed.video?.canPlay == true else { return nil }
+        return displayed.id
+    }
+}
+
 nonisolated struct RepostedPost: Equatable, Hashable, Sendable {
     let id: Int
     var author: PostAuthor
@@ -199,6 +249,7 @@ nonisolated struct RepostedPost: Equatable, Hashable, Sendable {
     var workout: PostWorkoutSnapshot?
     var meal: PostMealSnapshot?
     var planner: PostPlannerSnapshot?
+    var cookbook: CookbookPostSummary? = nil
     var video: PostVideoMedia? = nil
     var publishedAt: Date? = nil
     var displayDate: Date { publishedAt ?? createdAt }
@@ -238,6 +289,7 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     var workout: PostWorkoutSnapshot?
     var meal: PostMealSnapshot?
     var planner: PostPlannerSnapshot?
+    var cookbook: CookbookPostSummary? = nil
 
     // What other people have done with it. Counted by the server, because a
     // client only ever sees the page in front of it.
@@ -270,6 +322,20 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     var recommendation: PostRecommendation? = nil
     var publishedAt: Date? = nil
     var moderationStatus: String = "approved"
+    /// Set on a take: what it answers. Nil on everything else, and on any
+    /// post from a server that does not know about takes.
+    var source: PostSourceCredit? = nil
+    var isTake: Bool { source != nil }
+    /// How many takes of this anybody could see. The same for every reader.
+    var takeCount: Int = 0
+    /// Whether the reader could post a take of this now.
+    var viewerCanTake: Bool = false
+    /// How many people have said "I tried this", and whether the reader has.
+    /// Only ever their own statement: nothing tracked sets it.
+    var triedCount: Int = 0
+    var viewerHasTried: Bool = false
+    /// The sound its clip is set to, when it has one the reader may hear of.
+    var sound: PostSoundCredit? = nil
 
     var isPublished: Bool { moderationStatus == "approved" }
     var publicationMessage: String? {
@@ -286,14 +352,15 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
     /// exercises recorded is nothing to save.
     var offersWorkoutToSave: Bool {
         guard !viewerIsAuthor else { return false }
-        return !(displayed.workout?.exercises.isEmpty ?? true)
+        // The count, not the rows: a summary has the one without the other.
+        return (displayed.workout?.exerciseCount ?? 0) > 0
     }
 
     /// Whether this post offers a meal the reader could keep. Their own is
     /// already theirs, and a meal with no food in it is nothing to save.
     var offersMealToSave: Bool {
         guard !viewerIsAuthor else { return false }
-        return !(displayed.meal?.entries.isEmpty ?? true)
+        return (displayed.meal?.foodCount ?? 0) > 0
     }
 
     /// Whether this post can be reported or its author blocked. Neither is
@@ -309,8 +376,9 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
             return repostOf.workout != nil
                 || repostOf.meal != nil
                 || repostOf.planner != nil
+                || repostOf.cookbook != nil
         }
-        return workout != nil || meal != nil || planner != nil
+        return workout != nil || meal != nil || planner != nil || cookbook != nil
     }
 
     /// What the card actually draws — the original for a repost, itself
@@ -327,6 +395,7 @@ nonisolated struct FeedPost: Identifiable, Equatable, Hashable, Sendable {
             workout: workout,
             meal: meal,
             planner: planner,
+            cookbook: cookbook,
             video: video,
             publishedAt: publishedAt
         )

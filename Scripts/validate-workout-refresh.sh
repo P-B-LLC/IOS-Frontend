@@ -5,16 +5,58 @@ cd "$repo"
 for tool in swift xcodebuild xcrun; do
     command -v "$tool" >/dev/null || { echo "Run this on the Mac with Xcode selected: missing $tool" >&2; exit 1; }
 done
+if [ "${INSTALL_SIMULATOR:-0}" = 1 ]; then
+    xcrun simctl bootstatus booted -b || {
+        echo 'Open Simulator and boot an iPhone before running this script.' >&2
+        exit 1
+    }
+    # A normal signed-in build, never a screenshot fixture. An exported
+    # SIMCTL_CHILD preview flag would otherwise silently open sample data.
+    while IFS= read -r variable; do
+        case "$variable" in
+            SIMCTL_CHILD_REPBASE_*PREVIEW*)
+                echo "Unset $variable before launching the real app." >&2
+                exit 1
+                ;;
+        esac
+    done < <(compgen -e)
+    # Keep the installed app's configured backend; never invent a hosted API.
+    if [ -z "${REPBASE_API_URL:-}" ]; then
+        installed_app="$(xcrun simctl get_app_container booted com.pbllc.rytivo app 2>/dev/null || true)"
+        if [ -n "$installed_app" ]; then
+            REPBASE_API_URL="$(/usr/libexec/PlistBuddy -c 'Print :REPBASE_API_URL' "$installed_app/Info.plist" 2>/dev/null || true)"
+            export REPBASE_API_URL
+        fi
+    fi
+fi
 : "${REPBASE_API_URL:?Set REPBASE_API_URL to the configured HTTPS API origin.}"
 case "$REPBASE_API_URL" in https://*) ;; *) echo 'Use an HTTPS API origin.' >&2; exit 1;; esac
-bash Scripts/test-account-safety.sh
-build_dir="$(mktemp -d "${TMPDIR:-/tmp}/rytivo-workout-refresh.XXXXXX")"
-xcodebuild -project 'IOS Frontend/IOS Frontend.xcodeproj' -scheme 'IOS Frontend' \
+# Reuse intermediates instead of leaving another multi-GB build each run.
+# Never delete another build or the simulator's signed-in app data.
+build_dir="${DERIVED_DATA_PATH:-$repo/.build/workout-validation}"
+mkdir -p "$build_dir"
+if bash Scripts/test-account-safety.sh 2>&1 | tee "$build_dir/tests.log"; then
+    :
+else
+    test_status=$?
+    echo "Tests failed. Diagnostics from $build_dir/tests.log:" >&2
+    grep -n -B 3 -A 8 -E 'error:|XCTAssert|Test Case .*failed' "$build_dir/tests.log" | head -n 120 || true
+    exit "$test_status"
+fi
+if xcodebuild -project 'IOS Frontend/IOS Frontend.xcodeproj' -scheme 'IOS Frontend' \
     -configuration Debug -destination 'generic/platform=iOS Simulator' \
     -derivedDataPath "$build_dir" CODE_SIGNING_ALLOWED=NO \
-    REPBASE_API_URL="$REPBASE_API_URL" build 2>&1 | tee "$build_dir/build.log"
+    REPBASE_API_URL="$REPBASE_API_URL" build 2>&1 | tee "$build_dir/build.log"; then
+    :
+else
+    build_status=$?
+    echo "Build failed. Compiler diagnostics from $build_dir/build.log:" >&2
+    grep -n -B 4 -A 8 'error:' "$build_dir/build.log" | head -n 120 || true
+    exit "$build_status"
+fi
 if [ "${INSTALL_SIMULATOR:-0}" = 1 ]; then
     xcrun simctl install booted "$build_dir/Build/Products/Debug-iphonesimulator/Rytivo.app"
+    xcrun simctl terminate booted com.pbllc.rytivo >/dev/null 2>&1 || true
     xcrun simctl launch booted com.pbllc.rytivo
 fi
 echo "Build retained at: $build_dir"

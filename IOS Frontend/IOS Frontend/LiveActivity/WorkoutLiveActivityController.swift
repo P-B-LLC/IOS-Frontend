@@ -169,6 +169,9 @@ final class WorkoutLiveActivityController {
         let setIndex = exercise?.sets.firstIndex { !$0.isLogged }
         let set = setIndex.flatMap { exercise?.sets[$0] }
         let hint = exercise.flatMap { exercise in setIndex.flatMap { previous(exercise, $0) } }
+        // Each active exercise can be shown in a different unit. The caller's
+        // unit is only the account fallback for legacy/unselected rows.
+        let exerciseUnit = exercise?.weightUnit(default: unit) ?? unit
         let allDone = session.totalSetCount > 0 && session.loggedSetCount == session.totalSetCount
 
         var phase: State.Phase = allDone ? .done : .lifting
@@ -202,9 +205,9 @@ final class WorkoutLiveActivityController {
             ?? hint?.weightKilograms
         let reps = set.flatMap { Int($0.reps) } ?? set.flatMap { set in exercise?.targetReps(for: set) } ?? hint?.reps
         let target: String? = switch (weight, reps) {
-        case let (weight?, reps?): "\(unit.formatted(kilograms: weight)) × \(reps)"
+        case let (weight?, reps?): "\(exerciseUnit.formatted(kilograms: weight)) × \(reps)"
         case let (nil, reps?): String(localized: "\(reps) reps", bundle: .app, locale: .app)
-        case let (weight?, nil): unit.formatted(kilograms: weight)
+        case let (weight?, nil): exerciseUnit.formatted(kilograms: weight)
         case (nil, nil): nil
         }
 
@@ -229,7 +232,7 @@ final class WorkoutLiveActivityController {
             setTitle: setTitle,
             setBadge: set?.setType.badge,
             targetText: target,
-            previousText: hint?.summary(in: unit).map {
+            previousText: hint?.summary(in: exerciseUnit).map {
                 String(localized: "Last time \($0)", bundle: .app, locale: .app, comment: "What was lifted last time, such as “Last time 60 × 8”")
             },
             nextText: next,

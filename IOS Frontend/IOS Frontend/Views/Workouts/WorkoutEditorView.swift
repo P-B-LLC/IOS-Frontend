@@ -96,6 +96,7 @@ struct WorkoutEditorView: View {
             .saveFeedback(isSaving: isSaving, error: saveError)
             .recoverableDraft(key: recoveryKey, value: $draft, saved: $draftSaved, error: $saveError,
                               confirmRestoration: true)
+            .onChange(of: draft.name) { _, _ in saveError = nil }
         }
     }
 

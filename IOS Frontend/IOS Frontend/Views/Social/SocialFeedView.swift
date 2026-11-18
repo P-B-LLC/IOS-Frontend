@@ -29,6 +29,63 @@ struct SocialFeedView: View {
     /// and -- the tab never having changed -- is never asked again. The feed
     /// then sits on "Nothing here yet" while the server has posts to give
     /// it, which reads as an empty account rather than a dropped request.
+    /// The post whose workout or recipe is open in a sheet.
+    @State private var reading: CommentedPost?
+    /// The post whose takes are open in a sheet.
+    @State private var answering: CommentedPost?
+    /// The post a take is being written of.
+    @State private var takingOf: PostComposerView.TakeTarget?
+    /// The feed's one player. Made here so it lives exactly as long as the
+    /// feed does, and is let go with it.
+    @State private var playback = FeedPlaybackCoordinator()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotionForPlayback
+    /// Whether this feed draws the media-first cards. Read once per
+    /// appearance: a switch flipped mid-scroll must not redraw half a page.
+    @State private var usesNewFeed = SocialFeedExperience.isEnabled
+
+    /// One card, in whichever design is switched on.
+    @ViewBuilder
+    private func card(for post: FeedPost, timeOfDay: HomeTimeOfDay) -> some View {
+        if usesNewFeed {
+            FeedPostCard(
+                post: post,
+                timeOfDay: timeOfDay,
+                openComments: { commenting = CommentedPost(id: post.id) },
+                openAuthor: { visiting = VisitedPerson(id: $0) },
+                openPost: { opened = post.id },
+                openAttachment: { reading = CommentedPost(id: post.id) },
+                openTakes: { answering = CommentedPost(id: post.displayed.id) }
+            )
+            // Two thresholds stand in for a fraction: enough to tell the
+            // card that fills the screen from one that merely qualifies.
+            .onScrollVisibilityChange(threshold: 0.95) { mostly in
+                guard let id = post.playableClipID else { return }
+                playback.setVisibility(mostly ? 1 : FeedPlaybackPolicy.playableFraction, postID: id)
+            }
+            .onScrollVisibilityChange(threshold: FeedPlaybackPolicy.playableFraction) { visible in
+                guard let id = post.playableClipID else { return }
+                playback.setVisibility(visible ? FeedPlaybackPolicy.playableFraction : 0, postID: id)
+            }
+        } else {
+            PostCard(
+                post: post,
+                timeOfDay: timeOfDay,
+                // The button raises the threads over the feed
+                // so a comment can be left without losing your
+                // place in it; tapping the card opens the post.
+                openComments: { commenting = CommentedPost(id: post.id) },
+                openAuthor: { visiting = VisitedPerson(id: $0) }
+            )
+            .contentShape(Rectangle())
+            .onTapGesture { opened = post.id }
+        }
+    }
+
+    /// Whether anything is over the feed: a sheet, or a screen pushed on it.
+    private var isFeedCovered: Bool {
+        commenting != nil || isTuning || reading != nil || answering != nil || takingOf != nil
+    }
+
     private struct FeedLoad: Equatable {
         let mode: FeedMode
         let isConnected: Bool
@@ -51,6 +108,17 @@ struct SocialFeedView: View {
         /// People worth following and everybody's latest.
         case discover = "Discover"
         var id: String { rawValue }
+
+        /// Where a card was seen, as the server names it, so what the
+        /// ranking put in front of somebody can be told from what they went
+        /// looking for.
+        var attentionSurface: String {
+            switch self {
+            case .forYou: "for_you"
+            case .following: "following"
+            case .discover: "discover"
+            }
+        }
 
         var title: LocalizedStringKey {
             switch self {
@@ -137,7 +205,18 @@ struct SocialFeedView: View {
         }
     }
 
+    // The feed is split into a few builders so the compiler type-checks
+    // each modifier chain separately; as one chain it timed out on CI.
     private func screen(timeOfDay: HomeTimeOfDay) -> some View {
+        withPlayback(
+            withAttention(
+                withPresentation(feedScroll(timeOfDay: timeOfDay), timeOfDay: timeOfDay),
+                timeOfDay: timeOfDay
+            )
+        )
+    }
+
+    private func feedScroll(timeOfDay: HomeTimeOfDay) -> some View {
         ScrollView {
             LazyVStack(spacing: 0) {
                 if feedMode == .discover, !store.suggestedPeople.isEmpty {
@@ -197,25 +276,19 @@ struct SocialFeedView: View {
                             // inside it has four of its own, and a button
                             // holding buttons swallows their taps. A tap
                             // anywhere else opens the post.
-                            PostCard(
-                                post: post,
-                                timeOfDay: timeOfDay,
-                                // The button raises the threads over the feed
-                                // so a comment can be left without losing your
-                                // place in it; tapping the card opens the post.
-                                openComments: { commenting = CommentedPost(id: post.id) },
-                                openAuthor: { visiting = VisitedPerson(id: $0) }
-                            )
-                                .contentShape(Rectangle())
-                                .onTapGesture { opened = post.id }
+                            card(for: post, timeOfDay: timeOfDay)
                                 // What was on screen, and for how long, is
                                 // how For You tells a post somebody stopped
                                 // on from one they flicked past. Mostly on
                                 // screen counts, as on the web.
-                                .onScrollVisibilityChange(threshold: 0.6) { visible in
-                                    guard feedMode == .forYou, !isSearching, !isComposing else { return }
+                                .onScrollVisibilityChange(threshold: AttentionMeter.visibleFraction) { visible in
+                                    guard !isSearching, !isComposing else { return }
                                     if visible {
-                                        store.impressionShown(post.id)
+                                        store.impressionShown(
+                                            post.id,
+                                            surface: feedMode.attentionSurface,
+                                            clipMilliseconds: post.playableClipMilliseconds
+                                        )
                                     } else {
                                         store.impressionHidden(post.id)
                                     }
@@ -272,6 +345,10 @@ struct SocialFeedView: View {
                 await store.loadSuggestedPeople()
             }
         }
+    }
+
+    private func withPresentation(_ content: some View, timeOfDay: HomeTimeOfDay) -> some View {
+        content
         .toolbar(.hidden, for: .navigationBar)
         .homeTimeScreen(timeOfDay)
         .repbaseToast(saveConfirmation) { destination in
@@ -323,10 +400,17 @@ struct SocialFeedView: View {
                 await store.loadRelationships(for: viewerID)
             }
         }
+    }
+
+    private func withAttention(_ content: some View, timeOfDay: HomeTimeOfDay) -> some View {
+        content
         // Viewings still open when the page goes -- another tab, a pushed
         // post, the app to the background -- are closed and sent then, or
         // they would describe a reader staring at a post for an hour.
         .onChange(of: scenePhase) {
+            // The clocks stop the moment the app is not in front, before the
+            // open exposures are closed and sent.
+            store.attentionAppActive(scenePhase == .active)
             if scenePhase != .active {
                 Task { await store.finishImpressions() }
             } else {
@@ -339,9 +423,98 @@ struct SocialFeedView: View {
         .onChange(of: isSearching) {
             if isSearching { Task { await store.finishImpressions() } }
         }
-        .onDisappear {
-            Task { await store.finishImpressions() }
+        // A sheet over the feed suspends what is under it without ending the
+        // exposure: reading the comments and coming back is one look at the
+        // post, with a gap in it.
+        .onChange(of: isFeedCovered) { _, covered in
+            store.attentionFeedCovered(covered)
+            playback.setFeedActive(!covered && scenePhase == .active)
         }
+        // Opening the workout or recipe is reading, and is counted as it.
+        .onChange(of: reading) { was, now in
+            if let was { store.attentionAttachment(postID: was.id, isOpen: false) }
+            if let now { store.attentionAttachment(postID: now.id, isOpen: true) }
+        }
+        .sheet(item: $reading) { target in
+            PostAttachmentSheet(postID: target.id, timeOfDay: timeOfDay)
+        }
+        .sheet(item: $answering) { target in
+            PostTakesSheet(
+                postID: target.id,
+                timeOfDay: timeOfDay,
+                openPost: { opened = $0 },
+                startTake: {
+                    let author = store.post(withID: target.id)?.displayed.author.displayName ?? ""
+                    takingOf = .init(id: target.id, authorName: author)
+                }
+            )
+        }
+        .fullScreenCover(item: $takingOf, onDismiss: {
+            Task { await store.refreshPublicationStatuses() }
+        }) { target in
+            PostComposerView(takeOf: target)
+        }
+    }
+
+    private func withPlayback(_ content: some View) -> some View {
+        withFeedLifecycle(
+            content
+                .environment(playback)
+                .task(id: playbackClipIDs) { startPlayback() }
+                .onChange(of: reduceMotionForPlayback) { (_: Bool, reduce: Bool) in
+                    playback.update { $0.reduceMotion = reduce }
+                }
+                .onChange(of: scenePhase) { (_: ScenePhase, phase: ScenePhase) in
+                    playback.setFeedActive(phase == .active && !isFeedCovered)
+                }
+                .onChange(of: opened) { (_: Int?, post: Int?) in
+                    // A pushed post covers the feed as a sheet does.
+                    playback.setFeedActive(post == nil && scenePhase == .active && !isFeedCovered)
+                }
+        )
+    }
+
+    private func withFeedLifecycle(_ content: some View) -> some View {
+        content
+            .onScrollGeometryChange(for: CGFloat.self, of: Self.verticalOffset, action: scrolled)
+            .onDisappear { playback.stop() }
+            .onAppear { usesNewFeed = SocialFeedExperience.isEnabled }
+            .onChange(of: store.featuresRevision) { usesNewFeed = SocialFeedExperience.isEnabled }
+            .onChange(of: scenePhase) { (_: ScenePhase, phase: ScenePhase) in
+                if phase == .active { Task { await store.refreshFeatures() } }
+            }
+            .onDisappear {
+                Task { await store.finishImpressions() }
+            }
+    }
+
+    private static func verticalOffset(_ geometry: ScrollGeometry) -> CGFloat {
+        geometry.contentOffset.y
+    }
+
+    private func scrolled(_ old: CGFloat, _ y: CGFloat) {
+        if usesNewFeed { playback.scrolled(toOffset: y) }
+    }
+
+    /// The clips the playback task is keyed on; none while the old feed shows.
+    private var playbackClipIDs: [Int] {
+        guard usesNewFeed else { return [] }
+        return displayedPosts.compactMap(\.playableClipID)
+    }
+
+    private func startPlayback() {
+        guard usesNewFeed else { return }
+        playback.report = { [store] postID, event in store.attentionPlayback(postID: postID, event) }
+        playback.update {
+            $0.autoplayPreferred = SocialFeedExperience.autoplayPreferred
+            $0.reduceMotion = reduceMotionForPlayback
+        }
+        let clips: [FeedPlaybackCoordinator.Clip] = displayedPosts.compactMap { post in
+            guard let id = post.playableClipID, let video = post.displayed.video,
+                  let url = video.url, url.scheme == "https" else { return nil }
+            return FeedPlaybackCoordinator.Clip(postID: id, url: url, durationMilliseconds: video.durationMilliseconds)
+        }
+        playback.setClips(clips)
     }
 
     private func socialHeader(timeOfDay: HomeTimeOfDay) -> some View {
@@ -838,6 +1011,8 @@ struct PostCard: View {
 
     /// Set when Report was chosen, which raises the reasons.
     @State private var reportingPost: FeedPost?
+    @State private var choosingCookbook = false
+    @State private var openingCookbook = false
 
     /// The shape the photo was posted at, once its bytes have arrived.
     ///
@@ -946,6 +1121,8 @@ struct PostCard: View {
                         compactMealAttachment(meal, imageAttached: true)
                     } else if let planner = shown.planner {
                         compactPlannerAttachment(planner)
+                    } else if let cookbook = shown.cookbook {
+                        cookbookAttachment(cookbook)
                     }
                 } else if let workout = shown.workout {
                     compactWorkoutAttachment(workout, imageAttached: false)
@@ -953,6 +1130,8 @@ struct PostCard: View {
                     compactMealAttachment(meal, imageAttached: false)
                 } else if let planner = shown.planner {
                     compactPlannerAttachment(planner)
+                } else if let cookbook = shown.cookbook {
+                    cookbookAttachment(cookbook)
                 } else if shown.kind != .media {
                     // A photo or video post has no snapshot by design; its
                     // picture, drawn above, is the post.
@@ -972,6 +1151,28 @@ struct PostCard: View {
         .sheet(item: $reportingPost) { target in
             PostReportSheet(post: target, timeOfDay: timeOfDay)
         }
+        .sheet(isPresented: $choosingCookbook) {
+            NavigationStack {
+                CookbookPickerView(failureMessage: { store.errorMessage }) { book in
+                    await store.saveMeal(from: post, cookbookID: book.id)
+                }
+            }
+        }
+        .sheet(isPresented: $openingCookbook) { NavigationStack { PublishedCookbookView(post: post) } }
+    }
+
+    private func cookbookAttachment(_ cookbook: CookbookPostSummary) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Cookbook", systemImage: "books.vertical")
+                .font(.community(.caption, weight: .bold)).foregroundStyle(timeOfDay.accent)
+            Text(cookbook.name).font(.community(.title3, weight: .bold))
+            Text("\(cookbook.recipeCount) recipes · Ingredients & steps included")
+                .font(.community(.subheadline)).foregroundStyle(timeOfDay.secondaryText)
+            Button("View all recipes") { openingCookbook = true }
+                .buttonStyle(RepbasePrimaryButtonStyle())
+        }
+        .padding(18).frame(maxWidth: .infinity, alignment: .leading)
+        .background(timeOfDay.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 24))
     }
 
     /// Who passed it on, above the post itself — so the name beside the
@@ -1124,57 +1325,7 @@ struct PostCard: View {
                         .foregroundStyle(timeOfDay.canvasSecondaryText)
                 }
                 if post.viewerIsAuthor || post.offersModeration {
-                    Menu {
-                        if post.viewerIsAuthor {
-                            Button(role: .destructive) {
-                                store.delete(post)
-                            } label: {
-                                Label("Delete post", systemImage: "trash")
-                            }
-                        } else {
-                            // Only on For You, the one list the server picks.
-                            // Elsewhere a post is there because of who wrote it,
-                            // and the answer to that is unfollowing.
-                            if post.recommendation != nil {
-                                // A toggle, so the menu shows the choice and
-                                // is the way to take it back; the card stays.
-                                Toggle(isOn: Binding(
-                                    get: { store.wantedPostIDs.contains(post.id) },
-                                    set: { more in
-                                        Task { await store.setMoreLikeThis(more, post: post) }
-                                    }
-                                )) {
-                                    Label("More like this", systemImage: "hand.thumbsup")
-                                }
-                                Button {
-                                    Task { await store.setFewerLikeThis(true, post: post) }
-                                } label: {
-                                    Label("Fewer like this", systemImage: "hand.thumbsdown")
-                                }
-                                Button {
-                                    Task { await store.setNotInterested(true, post: post) }
-                                } label: {
-                                    Label("Not interested", systemImage: "eye.slash")
-                                }
-                            }
-                            // Report asks a question, so it opens a sheet.
-                            // Block does not: it acts on the tap, the way
-                            // every destructive control in this app does.
-                            Button {
-                                reportingPost = post
-                            } label: {
-                                Label("Report post", systemImage: "flag")
-                            }
-                            Button(role: .destructive) {
-                                Task { await store.block(shown.author) }
-                            } label: {
-                                Label(
-                                    "Block \(shown.author.displayName)",
-                                    systemImage: "hand.raised"
-                                )
-                            }
-                        }
-                    } label: {
+                    PostOptionsMenu(post: post, report: { reportingPost = post }) {
                         Image(systemName: "ellipsis")
                             .font(.community(size: 14, weight: .semibold))
                             .foregroundStyle(timeOfDay.canvasSecondaryText)
@@ -1618,7 +1769,7 @@ struct PostCard: View {
             isSaved: post.viewerHasSaved,
             tint: RepbaseDesign.success
         ) {
-            await store.saveMeal(from: post)
+            choosingCookbook = true
         }
     }
 

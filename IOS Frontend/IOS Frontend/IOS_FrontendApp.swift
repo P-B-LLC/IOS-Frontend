@@ -18,6 +18,12 @@ struct IOS_FrontendApp: App {
     @State private var authentication: AuthenticationStore
     @State private var workoutStore: WorkoutStore
     @State private var plannerStore: PlannerStore
+    #if DEBUG
+    @State private var calendarSharingStore = ProcessInfo.processInfo
+        .environment["REPBASE_CALENDAR_SHARING_PREVIEW"] != nil ? CalendarSharingStore.preview : CalendarSharingStore()
+    #else
+    @State private var calendarSharingStore = CalendarSharingStore()
+    #endif
     @State private var foodTrackingStore: FoodTrackingStore
     @State private var socialProfileStore: SocialProfileStore
     @State private var socialStore: SocialStore
@@ -53,9 +59,12 @@ struct IOS_FrontendApp: App {
             initialValue: AuthenticationStore(configuration: configuration)
         )
 #if DEBUG
+        let homePreview = ProcessInfo.processInfo.environment["REPBASE_HOME_PREVIEW"]
+        let hasHomeFixture = homePreview != nil && homePreview != "empty"
         _activityStore = State(
             initialValue: ProcessInfo.processInfo.environment["REPBASE_HEALTH_PREVIEW"] != nil
                 || ProcessInfo.processInfo.environment["REPBASE_STEPS_PREVIEW"] != nil
+                || hasHomeFixture
                 ? .preview
                 : ActivityStore()
         )
@@ -66,15 +75,24 @@ struct IOS_FrontendApp: App {
         )
         _socialStore = State(initialValue: SocialStore())
         _foodTrackingStore = State(
-            initialValue: isPreviewingFood ? .preview : FoodTrackingStore()
+            initialValue: isPreviewingFood || hasHomeFixture ? .preview : FoodTrackingStore()
         )
         let plannerPreview = ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"]
+        let sharingPreview = ProcessInfo.processInfo.environment["REPBASE_CALENDAR_SHARING_PREVIEW"] != nil
         _plannerStore = State(
-            initialValue: plannerPreview != nil ? .preview : PlannerStore()
+            initialValue: plannerPreview != nil || hasHomeFixture || sharingPreview ? .preview : PlannerStore()
         )
         // The home page draws workouts too, so previewing it needs both.
         _workoutStore = State(
-            initialValue: plannerPreview == "home" ? .preview : WorkoutStore()
+            initialValue: hasHomeFixture
+                ? WorkoutStore(initialSchedule: Dictionary(uniqueKeysWithValues:
+                    Weekday.allCases.map { ($0, [homePreview == "cardio"
+                        ? Workout(name: "Easy run", activity: .running)
+                        : ProcessInfo.processInfo.environment["REPBASE_PREVIEW_SPORT"]
+                            .flatMap(WorkoutActivity.init(rawValue:))
+                            .map { Workout(name: $0.title, activity: $0) }
+                            ?? WorkoutStore.previewWorkouts[0]]) }))
+                : (plannerPreview == "home" ? .preview : WorkoutStore())
         )
 #else
         _activityStore = State(initialValue: ActivityStore())
@@ -122,6 +140,8 @@ struct IOS_FrontendApp: App {
                 .environment(authentication)
                 .environment(workoutStore)
                 .environment(plannerStore)
+                .environment(calendarSharingStore)
+                .environment(\.calendarSharing, calendarSharingStore)
                 .environment(foodTrackingStore)
                 .environment(socialProfileStore)
                 .environment(socialStore)
@@ -184,6 +204,8 @@ private struct AppRootView: View {
     static var isPreviewing: Bool {
         let environment = ProcessInfo.processInfo.environment
         return environment["REPBASE_FOOD_PREVIEW"] != nil
+            || environment["REPBASE_CALENDAR_SHARING_PREVIEW"] != nil
+            || environment["REPBASE_HOME_PREVIEW"] != nil
             || environment["REPBASE_PLANNER_PREVIEW"] != nil
             || environment["REPBASE_PROFILE_PREVIEW"] != nil
             || environment["REPBASE_AUTH_PREVIEW"] != nil
@@ -207,6 +229,7 @@ private struct AppRootView: View {
     @Environment(AuthenticationStore.self) private var authentication
     @Environment(WorkoutStore.self) private var workoutStore
     @Environment(PlannerStore.self) private var plannerStore
+    @Environment(CalendarSharingStore.self) private var calendarSharingStore
     @Environment(FoodTrackingStore.self) private var foodTrackingStore
     @Environment(SocialProfileStore.self) private var socialProfileStore
     @Environment(SocialStore.self) private var socialStore
@@ -217,7 +240,25 @@ private struct AppRootView: View {
     var body: some View {
         Group {
 #if DEBUG
-            if ProcessInfo.processInfo.environment["REPBASE_ROUTE_CHECK"] != nil {
+            if let scenario = ProcessInfo.processInfo.environment["REPBASE_CALENDAR_SHARING_PREVIEW"] {
+                Group {
+                    if scenario == "invitations" {
+                        CalendarInvitationsView()
+                    } else {
+                        // The real Calendar tab composes only disconnected,
+                        // illustrative read-only grants for this launch.
+                        RepbaseRootView(initialTab: .planner)
+                    }
+                }
+                .dynamicTypeSize(ProcessInfo.processInfo.environment["REPBASE_HOME_LARGE_TEXT"] == "1"
+                    ? .accessibility3 : .large)
+            } else if ProcessInfo.processInfo.environment["REPBASE_HOME_PREVIEW"] != nil {
+                // Uses the real tab shell and Home, with disconnected sample
+                // stores. No account, hosted API or production data is needed.
+                RepbaseRootView(initialTab: .home)
+                    .dynamicTypeSize(ProcessInfo.processInfo.environment["REPBASE_HOME_LARGE_TEXT"] == "1"
+                        ? .accessibility3 : .large)
+            } else if ProcessInfo.processInfo.environment["REPBASE_ROUTE_CHECK"] != nil {
                 // The GPS path has never run end to end, because recording a
                 // run starts with a tap and nothing here can tap. simctl can
                 // drive the location and grant the authorisation, so this
@@ -239,11 +280,11 @@ private struct AppRootView: View {
                             Text("Health not connected")
                                 .font(.community(.caption, weight: .bold))
                             StepsWidget(explainsWhenEmpty: true)
-                                .environment(ActivityStore(health: .previewNeverAsked()))
+                                .environment(ActivityStore(health: HealthKitService.previewNeverAsked()))
                             Text("Asked already, still nothing")
                                 .font(.community(.caption, weight: .bold))
                             StepsWidget(explainsWhenEmpty: true)
-                                .environment(ActivityStore(health: .previewAlreadyAsked()))
+                                .environment(ActivityStore(health: HealthKitService.previewAlreadyAsked()))
                         }
                         .padding(RepbaseDesign.pageInset)
                     }
@@ -311,6 +352,8 @@ private struct AppRootView: View {
                 // also starts the Lock Screen activity, which the simulator
                 // shows on its own lock screen.
                 switch workoutPreview {
+                case "builder-order", "builder-reordered", "builder-units", "session-units":
+                    WorkoutFlowPreviewScreen(scenario: workoutPreview)
                 case "builder":
                     WorkoutEditorView(mode: .edit(WorkoutStore.previewWorkouts[0]))
                         .environment(WorkoutStore.previewWithLibrary)
@@ -422,7 +465,7 @@ private struct AppRootView: View {
             } else if ProcessInfo.processInfo.environment["REPBASE_HEALTH_PREVIEW"] != nil {
                 // The widget with days behind it. The simulator has no Watch,
                 // so this is the only way to see the populated state.
-                RepbaseRootView()
+                RepbaseRootView(initialTab: .home)
             } else if ProcessInfo.processInfo.environment["REPBASE_KEYCHAIN_CHECK"] != nil {
                 // Whether a signed-in session survives relaunching depends on
                 // whether this build can reach the Keychain, which no amount
@@ -456,16 +499,43 @@ private struct AppRootView: View {
                     .repbaseScreen(.prepare)
                     .navigationTitle("Home")
                 }
+            } else if let scenario = ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"],
+                      scenario.hasPrefix("meal-planner") {
+                FoodMealPlannerCardPreview(scenario: scenario)
+            } else if let scenario = ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"],
+                      scenario.hasPrefix("portion") {
+                NavigationStack { FoodPortionPreview(scenario: scenario) }
+            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "meal",
+                      let meal = foodTrackingStore.meals(on: Date()).first {
+                NavigationStack {
+                    MealDetailView(date: Date(), mealID: meal.id)
+                }
+            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "meal-empty",
+                      let meal = foodTrackingStore.meals(on: Date()).first(where: { $0.entries.isEmpty }) {
+                NavigationStack {
+                    MealDetailView(date: Date(), mealID: meal.id)
+                }
             } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "entry",
                       let meal = foodTrackingStore.meals(on: Date()).first {
                 NavigationStack {
                     FoodEntryEditorView(date: Date(), mealID: meal.id)
                 }
-            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "picker",
+            } else if let scenario = ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"],
+                      scenario == "picker" || scenario.hasPrefix("picker-"),
                       let meal = foodTrackingStore.meals(on: Date()).first {
                 NavigationStack {
-                    FoodPickerView(date: Date(), mealID: meal.id)
+                    FoodPickerView(date: Date(), mealID: meal.id, previewScenario: scenario)
                 }
+                .dynamicTypeSize(scenario == "picker-accessibility" ? .accessibility3 : .large)
+            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "cookbook" {
+                NavigationStack { SavedMealsView(referenceDate: Date(), cookbookID: 1) }
+            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "cookbook-picker" {
+                NavigationStack { CookbookPickerView { _ in false } }
+            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "cookbook-create" {
+                NavigationStack { CookbookEditorView() }
+            } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "cookbook-post",
+                      let cookbook = foodTrackingStore.cookbooks.first {
+                NavigationStack { CookbookPostComposer(cookbook: cookbook) }
             } else if ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "saved"
                         || ProcessInfo.processInfo.environment["REPBASE_FOOD_PREVIEW"] == "recipe" {
                 NavigationStack {
@@ -568,7 +638,7 @@ private struct AppRootView: View {
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "home" {
                 // The shell, not the page: the bottom bar lives on the shell,
                 // so previewing the page alone would show it without one.
-                RepbaseRootView()
+                RepbaseRootView(initialTab: .home)
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "shell-planner" {
                 RepbaseRootView(initialTab: .planner)
             } else if ProcessInfo.processInfo.environment["REPBASE_PLANNER_PREVIEW"] == "shell-workouts" {
@@ -614,10 +684,22 @@ private struct AppRootView: View {
         }
         .font(.community(.body))
         .repbaseCelebrationOverlay()
+        .onChange(of: workoutStore.preferences.weightUnit) {
+            // Update Lock Screen weight labels too. The notifier deduplicates
+            // the unchanged rest timer; no countdown or API write is started.
+            workoutStore.refreshSessionSignals()
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { workoutStore.checkpointActiveSession() }
             if phase == .active {
+                workoutStore.dismissExpiredRestBanner()
                 Task { await workoutStore.retryPendingWorkoutSaves() }
+                Task {
+#if DEBUG
+                    guard Self.isPreviewing == false else { return }
+#endif
+                    await activityStore.refreshIfNeeded()
+                }
             }
         }
         .task {
@@ -628,6 +710,7 @@ private struct AppRootView: View {
 #endif
             authentication.onSessionEnded = { clearAccountState() }
             authentication.onAccountDeleted = { ownerID in
+                activityStore.deleteHealthConnectionPreferences(accountID: ownerID, origin: authentication.configuration.serverURL.absoluteString)
                 workoutStore.deleteAccountRecovery(ownerID: ownerID, origin: authentication.configuration.serverURL.absoluteString)
                 try? EditorDraftRecovery.shared.removeAccount(scope: .init(ownerID: ownerID, origin: authentication.configuration.serverURL.absoluteString))
             }
@@ -670,6 +753,7 @@ private struct AppRootView: View {
                 token: token
             )
             guard authentication.token == token, !Task.isCancelled else { return }
+            calendarSharingStore.connect(configuration: authentication.configuration, token: token)
             await foodTrackingStore.connect(
                 configuration: authentication.configuration,
                 token: token
@@ -690,9 +774,15 @@ private struct AppRootView: View {
                 token: token
             )
             guard authentication.token == token, !Task.isCancelled else { return }
+            activityStore.onWorkoutsChanged = { [workoutStore, plannerStore] in
+                await workoutStore.loadDashboardSessions()
+                await workoutStore.reloadSchedule()
+                await plannerStore.refreshScheduledWorkouts()
+            }
             await activityStore.connect(
                 configuration: authentication.configuration,
-                token: token
+                token: token,
+                accountID: user.id
             )
             guard authentication.token == token, !Task.isCancelled else { return }
             await gearStore.connect(
@@ -781,6 +871,7 @@ private struct AppRootView: View {
         NotificationScheduler.shared.setAccount(nil)
         workoutStore.disconnect()
         plannerStore.disconnect()
+        calendarSharingStore.disconnect()
         socialProfileStore.disconnect()
         socialStore.disconnect()
         activityStore.disconnect()

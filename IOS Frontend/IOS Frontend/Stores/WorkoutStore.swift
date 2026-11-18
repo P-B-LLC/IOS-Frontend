@@ -88,6 +88,7 @@ final class WorkoutStore {
         didSet {
             checkpointActiveSession()
             publishSessionSignals()
+            scheduleRestBannerExpiry()
         }
     }
     /// Weight unit and rest settings, read by every workout screen.
@@ -100,6 +101,13 @@ final class WorkoutStore {
     private let liveActivity = WorkoutLiveActivityController()
     /// Says when a rest is over while the app is not on screen.
     private let restNotifier = RestTimerNotifier()
+    @ObservationIgnored private var restBannerExpiryTask: Task<Void, Never>?
+    @ObservationIgnored private var restBannerExpiryKey: RestBannerExpiryKey?
+    private struct RestBannerExpiryKey: Equatable {
+        let sessionID: Int
+        let generation: UUID
+        let timer: RestTimer
+    }
     /// Set while a connection is restoring the session; see
     /// `publishSessionSignals`.
     private var holdsSessionSignals = false
@@ -216,7 +224,7 @@ final class WorkoutStore {
         liveActivity.sync(
             session: session,
             enabled: preferences.liveActivity,
-            unit: preferences.weightUnit,
+            unit: preferences.defaultWeightUnit,
             previous: { [weak self] exercise, index in self?.previousSet(for: exercise, at: index) }
         )
         restNotifier.sync(
@@ -267,8 +275,12 @@ final class WorkoutStore {
             // Read once per connection rather than by every screen that shows
             // a weight. A failure keeps kilograms, which is what the stored
             // numbers are; it is never a reason to stop a workout.
+            let unitReadRevision = preferences.accountUnitReadRevision
             if let unit = try? await repository.preferredWeightUnit(), generation == connectionGeneration {
-                preferences.adoptAccountUnit(unit)
+                preferences.adoptAccountUnit(unit, ifUnchangedSince: unitReadRevision)
+                if preferences.hasLoadedUnit {
+                    mutateActiveSession { _ = $0.adoptDefaultDisplayUnits(preferences.defaultWeightUnit) }
+                }
             }
         } catch {
             self.repository = nil
@@ -991,11 +1003,12 @@ final class WorkoutStore {
 
         Task {
             do {
-                let session = try await repository.startSession(
+                let opened = try await repository.startSession(
                     for: workout,
                     on: day
                 )
                 guard connectionGeneration == generation else { return }
+                let session = withInitialDisplayUnits(opened)
                 routeTracker.reset()
                 activeSession = session
                 if checkpointActiveSession() { try await repository.acknowledgeSessionStart(id: session.serverID) }
@@ -1121,7 +1134,8 @@ final class WorkoutStore {
                         )
                     }
                     try await repository.unlogSet(id: entryID, sessionExerciseID: exercise.sessionExerciseID, setNumber: set.setNumber)
-                    guard connectionGeneration == generation else { return }
+                    guard connectionGeneration == generation,
+                          activeSession?.serverID == session.serverID else { return }
                     mutateSet(on: day, exerciseID: exerciseID, setID: setID) {
                         $0.serverID = nil
                         $0.isLogged = false
@@ -1132,7 +1146,8 @@ final class WorkoutStore {
                         sessionExerciseID: exercise.sessionExerciseID,
                         workoutType: workoutType
                     )
-                    guard connectionGeneration == generation else { return }
+                    guard connectionGeneration == generation,
+                          activeSession?.serverID == session.serverID else { return }
                     let weight = logged.weightKilograms
                     let reps = logged.reps
                     let distance = logged.distanceKilometers
@@ -1293,7 +1308,9 @@ final class WorkoutStore {
                     },
                     restSeconds: exercise.restSeconds,
                     targetReps: exercise.targetReps,
-                    targetWeightKilograms: exercise.targetWeightKilograms
+                    targetWeightKilograms: exercise.targetWeightKilograms,
+                    displayUnit: preferences.hasLoadedUnit ? preferences.defaultWeightUnit : nil,
+                    plannedSets: added.plannedSets
                 ))
                 if session.exercises.allSatisfy({ $0.isComplete || $0.id == session.exercises.last?.id }) {
                     session.focusedExerciseID = session.exercises.last?.id
@@ -1389,6 +1406,31 @@ final class WorkoutStore {
         }
     }
 
+    /// Local display state only: no account preference or exercise/set request
+    /// is made. The normal session assignment checkpoints the choice and updates
+    /// the Lock Screen, while an in-flight set response still edits only its set.
+    func setSessionExerciseDisplayUnit(
+        _ unit: WorkoutWeightUnit,
+        on day: Weekday,
+        sessionID: Int,
+        exerciseID: Exercise.ID
+    ) {
+        guard !isSaving, !isRecoveringWorkouts, var session = activeSession,
+              session.setExerciseDisplayUnit(unit, on: day, sessionID: sessionID, exerciseID: exerciseID) else { return }
+        activeSession = session
+    }
+
+    /// The default may still be loading during recovery. Leave missing units
+    /// nil until that read finishes; never freeze a legacy lb workout to kg just
+    /// because kg is the pre-connection placeholder. Explicit choices survive.
+    private func withInitialDisplayUnits(_ original: ActiveWorkoutSession) -> ActiveWorkoutSession {
+        var session = original
+        if preferences.hasLoadedUnit {
+            session.adoptDefaultDisplayUnits(preferences.defaultWeightUnit)
+        }
+        return session
+    }
+
     /// Joins two exercises into a superset, or adds one to its partner's
     /// existing superset.
     func supersetSessionExercise(on day: Weekday, exerciseID: Exercise.ID, with partnerID: Exercise.ID) {
@@ -1477,6 +1519,55 @@ final class WorkoutStore {
     }
 
     // MARK: - Rest timer
+
+    /// One deadline task per timer revision, not a database write or a polling
+    /// loop. It also runs while the workout screen is not visible. Suspension
+    /// can delay the callback; the end-date check still expires it on return.
+    private func scheduleRestBannerExpiry() {
+        guard let session = activeSession,
+              let timer = session.restTimer,
+              let deadline = timer.finishedBannerDismissalDate else {
+            restBannerExpiryTask?.cancel()
+            restBannerExpiryTask = nil
+            restBannerExpiryKey = nil
+            return
+        }
+        let key = RestBannerExpiryKey(sessionID: session.serverID, generation: connectionGeneration, timer: timer)
+        guard key != restBannerExpiryKey else { return }
+        restBannerExpiryTask?.cancel()
+        restBannerExpiryKey = key
+        restBannerExpiryTask = Task { @MainActor [weak self] in
+            do {
+                // Sleep uses elapsed time; the displayed timer uses wall-clock
+                // dates. If the clock moves back, wait for the new remainder
+                // rather than abandoning this still-current expiry task.
+                while !Task.isCancelled {
+                    let delay = deadline.timeIntervalSinceNow
+                    guard delay > 0 else { break }
+                    try await Task.sleep(for: .seconds(delay))
+                }
+            } catch { return }
+            guard !Task.isCancelled, let self,
+                  self.connectionGeneration == key.generation,
+                  self.activeSession?.serverID == key.sessionID else { return }
+            self.dismissExpiredRestBanner(matching: key.timer)
+        }
+    }
+
+    /// Checkpoint the dismissal so a finished notice cannot return after
+    /// navigation, backgrounding or relaunch. Never acts on a newer timer.
+    func dismissExpiredRestBanner(matching expected: RestTimer? = nil, at now: Date = Date()) {
+        guard let timer = activeSession?.restTimer,
+              timer.canDismissFinishedBanner(matching: expected ?? timer, at: now) else { return }
+        mutateActiveSession { $0.restTimer = nil }
+    }
+
+    /// An early tap on the completion notice cannot skip a newer running rest.
+    func dismissFinishedRest(matching expected: RestTimer) {
+        guard let current = activeSession?.restTimer,
+              current == expected, current.phase() == .finished else { return }
+        mutateActiveSession { $0.restTimer = nil }
+    }
 
     /// Starts a rest by hand, for somebody whose timer does not start itself
     /// or who wants one between exercises.
@@ -1577,7 +1668,8 @@ final class WorkoutStore {
                 restSeconds: exercise.restSeconds,
                 supersetGroup: superset,
                 targetReps: exercise.targetReps,
-                targetWeightKilograms: exercise.targetWeightKilograms
+                targetWeightKilograms: exercise.targetWeightKilograms,
+                plannedSets: exercise.reusablePlannedSets
             )
         }
         do {
@@ -1897,7 +1989,7 @@ final class WorkoutStore {
                 if let recovered = try await repository.recoverPendingSessionStart(),
                    generation == connectionGeneration, activeSession == nil {
                     routeTracker.reset()
-                    activeSession = recovered
+                    activeSession = withInitialDisplayUnits(recovered)
                     recoveredActiveSession = true
                     if checkpointActiveSession() { try await repository.acknowledgeSessionStart(id: recovered.serverID) }
                     // As startSession does: the hints and one-tap logging
@@ -1919,7 +2011,7 @@ final class WorkoutStore {
             let reconciled = try await repository.reconcileLoggedSets(saved.session)
             guard generation == connectionGeneration, activeSession == nil else { return }
             routeTracker.restore(saved.points)
-            activeSession = reconciled
+            activeSession = withInitialDisplayUnits(reconciled)
             recoveredActiveSession = true
             if checkpointActiveSession() { try await repository.acknowledgeSessionStart(id: reconciled.serverID) }
             if !reconciled.tracksDistance {
@@ -2131,7 +2223,11 @@ final class WorkoutStore {
                 Exercise(
                     serverID: $0.serverID, serverName: $0.serverName, name: $0.name, sets: $0.sets,
                     setTypes: $0.setTypes, restSeconds: $0.restSeconds, supersetGroup: $0.supersetGroup,
-                    targetReps: $0.targetReps, targetWeightKilograms: $0.targetWeightKilograms
+                    targetReps: $0.targetReps, targetWeightKilograms: $0.targetWeightKilograms,
+                    plannedSets: $0.plannedSets.map { row in
+                        WorkoutPlannedSet(setType: row.setType, targetReps: row.targetReps,
+                                          targetWeightKilograms: row.targetWeightKilograms)
+                    }
                 )
             }
         )
@@ -2474,6 +2570,13 @@ extension WorkoutStore {
     /// script's reach, so this is how it is looked at in the simulator.
     static var previewActiveSession: WorkoutStore {
         let store = previewWithLibrary
+        // This disconnected unit-control fixture must not request notification
+        // permission or publish a Live Activity before its screen is captured.
+        // Keep the hold before assigning activeSession: its observer publishes
+        // immediately. Other previews and real sessions retain their behavior.
+        if ProcessInfo.processInfo.environment["REPBASE_WORKOUT_PREVIEW"] == "session-units" {
+            store.holdsSessionSignals = true
+        }
         let day = store.today ?? .monday
         let bench = UUID(), incline = UUID(), fly = UUID(), dips = UUID()
         func sets(_ types: [WorkoutSetType], logged: Int, weight: String, reps: String) -> [WorkoutSetDraft] {
@@ -2508,6 +2611,11 @@ extension WorkoutStore {
             restTimer: .start(seconds: 150, exerciseID: bench, at: Date().addingTimeInterval(-38)),
             focusedExerciseID: bench
         )
+        // Isolated visual validation only. Normal simulator builds never set
+        // this launch flag; the preview has no account, repository or writes.
+        if ProcessInfo.processInfo.environment["REPBASE_WORKOUT_PREVIEW"] == "rest-complete" {
+            session.restTimer = .start(seconds: 15, exerciseID: bench, at: Date().addingTimeInterval(-15))
+        }
         var plan = session.structure
         plan.items.removeLast()
         session.plan = plan
@@ -2527,3 +2635,5 @@ extension WorkoutStore {
     static let sharedPreviewActiveSession = previewActiveSession
 #endif
 }
+
+extension WorkoutStore: WorkoutWeightUnitSaving {}

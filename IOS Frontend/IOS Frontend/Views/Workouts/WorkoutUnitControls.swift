@@ -9,62 +9,90 @@ import SwiftUI
 
 /// A two-position kg | lb switch.
 ///
-/// Tapping changes what this and every other workout screen shows, at once
-/// and without leaving the screen; the account's default is left alone, so
-/// the next session opens in it again. Holding it offers to make the choice
-/// the default instead. Only the display changes: stored weights stay in
-/// kilograms, so switching back and forth never moves a recorded number.
+/// The owner supplies the selection. This control never changes the account
+/// default or any other exercise's display unit.
 struct WeightUnitToggle: View {
-    @Environment(WorkoutStore.self) private var store
+    @Binding var selection: WorkoutWeightUnit
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorSchemeContrast) private var contrast
+    @State private var selectionFeedback = 0
     var compact = false
-
-    private var preferences: WorkoutPreferences { store.preferences }
+    var onWillChange: () -> Void = {}
+    var identifierPrefix = "workout.weight-unit"
 
     var body: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: 0) {
             ForEach(WorkoutWeightUnit.allCases) { unit in
-                let selected = preferences.weightUnit == unit
+                let selected = selection == unit
                 Button {
-                    withAnimation(.snappy(duration: 0.2)) { preferences.useTemporarily(unit) }
+                    guard !selected else { return }
+                    onWillChange()
+                    withAnimation(reduceMotion ? nil : .snappy(duration: 0.2)) {
+                        selection = unit
+                    }
+                    selectionFeedback += 1
                 } label: {
                     Text(unit.label)
-                        .font(.community(compact ? .caption2 : .caption, weight: .bold))
+                        .font(.community(compact ? .caption : .subheadline, weight: .bold))
                         .foregroundStyle(selected ? WorkoutVisualPhase.focus.onPrimaryAction : WorkoutVisualPhase.focus.secondaryText)
-                        .padding(.horizontal, compact ? 8 : 11)
-                        .frame(minHeight: compact ? 26 : 30)
+                        .padding(.horizontal, 12)
+                        .frame(minWidth: 60, minHeight: 44)
                         .background {
                             if selected {
                                 Capsule().fill(WorkoutVisualPhase.focus.primaryActionSurface)
+                                    .padding(.vertical, 3)
                             }
                         }
-                        .contentShape(Capsule())
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(unit.title)
                 .accessibilityAddTraits(selected ? [.isSelected] : [])
+                .accessibilityIdentifier("\(identifierPrefix).\(unit.rawValue)")
             }
         }
-        .padding(2)
-        .background(WorkoutVisualPhase.focus.cardBorder.opacity(0.55), in: Capsule())
-        // A 44-point target around a smaller drawn control.
-        .frame(minHeight: 44)
-        .contentShape(Rectangle())
-        .sensoryFeedback(.selection, trigger: preferences.weightUnit)
-        .contextMenu {
-            ForEach(WorkoutWeightUnit.allCases) { unit in
-                Button {
-                    Task { await preferences.makeDefault(unit, using: store) }
-                } label: {
-                    Label(
-                        unit == .metric ? "Make kilograms my default" : "Make pounds my default",
-                        systemImage: preferences.defaultWeightUnit == unit ? "checkmark" : "scalemass"
-                    )
-                }
-            }
+        .padding(.horizontal, 3)
+        .background(WorkoutVisualPhase.focus.accent.opacity(0.12), in: Capsule())
+        .overlay {
+            Capsule().strokeBorder(WorkoutVisualPhase.focus.cardBorder.opacity(contrast == .increased ? 1 : 0.65), lineWidth: 1)
         }
+        .sensoryFeedback(.selection, trigger: selectionFeedback)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Weight unit")
         .accessibilityHint("Changes how weights are shown. Your recorded weights do not change.")
+    }
+}
+
+/// Shown only inside an active exercise, immediately above its weight entries.
+/// No account-default action belongs here: a mixed-equipment session needs
+/// independent units without changing other exercises or future workouts.
+struct WorkoutWeightUnitControl: View {
+    @Binding var selection: WorkoutWeightUnit
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    var onWillChange: () -> Void = {}
+    var identifierPrefix: String
+    private let phase = WorkoutVisualPhase.focus
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            let layout = dynamicTypeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+                : AnyLayout(HStackLayout(spacing: 12))
+            layout {
+                Text("Weight unit")
+                    .font(.community(.subheadline, weight: .semibold))
+                    .foregroundStyle(phase.primaryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                WeightUnitToggle(selection: $selection, onWillChange: onWillChange,
+                                 identifierPrefix: identifierPrefix)
+            }
+            Text("Only this exercise.")
+                .font(.community(.caption))
+                .foregroundStyle(phase.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier(identifierPrefix)
     }
 }
 

@@ -13,26 +13,15 @@
 import Foundation
 import RepbaseAPI
 
-/// What an import did, counted.
-///
-/// Three numbers rather than one, because "nothing was added" has three very
-/// different causes: nothing new to add, everything already added, or
-/// everything skipped for clashing with a session Repbase recorded itself.
-nonisolated struct HealthImportSummary: Equatable, Sendable {
-    let imported: Int
-    let skippedOverlapping: Int
-    let alreadyImported: Int
-
-    static let nothing = HealthImportSummary(
-        imported: 0,
-        skippedOverlapping: 0,
-        alreadyImported: 0
-    )
-}
-
 actor ActivityAPIRepository {
     private let configuration: APIConfiguration
     private let client: Client
+    private var integrationMutation: Task<HealthIntegrationStatus, Error>?
+
+    init(configuration: APIConfiguration, client: Client) {
+        self.configuration = configuration
+        self.client = client
+    }
 
     init(configuration: APIConfiguration, token: String) throws {
         self.configuration = configuration
@@ -44,6 +33,57 @@ actor ActivityAPIRepository {
     }
 
     // MARK: - Reading
+
+    func integrationStatus() async throws -> HealthIntegrationStatus {
+        switch try await client.integrationsAppleHealthRetrieve() {
+        case .ok(let response): return Self.integration(try response.body.json)
+        case .undocumented(let status, let payload):
+            if [404, 405, 501].contains(status) { throw HealthIntegrationFailure.unsupportedServer }
+            throw await RepbaseAPIHTTPError.decode(statusCode: status, payload: payload)
+        }
+    }
+
+    func setIntegrationEnabled(_ enabled: Bool) async throws -> HealthIntegrationStatus {
+        // Actor methods are reentrant across network awaits. Serialize consent
+        // writes explicitly so an older Enable cannot finish after Pause.
+        let previous = integrationMutation
+        let client = client
+        let mutation = Task {
+            if let previous { _ = try? await previous.value }
+            let output = try await client.integrationsAppleHealthPartialUpdate(body: .json(.init(
+                enabled: enabled, consentVersion: enabled ? HealthSyncPolicy.consentVersion : nil)))
+            switch output {
+            case .ok(let response): return Self.integration(try response.body.json)
+            case .undocumented(let status, let payload):
+                if [404, 405, 501].contains(status) { throw HealthIntegrationFailure.unsupportedServer }
+                throw await RepbaseAPIHTTPError.decode(statusCode: status, payload: payload)
+            }
+        }
+        integrationMutation = mutation
+        return try await mutation.value
+    }
+
+    func workoutSummaries(page: Int?, garminOnly: Bool = false) async throws -> HealthWorkoutSummaryPage {
+        switch try await client.integrationsWorkoutsList(query: .init(page: page, source: garminOnly ? .garmin : nil)) {
+        case .ok(let response):
+            let value = try response.body.json
+            var visited: Set<Int> = [page ?? 1]
+            return HealthWorkoutSummaryPage(workouts: value.results.map(HealthWorkoutSummary.init(api:)),
+                                           nextPage: try nextPage(value.next, visited: &visited))
+        case .undocumented(let status, let payload):
+            if [404, 405, 501].contains(status) { throw HealthIntegrationFailure.unsupportedServer }
+            throw await RepbaseAPIHTTPError.decode(statusCode: status, payload: payload)
+        }
+    }
+
+    private static func integration(_ value: Components.Schemas.AppleHealthConnection) -> HealthIntegrationStatus {
+        HealthIntegrationStatus(enabled: value.enabled, consentVersion: value.consentVersion,
+                                lastSyncedAt: value.lastSyncAt,
+                                importedCount: value.lastSyncImportedCount,
+                                updatedCount: value.lastSyncUpdatedCount,
+                                schemaVersion: value.schemaVersion ?? 0,
+                                garminDirectAvailable: value.garminDirectAvailable ?? false)
+    }
 
     /// Every day the server holds on or after `start`, newest first.
     func steps(since start: Date) async throws -> [DailyStepCount] {
@@ -99,6 +139,7 @@ actor ActivityAPIRepository {
         case .noContent:
             return
         case .undocumented(let statusCode, _):
+            if statusCode == 403 { throw HealthIntegrationFailure.consentRequired }
             throw APIServiceError.undocumentedStatus(statusCode)
         }
     }
@@ -110,6 +151,7 @@ actor ActivityAPIRepository {
     /// first, and the answer would still be the server's to give.
     func importWorkouts(_ workouts: [HealthWorkout]) async throws -> HealthImportSummary {
         guard workouts.isEmpty == false else { return .nothing }
+        guard workouts.count <= HealthSyncPolicy.batchSize else { throw HealthIntegrationFailure.malformedPage }
 
         let output = try await client.sessionsImportHealthCreate(
             body: .json(
@@ -118,9 +160,17 @@ actor ActivityAPIRepository {
                         Components.Schemas.HealthWorkoutRequest(
                             externalId: $0.externalID,
                             activity: Self.activity($0.activity),
+                            workoutActivity: $0.workoutActivity.rawValue,
                             startedAt: $0.startedAt,
                             endedAt: $0.endedAt,
-                            distanceKm: Self.decimalString($0.distanceKilometres)
+                            durationSeconds: $0.durationSeconds,
+                            distanceKm: HealthSyncPolicy.boundedDecimalString($0.distanceKilometres, range: 0...9999.999, places: 3),
+                            activeEnergyKcal: HealthSyncPolicy.boundedDecimalString($0.energyKilocalories, range: 0...100000),
+                            averageHeartRateBpm: HealthSyncPolicy.heartRates(average: $0.averageHeartRateBPM, maximum: $0.maxHeartRateBPM).average,
+                            maxHeartRateBpm: HealthSyncPolicy.heartRates(average: $0.averageHeartRateBPM, maximum: $0.maxHeartRateBPM).maximum,
+                            sourceName: HealthSyncPolicy.label($0.sourceName, maximum: 100),
+                            sourceBundleId: HealthSyncPolicy.label($0.sourceBundleID, maximum: 255),
+                            deviceName: HealthSyncPolicy.label($0.deviceName, maximum: 100)
                         )
                     }
                 )
@@ -133,9 +183,12 @@ actor ActivityAPIRepository {
             return HealthImportSummary(
                 imported: result.imported,
                 skippedOverlapping: result.skippedOverlapping,
-                alreadyImported: result.alreadyImported
+                alreadyImported: result.alreadyImported,
+                updated: result.updated ?? 0,
+                linked: result.linked ?? 0
             )
         case .undocumented(let statusCode, _):
+            if statusCode == 403 { throw HealthIntegrationFailure.consentRequired }
             throw APIServiceError.undocumentedStatus(statusCode)
         }
     }
@@ -172,8 +225,6 @@ actor ActivityAPIRepository {
 
     private nonisolated static func activity(
         _ type: WorkoutType
-    // Named WorkoutTypeEnum rather than ActivityEnum since the schema stopped
-    // emitting one component per field name. Same four values either way.
     ) -> Components.Schemas.WorkoutTypeEnum {
         switch type {
         case .lifting: .lifting
@@ -181,15 +232,6 @@ actor ActivityAPIRepository {
         case .biking: .biking
         case .swimming: .swimming
         }
-    }
-
-    /// A decimal as a string, which is how the server sends and expects them.
-    ///
-    /// Putting a decimal through a JSON number gives away the exactness the
-    /// type exists to keep, so the contract types it as a string at both ends.
-    private nonisolated static func decimalString(_ value: Double?) -> String? {
-        guard let value, value.isFinite, value >= 0 else { return nil }
-        return String(format: "%.3f", value)
     }
 
     /// `YYYY-MM-DD` in the device's own calendar.
@@ -255,5 +297,27 @@ actor ActivityAPIRepository {
         case "http": return 80
         default: return nil
         }
+    }
+}
+
+extension HealthWorkoutSummary {
+    init(api value: Components.Schemas.HealthWorkoutSummary) {
+        self.init(id: value.id, sessionID: value.session, externalID: value.externalId,
+                  provider: value.provider, source: value.source,
+                  sourceName: value.sourceName, sourceBundleID: value.sourceBundleId,
+                  deviceName: value.deviceName,
+                  activity: WorkoutActivity(rawValue: value.workoutActivity) ?? .other,
+                  startedAt: value.startedAt, endedAt: value.endedAt,
+                  durationSeconds: value.durationSeconds,
+                  distanceKilometers: Self.metric(value.distanceKm),
+                  activeEnergyKilocalories: Self.metric(value.activeEnergyKcal),
+                  averageHeartRateBPM: Self.metric(value.averageHeartRateBpm),
+                  maxHeartRateBPM: Self.metric(value.maxHeartRateBpm), updatedAt: value.updatedAt)
+    }
+
+    private static func metric(_ value: String?) -> Decimal? {
+        guard let value, let decimal = Decimal(string: value, locale: Locale(identifier: "en_US_POSIX")),
+              !decimal.isNaN, decimal >= 0 else { return nil }
+        return decimal
     }
 }

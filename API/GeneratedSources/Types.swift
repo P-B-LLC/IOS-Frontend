@@ -69,6 +69,59 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/body-weight/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/body-weight/{id}//delete(body_weight_destroy)`.
     func bodyWeightDestroy(_ input: Operations.BodyWeightDestroy.Input) async throws -> Operations.BodyWeightDestroy.Output
+    /// Questions addressed only to the signed-in follower; no social push.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/invitations/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/invitations//get(calendar_invitations_list)`.
+    func calendarInvitationsList(_ input: Operations.CalendarInvitationsList.Input) async throws -> Operations.CalendarInvitationsList.Output
+    /// Questions addressed only to the signed-in follower; no social push.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/invitations/{id}/accept/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/accept//post(calendar_invitations_accept_create)`.
+    func calendarInvitationsAcceptCreate(_ input: Operations.CalendarInvitationsAcceptCreate.Input) async throws -> Operations.CalendarInvitationsAcceptCreate.Output
+    /// Questions addressed only to the signed-in follower; no social push.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/invitations/{id}/decline/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/decline//post(calendar_invitations_decline_create)`.
+    func calendarInvitationsDeclineCreate(_ input: Operations.CalendarInvitationsDeclineCreate.Input) async throws -> Operations.CalendarInvitationsDeclineCreate.Output
+    /// - Remark: HTTP `GET /api/v1/calendar/share-recipients/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/share-recipients//get(calendar_share_recipients_list)`.
+    func calendarShareRecipientsList(_ input: Operations.CalendarShareRecipientsList.Input) async throws -> Operations.CalendarShareRecipientsList.Output
+    /// Read-only shared items, separate from own tasks, counters and reminders.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shared/day/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shared/day//get(calendar_shared_day_list)`.
+    func calendarSharedDayList(_ input: Operations.CalendarSharedDayList.Input) async throws -> Operations.CalendarSharedDayList.Output
+    /// Read-only shared items, separate from own tasks, counters and reminders.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shared/month/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shared/month//get(calendar_shared_month_retrieve)`.
+    func calendarSharedMonthRetrieve(_ input: Operations.CalendarSharedMonthRetrieve.Input) async throws -> Operations.CalendarSharedMonthRetrieve.Output
+    /// Read-only shared items, separate from own tasks, counters and reminders.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shared/people/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shared/people//get(calendar_shared_people_list)`.
+    func calendarSharedPeopleList(_ input: Operations.CalendarSharedPeopleList.Input) async throws -> Operations.CalendarSharedPeopleList.Output
+    /// Owner management; never reads another account's private planner row.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shares/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares//get(calendar_shares_list)`.
+    func calendarSharesList(_ input: Operations.CalendarSharesList.Input) async throws -> Operations.CalendarSharesList.Output
+    /// Invite up to 20 current followers. Default scope is only this occurrence. An old declined/revoked invitation requires explicit reinvite=true; retries never silently reactivate it.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/shares/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares//post(calendar_shares_create)`.
+    func calendarSharesCreate(_ input: Operations.CalendarSharesCreate.Input) async throws -> Operations.CalendarSharesCreate.Output
+    /// Owner management; never reads another account's private planner row.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/shares/{id}/revoke/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares/{id}/revoke//post(calendar_shares_revoke_create)`.
+    func calendarSharesRevokeCreate(_ input: Operations.CalendarSharesRevokeCreate.Input) async throws -> Operations.CalendarSharesRevokeCreate.Output
+    /// Make only this occurrence private, or stop sharing its entire repeating lineage. Privacy exceptions survive date moves and future-rule edits.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/shares/privacy/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares/privacy//post(calendar_shares_privacy_create)`.
+    func calendarSharesPrivacyCreate(_ input: Operations.CalendarSharesPrivacyCreate.Input) async throws -> Operations.CalendarSharesPrivacyCreate.Output
     /// Rotations that repeat every N days rather than every week.
     ///
     /// - Remark: HTTP `GET /api/v1/cycles/`.
@@ -145,6 +198,29 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/exercises/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/exercises/{id}//delete(exercises_destroy)`.
     func exercisesDestroy(_ input: Operations.ExercisesDestroy.Input) async throws -> Operations.ExercisesDestroy.Output
+    /// - Remark: HTTP `GET /api/v1/food/cookbooks/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks//get(food_cookbooks_list)`.
+    func foodCookbooksList(_ input: Operations.FoodCookbooksList.Input) async throws -> Operations.FoodCookbooksList.Output
+    /// - Remark: HTTP `POST /api/v1/food/cookbooks/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks//post(food_cookbooks_create)`.
+    func foodCookbooksCreate(_ input: Operations.FoodCookbooksCreate.Input) async throws -> Operations.FoodCookbooksCreate.Output
+    /// - Remark: HTTP `GET /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//get(food_cookbooks_retrieve)`.
+    func foodCookbooksRetrieve(_ input: Operations.FoodCookbooksRetrieve.Input) async throws -> Operations.FoodCookbooksRetrieve.Output
+    /// - Remark: HTTP `PATCH /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//patch(food_cookbooks_partial_update)`.
+    func foodCookbooksPartialUpdate(_ input: Operations.FoodCookbooksPartialUpdate.Input) async throws -> Operations.FoodCookbooksPartialUpdate.Output
+    /// - Remark: HTTP `PUT /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//put(food_cookbooks_update)`.
+    func foodCookbooksUpdate(_ input: Operations.FoodCookbooksUpdate.Input) async throws -> Operations.FoodCookbooksUpdate.Output
+    /// - Remark: HTTP `DELETE /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//delete(food_cookbooks_destroy)`.
+    func foodCookbooksDestroy(_ input: Operations.FoodCookbooksDestroy.Input) async throws -> Operations.FoodCookbooksDestroy.Output
+    /// Searches the Open Food Facts index for product identities only. Candidates contain no nutrition or serving basis. Before offering portions or logging, resolve the source_id barcode with food/search. Attribute Open Food Facts (ODbL).
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/discover/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/discover//get(food_discover_list)`.
+    func foodDiscoverList(_ input: Operations.FoodDiscoverList.Input) async throws -> Operations.FoodDiscoverList.Output
     /// Foods inside meals. Ownership is the meal's owner, one step away.
     ///
     /// - Remark: HTTP `GET /api/v1/food/entries/`.
@@ -404,6 +480,15 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /api/v1/gyms/{id}/members/`.
     /// - Remark: Generated from `#/paths//api/v1/gyms/{id}/members//get(gyms_members_list)`.
     func gymsMembersList(_ input: Operations.GymsMembersList.Input) async throws -> Operations.GymsMembersList.Output
+    /// - Remark: HTTP `GET /api/v1/integrations/apple-health/`.
+    /// - Remark: Generated from `#/paths//api/v1/integrations/apple-health//get(integrations_apple_health_retrieve)`.
+    func integrationsAppleHealthRetrieve(_ input: Operations.IntegrationsAppleHealthRetrieve.Input) async throws -> Operations.IntegrationsAppleHealthRetrieve.Output
+    /// - Remark: HTTP `PATCH /api/v1/integrations/apple-health/`.
+    /// - Remark: Generated from `#/paths//api/v1/integrations/apple-health//patch(integrations_apple_health_partial_update)`.
+    func integrationsAppleHealthPartialUpdate(_ input: Operations.IntegrationsAppleHealthPartialUpdate.Input) async throws -> Operations.IntegrationsAppleHealthPartialUpdate.Output
+    /// - Remark: HTTP `GET /api/v1/integrations/workouts/`.
+    /// - Remark: Generated from `#/paths//api/v1/integrations/workouts//get(integrations_workouts_list)`.
+    func integrationsWorkoutsList(_ input: Operations.IntegrationsWorkoutsList.Input) async throws -> Operations.IntegrationsWorkoutsList.Output
     /// - Remark: HTTP `GET /api/v1/me/`.
     /// - Remark: Generated from `#/paths//api/v1/me//get(me_retrieve)`.
     func meRetrieve(_ input: Operations.MeRetrieve.Input) async throws -> Operations.MeRetrieve.Output
@@ -891,6 +976,11 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /api/v1/social/comments/{id}/report/`.
     /// - Remark: Generated from `#/paths//api/v1/social/comments/{id}/report//post(social_comments_report_create)`.
     func socialCommentsReportCreate(_ input: Operations.SocialCommentsReportCreate.Input) async throws -> Operations.SocialCommentsReportCreate.Output
+    /// Which parts of the new Social this account has been given. The app asks at launch and when it returns to the foreground, and treats a part it is not told about, or a failed request, as off. The server enforces the ones that are its to enforce -- takes, sounds, measurement and ranking -- whatever the app does.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/features/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/features//get(social_features_retrieve)`.
+    func socialFeaturesRetrieve(_ input: Operations.SocialFeaturesRetrieve.Input) async throws -> Operations.SocialFeaturesRetrieve.Output
     /// What the people you follow have posted, newest first.
     ///
     /// Fanned out on read: a page is one indexed walk over the posts of everyone
@@ -974,6 +1064,8 @@ public protocol APIProtocol: Sendable {
     func socialForYouPreferencesPartialUpdate(_ input: Operations.SocialForYouPreferencesPartialUpdate.Input) async throws -> Operations.SocialForYouPreferencesPartialUpdate.Output
     /// Record a batch of views. Posts the reader cannot see, and their own posts, are ignored rather than refused, so a client does not need to know which of the posts it showed have since gone.
     ///
+    /// With `schema_version` 2 each event is a summary of one exposure measured on the device, and the batch carries a `batch_id`: sending the same batch again adds nothing and answers with `duplicate` true. Figures beyond what could have happened are brought down to it, not refused. A body over 64 kB is a 413.
+    ///
     /// - Remark: HTTP `POST /api/v1/social/impressions/`.
     /// - Remark: Generated from `#/paths//api/v1/social/impressions//post(social_impressions_create)`.
     func socialImpressionsCreate(_ input: Operations.SocialImpressionsCreate.Input) async throws -> Operations.SocialImpressionsCreate.Output
@@ -1026,7 +1118,7 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /api/v1/social/posts/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//get(social_posts_retrieve)`.
     func socialPostsRetrieve(_ input: Operations.SocialPostsRetrieve.Input) async throws -> Operations.SocialPostsRetrieve.Output
-    /// Change the caption or who can see this post. The snapshot records what happened and is not editable.
+    /// Change the caption, who can see this post, who may post a take of it, its language or its topics. The snapshot records what happened and is not editable, and neither is what the post is a take of. Closing a post to takes stops new ones; takes already posted stay.
     ///
     /// - Remark: HTTP `PATCH /api/v1/social/posts/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//patch(social_posts_partial_update)`.
@@ -1042,6 +1134,17 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//delete(social_posts_destroy)`.
     func socialPostsDestroy(_ input: Operations.SocialPostsDestroy.Input) async throws -> Operations.SocialPostsDestroy.Output
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/{id}/cookbook/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/cookbook//get(social_posts_cookbook_retrieve)`.
+    func socialPostsCookbookRetrieve(_ input: Operations.SocialPostsCookbookRetrieve.Input) async throws -> Operations.SocialPostsCookbookRetrieve.Output
     /// Ask for fewer posts like this one on your For You page. It leaves the page at once, and its kind of content -- its topics and the exercises in it -- is shown less from then on; its author only a little less, unlike "not interested". Replaces "not interested" or "more like this" on the same post. Saying it twice is not an error.
     ///
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/fewer-like-this/`.
@@ -1097,6 +1200,17 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/repost/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/repost//delete(social_posts_repost_destroy)`.
     func socialPostsRepostDestroy(_ input: Operations.SocialPostsRepostDestroy.Input) async throws -> Operations.SocialPostsRepostDestroy.Output
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-cookbook/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-cookbook//post(social_posts_save_cookbook_create)`.
+    func socialPostsSaveCookbookCreate(_ input: Operations.SocialPostsSaveCookbookCreate.Input) async throws -> Operations.SocialPostsSaveCookbookCreate.Output
     /// Copy a posted meal into your own saved meals. The foods and their servings are taken whole, so applying it to a day later gives the same numbers the post showed.
     ///
     /// Saving the same post again does not make a second copy: the one already saved is returned with already_saved true, and a 200 rather than a 201, because nothing was created.
@@ -1111,6 +1225,21 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-workout/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-workout//post(social_posts_save_workout_create)`.
     func socialPostsSaveWorkoutCreate(_ input: Operations.SocialPostsSaveWorkoutCreate.Input) async throws -> Operations.SocialPostsSaveWorkoutCreate.Output
+    /// The takes people have posted of this post, newest first: the ones that answer it directly, and only those the reader may see. A repost's id stands for the post it passes on.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/{id}/takes/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/takes//get(social_posts_takes_list)`.
+    func socialPostsTakesList(_ input: Operations.SocialPostsTakesList.Input) async throws -> Operations.SocialPostsTakesList.Output
+    /// Say "I tried this" about somebody else's post. It is the reader's own statement and is only ever made by this request: nothing they track -- a finished workout, a logged meal -- makes it for them. Saying it twice is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/tried/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/tried//post(social_posts_tried_create)`.
+    func socialPostsTriedCreate(_ input: Operations.SocialPostsTriedCreate.Input) async throws -> Operations.SocialPostsTriedCreate.Output
+    /// Take back "I tried this". Answers with the post, not 204.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/tried/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/tried//delete(social_posts_tried_destroy)`.
+    func socialPostsTriedDestroy(_ input: Operations.SocialPostsTriedDestroy.Input) async throws -> Operations.SocialPostsTriedDestroy.Output
     /// Attach a clip to your own post, replacing any clip already on it. Send the file itself as the request body with a video Content-Type -- not base64, not multipart.
     ///
     /// Accepted: MP4 or QuickTime with H.264 or HEVC video, within the server's size, length and dimension limits. What the file is, and how it is stored, is read from its bytes; the Content-Type only has to say it is a video. Location and device metadata are removed before the clip is stored.
@@ -1130,6 +1259,39 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /api/v1/social/posts/{post_id}/video-upload/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{post_id}/video-upload//post(social_posts_video_upload_create)`.
     func socialPostsVideoUploadCreate(_ input: Operations.SocialPostsVideoUploadCreate.Input) async throws -> Operations.SocialPostsVideoUploadCreate.Output
+    /// The prompts a post can answer. Send a code as `prompt` when creating a post; browse one with `?prompt=` on the post list.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/prompts/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/prompts//get(social_prompts_list)`.
+    func socialPromptsList(_ input: Operations.SocialPromptsList.Input) async throws -> Operations.SocialPromptsList.Output
+    /// Publish the audio of one of your own posts as a sound others may set their clips to. The post needs an approved video with audio. Asking again for the same post answers 200 with the sound already made. The audio is prepared shortly afterwards; until then `audio_url` is null.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/sounds/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds//post(social_sounds_create)`.
+    func socialSoundsCreate(_ input: Operations.SocialSoundsCreate.Input) async throws -> Operations.SocialSoundsCreate.Output
+    /// - Remark: HTTP `GET /api/v1/social/sounds/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//get(social_sounds_retrieve)`.
+    func socialSoundsRetrieve(_ input: Operations.SocialSoundsRetrieve.Input) async throws -> Operations.SocialSoundsRetrieve.Output
+    /// Rename your sound, or change who may use it. Closing it stops new uses; posts already set to it keep it.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/social/sounds/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//patch(social_sounds_partial_update)`.
+    func socialSoundsPartialUpdate(_ input: Operations.SocialSoundsPartialUpdate.Input) async throws -> Operations.SocialSoundsPartialUpdate.Output
+    /// Take your sound down. Posts set to it stay and lose its credit, its audio stops being served, and nobody new can use it. `restore` puts all of that back.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/sounds/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//delete(social_sounds_destroy)`.
+    func socialSoundsDestroy(_ input: Operations.SocialSoundsDestroy.Input) async throws -> Operations.SocialSoundsDestroy.Output
+    /// The posts set to this sound that the reader may see, newest first. A sound that has been taken down has no such list.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/sounds/{id}/posts/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}/posts//get(social_sounds_posts_list)`.
+    func socialSoundsPostsList(_ input: Operations.SocialSoundsPostsList.Input) async throws -> Operations.SocialSoundsPostsList.Output
+    /// Put back a sound you took down. Not one a moderator removed.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/sounds/{id}/restore/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}/restore//post(social_sounds_restore_create)`.
+    func socialSoundsRestoreCreate(_ input: Operations.SocialSoundsRestoreCreate.Input) async throws -> Operations.SocialSoundsRestoreCreate.Output
     /// - Remark: HTTP `GET /api/v1/social/spotlight/`.
     /// - Remark: Generated from `#/paths//api/v1/social/spotlight//get(community_spotlight_retrieve)`.
     func communitySpotlightRetrieve(_ input: Operations.CommunitySpotlightRetrieve.Input) async throws -> Operations.CommunitySpotlightRetrieve.Output
@@ -1264,6 +1426,9 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /api/v1/workouts/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/workouts/{id}//delete(workouts_destroy)`.
     func workoutsDestroy(_ input: Operations.WorkoutsDestroy.Input) async throws -> Operations.WorkoutsDestroy.Output
+    /// - Remark: HTTP `GET /api/v1/workouts/capabilities/`.
+    /// - Remark: Generated from `#/paths//api/v1/workouts/capabilities//get(workouts_capabilities_retrieve)`.
+    func workoutsCapabilitiesRetrieve(_ input: Operations.WorkoutsCapabilitiesRetrieve.Input) async throws -> Operations.WorkoutsCapabilitiesRetrieve.Output
 }
 
 /// Convenience overloads for operation inputs.
@@ -1455,6 +1620,141 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/body-weight/{id}//delete(body_weight_destroy)`.
     public func bodyWeightDestroy(path: Operations.BodyWeightDestroy.Input.Path) async throws -> Operations.BodyWeightDestroy.Output {
         try await bodyWeightDestroy(Operations.BodyWeightDestroy.Input(path: path))
+    }
+    /// Questions addressed only to the signed-in follower; no social push.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/invitations/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/invitations//get(calendar_invitations_list)`.
+    public func calendarInvitationsList(
+        query: Operations.CalendarInvitationsList.Input.Query = .init(),
+        headers: Operations.CalendarInvitationsList.Input.Headers = .init()
+    ) async throws -> Operations.CalendarInvitationsList.Output {
+        try await calendarInvitationsList(Operations.CalendarInvitationsList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Questions addressed only to the signed-in follower; no social push.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/invitations/{id}/accept/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/accept//post(calendar_invitations_accept_create)`.
+    public func calendarInvitationsAcceptCreate(
+        path: Operations.CalendarInvitationsAcceptCreate.Input.Path,
+        headers: Operations.CalendarInvitationsAcceptCreate.Input.Headers = .init()
+    ) async throws -> Operations.CalendarInvitationsAcceptCreate.Output {
+        try await calendarInvitationsAcceptCreate(Operations.CalendarInvitationsAcceptCreate.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Questions addressed only to the signed-in follower; no social push.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/invitations/{id}/decline/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/decline//post(calendar_invitations_decline_create)`.
+    public func calendarInvitationsDeclineCreate(
+        path: Operations.CalendarInvitationsDeclineCreate.Input.Path,
+        headers: Operations.CalendarInvitationsDeclineCreate.Input.Headers = .init()
+    ) async throws -> Operations.CalendarInvitationsDeclineCreate.Output {
+        try await calendarInvitationsDeclineCreate(Operations.CalendarInvitationsDeclineCreate.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// - Remark: HTTP `GET /api/v1/calendar/share-recipients/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/share-recipients//get(calendar_share_recipients_list)`.
+    public func calendarShareRecipientsList(
+        query: Operations.CalendarShareRecipientsList.Input.Query = .init(),
+        headers: Operations.CalendarShareRecipientsList.Input.Headers = .init()
+    ) async throws -> Operations.CalendarShareRecipientsList.Output {
+        try await calendarShareRecipientsList(Operations.CalendarShareRecipientsList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Read-only shared items, separate from own tasks, counters and reminders.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shared/day/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shared/day//get(calendar_shared_day_list)`.
+    public func calendarSharedDayList(
+        query: Operations.CalendarSharedDayList.Input.Query,
+        headers: Operations.CalendarSharedDayList.Input.Headers = .init()
+    ) async throws -> Operations.CalendarSharedDayList.Output {
+        try await calendarSharedDayList(Operations.CalendarSharedDayList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Read-only shared items, separate from own tasks, counters and reminders.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shared/month/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shared/month//get(calendar_shared_month_retrieve)`.
+    public func calendarSharedMonthRetrieve(
+        query: Operations.CalendarSharedMonthRetrieve.Input.Query,
+        headers: Operations.CalendarSharedMonthRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.CalendarSharedMonthRetrieve.Output {
+        try await calendarSharedMonthRetrieve(Operations.CalendarSharedMonthRetrieve.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Read-only shared items, separate from own tasks, counters and reminders.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shared/people/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shared/people//get(calendar_shared_people_list)`.
+    public func calendarSharedPeopleList(
+        query: Operations.CalendarSharedPeopleList.Input.Query = .init(),
+        headers: Operations.CalendarSharedPeopleList.Input.Headers = .init()
+    ) async throws -> Operations.CalendarSharedPeopleList.Output {
+        try await calendarSharedPeopleList(Operations.CalendarSharedPeopleList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Owner management; never reads another account's private planner row.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shares/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares//get(calendar_shares_list)`.
+    public func calendarSharesList(
+        query: Operations.CalendarSharesList.Input.Query = .init(),
+        headers: Operations.CalendarSharesList.Input.Headers = .init()
+    ) async throws -> Operations.CalendarSharesList.Output {
+        try await calendarSharesList(Operations.CalendarSharesList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Invite up to 20 current followers. Default scope is only this occurrence. An old declined/revoked invitation requires explicit reinvite=true; retries never silently reactivate it.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/shares/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares//post(calendar_shares_create)`.
+    public func calendarSharesCreate(
+        headers: Operations.CalendarSharesCreate.Input.Headers = .init(),
+        body: Operations.CalendarSharesCreate.Input.Body
+    ) async throws -> Operations.CalendarSharesCreate.Output {
+        try await calendarSharesCreate(Operations.CalendarSharesCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Owner management; never reads another account's private planner row.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/shares/{id}/revoke/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares/{id}/revoke//post(calendar_shares_revoke_create)`.
+    public func calendarSharesRevokeCreate(
+        path: Operations.CalendarSharesRevokeCreate.Input.Path,
+        headers: Operations.CalendarSharesRevokeCreate.Input.Headers = .init()
+    ) async throws -> Operations.CalendarSharesRevokeCreate.Output {
+        try await calendarSharesRevokeCreate(Operations.CalendarSharesRevokeCreate.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Make only this occurrence private, or stop sharing its entire repeating lineage. Privacy exceptions survive date moves and future-rule edits.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/shares/privacy/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares/privacy//post(calendar_shares_privacy_create)`.
+    public func calendarSharesPrivacyCreate(body: Operations.CalendarSharesPrivacyCreate.Input.Body) async throws -> Operations.CalendarSharesPrivacyCreate.Output {
+        try await calendarSharesPrivacyCreate(Operations.CalendarSharesPrivacyCreate.Input(body: body))
     }
     /// Rotations that repeat every N days rather than every week.
     ///
@@ -1661,6 +1961,83 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/exercises/{id}//delete(exercises_destroy)`.
     public func exercisesDestroy(path: Operations.ExercisesDestroy.Input.Path) async throws -> Operations.ExercisesDestroy.Output {
         try await exercisesDestroy(Operations.ExercisesDestroy.Input(path: path))
+    }
+    /// - Remark: HTTP `GET /api/v1/food/cookbooks/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks//get(food_cookbooks_list)`.
+    public func foodCookbooksList(
+        query: Operations.FoodCookbooksList.Input.Query = .init(),
+        headers: Operations.FoodCookbooksList.Input.Headers = .init()
+    ) async throws -> Operations.FoodCookbooksList.Output {
+        try await foodCookbooksList(Operations.FoodCookbooksList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
+    /// - Remark: HTTP `POST /api/v1/food/cookbooks/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks//post(food_cookbooks_create)`.
+    public func foodCookbooksCreate(
+        headers: Operations.FoodCookbooksCreate.Input.Headers = .init(),
+        body: Operations.FoodCookbooksCreate.Input.Body
+    ) async throws -> Operations.FoodCookbooksCreate.Output {
+        try await foodCookbooksCreate(Operations.FoodCookbooksCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// - Remark: HTTP `GET /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//get(food_cookbooks_retrieve)`.
+    public func foodCookbooksRetrieve(
+        path: Operations.FoodCookbooksRetrieve.Input.Path,
+        headers: Operations.FoodCookbooksRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.FoodCookbooksRetrieve.Output {
+        try await foodCookbooksRetrieve(Operations.FoodCookbooksRetrieve.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// - Remark: HTTP `PATCH /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//patch(food_cookbooks_partial_update)`.
+    public func foodCookbooksPartialUpdate(
+        path: Operations.FoodCookbooksPartialUpdate.Input.Path,
+        headers: Operations.FoodCookbooksPartialUpdate.Input.Headers = .init(),
+        body: Operations.FoodCookbooksPartialUpdate.Input.Body? = nil
+    ) async throws -> Operations.FoodCookbooksPartialUpdate.Output {
+        try await foodCookbooksPartialUpdate(Operations.FoodCookbooksPartialUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// - Remark: HTTP `PUT /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//put(food_cookbooks_update)`.
+    public func foodCookbooksUpdate(
+        path: Operations.FoodCookbooksUpdate.Input.Path,
+        headers: Operations.FoodCookbooksUpdate.Input.Headers = .init(),
+        body: Operations.FoodCookbooksUpdate.Input.Body
+    ) async throws -> Operations.FoodCookbooksUpdate.Output {
+        try await foodCookbooksUpdate(Operations.FoodCookbooksUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// - Remark: HTTP `DELETE /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//delete(food_cookbooks_destroy)`.
+    public func foodCookbooksDestroy(path: Operations.FoodCookbooksDestroy.Input.Path) async throws -> Operations.FoodCookbooksDestroy.Output {
+        try await foodCookbooksDestroy(Operations.FoodCookbooksDestroy.Input(path: path))
+    }
+    /// Searches the Open Food Facts index for product identities only. Candidates contain no nutrition or serving basis. Before offering portions or logging, resolve the source_id barcode with food/search. Attribute Open Food Facts (ODbL).
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/discover/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/discover//get(food_discover_list)`.
+    public func foodDiscoverList(
+        query: Operations.FoodDiscoverList.Input.Query,
+        headers: Operations.FoodDiscoverList.Input.Headers = .init()
+    ) async throws -> Operations.FoodDiscoverList.Output {
+        try await foodDiscoverList(Operations.FoodDiscoverList.Input(
+            query: query,
+            headers: headers
+        ))
     }
     /// Foods inside meals. Ownership is the meal's owner, one step away.
     ///
@@ -2205,6 +2582,33 @@ extension APIProtocol {
             headers: headers
         ))
     }
+    /// - Remark: HTTP `GET /api/v1/integrations/apple-health/`.
+    /// - Remark: Generated from `#/paths//api/v1/integrations/apple-health//get(integrations_apple_health_retrieve)`.
+    public func integrationsAppleHealthRetrieve(headers: Operations.IntegrationsAppleHealthRetrieve.Input.Headers = .init()) async throws -> Operations.IntegrationsAppleHealthRetrieve.Output {
+        try await integrationsAppleHealthRetrieve(Operations.IntegrationsAppleHealthRetrieve.Input(headers: headers))
+    }
+    /// - Remark: HTTP `PATCH /api/v1/integrations/apple-health/`.
+    /// - Remark: Generated from `#/paths//api/v1/integrations/apple-health//patch(integrations_apple_health_partial_update)`.
+    public func integrationsAppleHealthPartialUpdate(
+        headers: Operations.IntegrationsAppleHealthPartialUpdate.Input.Headers = .init(),
+        body: Operations.IntegrationsAppleHealthPartialUpdate.Input.Body? = nil
+    ) async throws -> Operations.IntegrationsAppleHealthPartialUpdate.Output {
+        try await integrationsAppleHealthPartialUpdate(Operations.IntegrationsAppleHealthPartialUpdate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// - Remark: HTTP `GET /api/v1/integrations/workouts/`.
+    /// - Remark: Generated from `#/paths//api/v1/integrations/workouts//get(integrations_workouts_list)`.
+    public func integrationsWorkoutsList(
+        query: Operations.IntegrationsWorkoutsList.Input.Query = .init(),
+        headers: Operations.IntegrationsWorkoutsList.Input.Headers = .init()
+    ) async throws -> Operations.IntegrationsWorkoutsList.Output {
+        try await integrationsWorkoutsList(Operations.IntegrationsWorkoutsList.Input(
+            query: query,
+            headers: headers
+        ))
+    }
     /// - Remark: HTTP `GET /api/v1/me/`.
     /// - Remark: Generated from `#/paths//api/v1/me//get(me_retrieve)`.
     public func meRetrieve(headers: Operations.MeRetrieve.Input.Headers = .init()) async throws -> Operations.MeRetrieve.Output {
@@ -2439,11 +2843,13 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/planner/{id}//patch(planner_partial_update)`.
     public func plannerPartialUpdate(
         path: Operations.PlannerPartialUpdate.Input.Path,
+        query: Operations.PlannerPartialUpdate.Input.Query = .init(),
         headers: Operations.PlannerPartialUpdate.Input.Headers = .init(),
         body: Operations.PlannerPartialUpdate.Input.Body? = nil
     ) async throws -> Operations.PlannerPartialUpdate.Output {
         try await plannerPartialUpdate(Operations.PlannerPartialUpdate.Input(
             path: path,
+            query: query,
             headers: headers,
             body: body
         ))
@@ -2457,11 +2863,13 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/planner/{id}//put(planner_update)`.
     public func plannerUpdate(
         path: Operations.PlannerUpdate.Input.Path,
+        query: Operations.PlannerUpdate.Input.Query = .init(),
         headers: Operations.PlannerUpdate.Input.Headers = .init(),
         body: Operations.PlannerUpdate.Input.Body
     ) async throws -> Operations.PlannerUpdate.Output {
         try await plannerUpdate(Operations.PlannerUpdate.Input(
             path: path,
+            query: query,
             headers: headers,
             body: body
         ))
@@ -3238,6 +3646,13 @@ extension APIProtocol {
             body: body
         ))
     }
+    /// Which parts of the new Social this account has been given. The app asks at launch and when it returns to the foreground, and treats a part it is not told about, or a failed request, as off. The server enforces the ones that are its to enforce -- takes, sounds, measurement and ranking -- whatever the app does.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/features/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/features//get(social_features_retrieve)`.
+    public func socialFeaturesRetrieve(headers: Operations.SocialFeaturesRetrieve.Input.Headers = .init()) async throws -> Operations.SocialFeaturesRetrieve.Output {
+        try await socialFeaturesRetrieve(Operations.SocialFeaturesRetrieve.Input(headers: headers))
+    }
     /// What the people you follow have posted, newest first.
     ///
     /// Fanned out on read: a page is one indexed walk over the posts of everyone
@@ -3361,6 +3776,8 @@ extension APIProtocol {
     }
     /// Record a batch of views. Posts the reader cannot see, and their own posts, are ignored rather than refused, so a client does not need to know which of the posts it showed have since gone.
     ///
+    /// With `schema_version` 2 each event is a summary of one exposure measured on the device, and the batch carries a `batch_id`: sending the same batch again adds nothing and answers with `duplicate` true. Figures beyond what could have happened are brought down to it, not refused. A body over 64 kB is a 413.
+    ///
     /// - Remark: HTTP `POST /api/v1/social/impressions/`.
     /// - Remark: Generated from `#/paths//api/v1/social/impressions//post(social_impressions_create)`.
     public func socialImpressionsCreate(
@@ -3463,7 +3880,7 @@ extension APIProtocol {
             headers: headers
         ))
     }
-    /// Change the caption or who can see this post. The snapshot records what happened and is not editable.
+    /// Change the caption, who can see this post, who may post a take of it, its language or its topics. The snapshot records what happened and is not editable, and neither is what the post is a take of. Closing a post to takes stops new ones; takes already posted stay.
     ///
     /// - Remark: HTTP `PATCH /api/v1/social/posts/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//patch(social_posts_partial_update)`.
@@ -3490,6 +3907,25 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//delete(social_posts_destroy)`.
     public func socialPostsDestroy(path: Operations.SocialPostsDestroy.Input.Path) async throws -> Operations.SocialPostsDestroy.Output {
         try await socialPostsDestroy(Operations.SocialPostsDestroy.Input(path: path))
+    }
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/{id}/cookbook/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/cookbook//get(social_posts_cookbook_retrieve)`.
+    public func socialPostsCookbookRetrieve(
+        path: Operations.SocialPostsCookbookRetrieve.Input.Path,
+        headers: Operations.SocialPostsCookbookRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.SocialPostsCookbookRetrieve.Output {
+        try await socialPostsCookbookRetrieve(Operations.SocialPostsCookbookRetrieve.Input(
+            path: path,
+            headers: headers
+        ))
     }
     /// Ask for fewer posts like this one on your For You page. It leaves the page at once, and its kind of content -- its topics and the exercises in it -- is shown less from then on; its author only a little less, unlike "not interested". Replaces "not interested" or "more like this" on the same post. Saying it twice is not an error.
     ///
@@ -3600,6 +4036,25 @@ extension APIProtocol {
             headers: headers
         ))
     }
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-cookbook/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-cookbook//post(social_posts_save_cookbook_create)`.
+    public func socialPostsSaveCookbookCreate(
+        path: Operations.SocialPostsSaveCookbookCreate.Input.Path,
+        headers: Operations.SocialPostsSaveCookbookCreate.Input.Headers = .init()
+    ) async throws -> Operations.SocialPostsSaveCookbookCreate.Output {
+        try await socialPostsSaveCookbookCreate(Operations.SocialPostsSaveCookbookCreate.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// Copy a posted meal into your own saved meals. The foods and their servings are taken whole, so applying it to a day later gives the same numbers the post showed.
     ///
     /// Saving the same post again does not make a second copy: the one already saved is returned with already_saved true, and a 200 rather than a 201, because nothing was created.
@@ -3608,11 +4063,13 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-meal//post(social_posts_save_meal_create)`.
     public func socialPostsSaveMealCreate(
         path: Operations.SocialPostsSaveMealCreate.Input.Path,
-        headers: Operations.SocialPostsSaveMealCreate.Input.Headers = .init()
+        headers: Operations.SocialPostsSaveMealCreate.Input.Headers = .init(),
+        body: Operations.SocialPostsSaveMealCreate.Input.Body
     ) async throws -> Operations.SocialPostsSaveMealCreate.Output {
         try await socialPostsSaveMealCreate(Operations.SocialPostsSaveMealCreate.Input(
             path: path,
-            headers: headers
+            headers: headers,
+            body: body
         ))
     }
     /// Copy a posted workout into your own workouts. The exercises and their set counts are taken; weights are not, because a workout you save is a plan to follow rather than a record of somebody else's session.
@@ -3626,6 +4083,47 @@ extension APIProtocol {
         headers: Operations.SocialPostsSaveWorkoutCreate.Input.Headers = .init()
     ) async throws -> Operations.SocialPostsSaveWorkoutCreate.Output {
         try await socialPostsSaveWorkoutCreate(Operations.SocialPostsSaveWorkoutCreate.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// The takes people have posted of this post, newest first: the ones that answer it directly, and only those the reader may see. A repost's id stands for the post it passes on.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/{id}/takes/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/takes//get(social_posts_takes_list)`.
+    public func socialPostsTakesList(
+        path: Operations.SocialPostsTakesList.Input.Path,
+        query: Operations.SocialPostsTakesList.Input.Query = .init(),
+        headers: Operations.SocialPostsTakesList.Input.Headers = .init()
+    ) async throws -> Operations.SocialPostsTakesList.Output {
+        try await socialPostsTakesList(Operations.SocialPostsTakesList.Input(
+            path: path,
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Say "I tried this" about somebody else's post. It is the reader's own statement and is only ever made by this request: nothing they track -- a finished workout, a logged meal -- makes it for them. Saying it twice is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/tried/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/tried//post(social_posts_tried_create)`.
+    public func socialPostsTriedCreate(
+        path: Operations.SocialPostsTriedCreate.Input.Path,
+        headers: Operations.SocialPostsTriedCreate.Input.Headers = .init()
+    ) async throws -> Operations.SocialPostsTriedCreate.Output {
+        try await socialPostsTriedCreate(Operations.SocialPostsTriedCreate.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Take back "I tried this". Answers with the post, not 204.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/tried/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/tried//delete(social_posts_tried_destroy)`.
+    public func socialPostsTriedDestroy(
+        path: Operations.SocialPostsTriedDestroy.Input.Path,
+        headers: Operations.SocialPostsTriedDestroy.Input.Headers = .init()
+    ) async throws -> Operations.SocialPostsTriedDestroy.Output {
+        try await socialPostsTriedDestroy(Operations.SocialPostsTriedDestroy.Input(
             path: path,
             headers: headers
         ))
@@ -3675,6 +4173,87 @@ extension APIProtocol {
             path: path,
             headers: headers,
             body: body
+        ))
+    }
+    /// The prompts a post can answer. Send a code as `prompt` when creating a post; browse one with `?prompt=` on the post list.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/prompts/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/prompts//get(social_prompts_list)`.
+    public func socialPromptsList(headers: Operations.SocialPromptsList.Input.Headers = .init()) async throws -> Operations.SocialPromptsList.Output {
+        try await socialPromptsList(Operations.SocialPromptsList.Input(headers: headers))
+    }
+    /// Publish the audio of one of your own posts as a sound others may set their clips to. The post needs an approved video with audio. Asking again for the same post answers 200 with the sound already made. The audio is prepared shortly afterwards; until then `audio_url` is null.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/sounds/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds//post(social_sounds_create)`.
+    public func socialSoundsCreate(
+        headers: Operations.SocialSoundsCreate.Input.Headers = .init(),
+        body: Operations.SocialSoundsCreate.Input.Body
+    ) async throws -> Operations.SocialSoundsCreate.Output {
+        try await socialSoundsCreate(Operations.SocialSoundsCreate.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// - Remark: HTTP `GET /api/v1/social/sounds/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//get(social_sounds_retrieve)`.
+    public func socialSoundsRetrieve(
+        path: Operations.SocialSoundsRetrieve.Input.Path,
+        headers: Operations.SocialSoundsRetrieve.Input.Headers = .init()
+    ) async throws -> Operations.SocialSoundsRetrieve.Output {
+        try await socialSoundsRetrieve(Operations.SocialSoundsRetrieve.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Rename your sound, or change who may use it. Closing it stops new uses; posts already set to it keep it.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/social/sounds/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//patch(social_sounds_partial_update)`.
+    public func socialSoundsPartialUpdate(
+        path: Operations.SocialSoundsPartialUpdate.Input.Path,
+        headers: Operations.SocialSoundsPartialUpdate.Input.Headers = .init(),
+        body: Operations.SocialSoundsPartialUpdate.Input.Body? = nil
+    ) async throws -> Operations.SocialSoundsPartialUpdate.Output {
+        try await socialSoundsPartialUpdate(Operations.SocialSoundsPartialUpdate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Take your sound down. Posts set to it stay and lose its credit, its audio stops being served, and nobody new can use it. `restore` puts all of that back.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/sounds/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//delete(social_sounds_destroy)`.
+    public func socialSoundsDestroy(path: Operations.SocialSoundsDestroy.Input.Path) async throws -> Operations.SocialSoundsDestroy.Output {
+        try await socialSoundsDestroy(Operations.SocialSoundsDestroy.Input(path: path))
+    }
+    /// The posts set to this sound that the reader may see, newest first. A sound that has been taken down has no such list.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/sounds/{id}/posts/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}/posts//get(social_sounds_posts_list)`.
+    public func socialSoundsPostsList(
+        path: Operations.SocialSoundsPostsList.Input.Path,
+        query: Operations.SocialSoundsPostsList.Input.Query = .init(),
+        headers: Operations.SocialSoundsPostsList.Input.Headers = .init()
+    ) async throws -> Operations.SocialSoundsPostsList.Output {
+        try await socialSoundsPostsList(Operations.SocialSoundsPostsList.Input(
+            path: path,
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Put back a sound you took down. Not one a moderator removed.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/sounds/{id}/restore/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}/restore//post(social_sounds_restore_create)`.
+    public func socialSoundsRestoreCreate(
+        path: Operations.SocialSoundsRestoreCreate.Input.Path,
+        headers: Operations.SocialSoundsRestoreCreate.Input.Headers = .init()
+    ) async throws -> Operations.SocialSoundsRestoreCreate.Output {
+        try await socialSoundsRestoreCreate(Operations.SocialSoundsRestoreCreate.Input(
+            path: path,
+            headers: headers
         ))
     }
     /// - Remark: HTTP `GET /api/v1/social/spotlight/`.
@@ -4005,6 +4584,11 @@ extension APIProtocol {
     public func workoutsDestroy(path: Operations.WorkoutsDestroy.Input.Path) async throws -> Operations.WorkoutsDestroy.Output {
         try await workoutsDestroy(Operations.WorkoutsDestroy.Input(path: path))
     }
+    /// - Remark: HTTP `GET /api/v1/workouts/capabilities/`.
+    /// - Remark: Generated from `#/paths//api/v1/workouts/capabilities//get(workouts_capabilities_retrieve)`.
+    public func workoutsCapabilitiesRetrieve(headers: Operations.WorkoutsCapabilitiesRetrieve.Input.Headers = .init()) async throws -> Operations.WorkoutsCapabilitiesRetrieve.Output {
+        try await workoutsCapabilitiesRetrieve(Operations.WorkoutsCapabilitiesRetrieve.Input(headers: headers))
+    }
 }
 
 /// Server URLs defined in the OpenAPI document.
@@ -4297,6 +4881,59 @@ public enum Components {
             case analytics = "analytics"
             case moderator = "moderator"
         }
+        /// - Remark: Generated from `#/components/schemas/AppleHealthConnection`.
+        public struct AppleHealthConnection: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/AppleHealthConnection/enabled`.
+            public var enabled: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/AppleHealthConnection/consent_version`.
+            public var consentVersion: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/AppleHealthConnection/last_sync_at`.
+            public var lastSyncAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/AppleHealthConnection/last_sync_imported_count`.
+            public var lastSyncImportedCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/AppleHealthConnection/last_sync_updated_count`.
+            public var lastSyncUpdatedCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/AppleHealthConnection/schema_version`.
+            public var schemaVersion: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/AppleHealthConnection/garmin_direct_available`.
+            public var garminDirectAvailable: Swift.Bool?
+            /// Creates a new `AppleHealthConnection`.
+            ///
+            /// - Parameters:
+            ///   - enabled:
+            ///   - consentVersion:
+            ///   - lastSyncAt:
+            ///   - lastSyncImportedCount:
+            ///   - lastSyncUpdatedCount:
+            ///   - schemaVersion:
+            ///   - garminDirectAvailable:
+            public init(
+                enabled: Swift.Bool,
+                consentVersion: Swift.String? = nil,
+                lastSyncAt: Foundation.Date? = nil,
+                lastSyncImportedCount: Swift.Int,
+                lastSyncUpdatedCount: Swift.Int,
+                schemaVersion: Swift.Int? = nil,
+                garminDirectAvailable: Swift.Bool? = nil
+            ) {
+                self.enabled = enabled
+                self.consentVersion = consentVersion
+                self.lastSyncAt = lastSyncAt
+                self.lastSyncImportedCount = lastSyncImportedCount
+                self.lastSyncUpdatedCount = lastSyncUpdatedCount
+                self.schemaVersion = schemaVersion
+                self.garminDirectAvailable = garminDirectAvailable
+            }
+            public enum CodingKeys: String, CodingKey {
+                case enabled
+                case consentVersion = "consent_version"
+                case lastSyncAt = "last_sync_at"
+                case lastSyncImportedCount = "last_sync_imported_count"
+                case lastSyncUpdatedCount = "last_sync_updated_count"
+                case schemaVersion = "schema_version"
+                case garminDirectAvailable = "garmin_direct_available"
+            }
+        }
         /// Which days to copy a saved meal into, and which meal on each of them.
         ///
         /// Days rather than a meal id: the screen that applies a saved meal asks for a
@@ -4383,6 +5020,8 @@ public enum Components {
                 case user
             }
         }
+        /// - Remark: Generated from `#/components/schemas/BlankEnum`.
+        public typealias BlankEnum = OpenAPIRuntime.OpenAPIValueContainer
         /// One person the requester has blocked.
         ///
         /// `blocked_user` is nested beside the plain id because the only screen that
@@ -4594,6 +5233,266 @@ public enum Components {
                 case csrfToken = "csrf_token"
             }
         }
+        /// - Remark: Generated from `#/components/schemas/CalendarPerson`.
+        public struct CalendarPerson: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CalendarPerson/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CalendarPerson/username`.
+            public var username: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CalendarPerson/display_name`.
+            public var displayName: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CalendarPerson/profile_photo_url`.
+            public var profilePhotoUrl: Swift.String?
+            /// Creates a new `CalendarPerson`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - username:
+            ///   - displayName:
+            ///   - profilePhotoUrl:
+            public init(
+                id: Swift.Int,
+                username: Swift.String,
+                displayName: Swift.String,
+                profilePhotoUrl: Swift.String? = nil
+            ) {
+                self.id = id
+                self.username = username
+                self.displayName = displayName
+                self.profilePhotoUrl = profilePhotoUrl
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case username
+                case displayName = "display_name"
+                case profilePhotoUrl = "profile_photo_url"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CalendarShare`.
+        public struct CalendarShare: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/owner`.
+            public var owner: Components.Schemas.CalendarPerson
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/recipient`.
+            public var recipient: Components.Schemas.CalendarPerson
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/scope`.
+            public var scope: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/status`.
+            public var status: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/starts_on`.
+            public var startsOn: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/created_at`.
+            public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/responded_at`.
+            public var respondedAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/item`.
+            public struct ItemPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CalendarShare/item/value1`.
+                public var value1: Components.Schemas.SharedCalendarItem
+                /// Creates a new `ItemPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.SharedCalendarItem) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/item`.
+            public var item: Components.Schemas.CalendarShare.ItemPayload?
+            /// Owner management only: whether an active or pending grant covers the selected occurrence. False for a later series boundary or a private exception; acceptance is still required for recipient visibility.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CalendarShare/applies_to_selected_occurrence`.
+            public var appliesToSelectedOccurrence: Swift.Bool?
+            /// Creates a new `CalendarShare`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - owner:
+            ///   - recipient:
+            ///   - scope:
+            ///   - status:
+            ///   - startsOn:
+            ///   - createdAt:
+            ///   - respondedAt:
+            ///   - item:
+            ///   - appliesToSelectedOccurrence: Owner management only: whether an active or pending grant covers the selected occurrence. False for a later series boundary or a private exception; acceptance is still required for recipient visibility.
+            public init(
+                id: Swift.Int,
+                owner: Components.Schemas.CalendarPerson,
+                recipient: Components.Schemas.CalendarPerson,
+                scope: Swift.String,
+                status: Swift.String,
+                startsOn: Swift.String? = nil,
+                createdAt: Foundation.Date,
+                respondedAt: Foundation.Date? = nil,
+                item: Components.Schemas.CalendarShare.ItemPayload? = nil,
+                appliesToSelectedOccurrence: Swift.Bool? = nil
+            ) {
+                self.id = id
+                self.owner = owner
+                self.recipient = recipient
+                self.scope = scope
+                self.status = status
+                self.startsOn = startsOn
+                self.createdAt = createdAt
+                self.respondedAt = respondedAt
+                self.item = item
+                self.appliesToSelectedOccurrence = appliesToSelectedOccurrence
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case owner
+                case recipient
+                case scope
+                case status
+                case startsOn = "starts_on"
+                case createdAt = "created_at"
+                case respondedAt = "responded_at"
+                case item
+                case appliesToSelectedOccurrence = "applies_to_selected_occurrence"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CalendarShareBatch`.
+        public struct CalendarShareBatch: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CalendarShareBatch/shares`.
+            public var shares: [Components.Schemas.CalendarShare]
+            /// Creates a new `CalendarShareBatch`.
+            ///
+            /// - Parameters:
+            ///   - shares:
+            public init(shares: [Components.Schemas.CalendarShare]) {
+                self.shares = shares
+            }
+            public enum CodingKeys: String, CodingKey {
+                case shares
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CalendarShareConflict`.
+        public struct CalendarShareConflict: Codable, Hashable, Sendable {
+            /// reinvite_required, scope_conflict, or state_conflict. Plain string for forward compatibility.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CalendarShareConflict/code`.
+            public var code: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CalendarShareConflict/detail`.
+            public var detail: Swift.String
+            /// Creates a new `CalendarShareConflict`.
+            ///
+            /// - Parameters:
+            ///   - code: reinvite_required, scope_conflict, or state_conflict. Plain string for forward compatibility.
+            ///   - detail:
+            public init(
+                code: Swift.String,
+                detail: Swift.String
+            ) {
+                self.code = code
+                self.detail = detail
+            }
+            public enum CodingKeys: String, CodingKey {
+                case code
+                case detail
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CalendarShareCreateRequest`.
+        public struct CalendarShareCreateRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CalendarShareCreateRequest/source_entry_id`.
+            public var sourceEntryId: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CalendarShareCreateRequest/recipient_ids`.
+            public var recipientIds: [Swift.Int]
+            /// - Remark: Generated from `#/components/schemas/CalendarShareCreateRequest/scope`.
+            public struct ScopePayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CalendarShareCreateRequest/scope/value1`.
+                public var value1: Components.Schemas.ScopeEnum
+                /// Creates a new `ScopePayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.ScopeEnum) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try decoder.decodeFromSingleValueContainer()
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeToSingleValueContainer(self.value1)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CalendarShareCreateRequest/scope`.
+            public var scope: Components.Schemas.CalendarShareCreateRequest.ScopePayload?
+            /// - Remark: Generated from `#/components/schemas/CalendarShareCreateRequest/reinvite`.
+            public var reinvite: Swift.Bool?
+            /// Creates a new `CalendarShareCreateRequest`.
+            ///
+            /// - Parameters:
+            ///   - sourceEntryId:
+            ///   - recipientIds:
+            ///   - scope:
+            ///   - reinvite:
+            public init(
+                sourceEntryId: Swift.Int,
+                recipientIds: [Swift.Int],
+                scope: Components.Schemas.CalendarShareCreateRequest.ScopePayload? = nil,
+                reinvite: Swift.Bool? = nil
+            ) {
+                self.sourceEntryId = sourceEntryId
+                self.recipientIds = recipientIds
+                self.scope = scope
+                self.reinvite = reinvite
+            }
+            public enum CodingKeys: String, CodingKey {
+                case sourceEntryId = "source_entry_id"
+                case recipientIds = "recipient_ids"
+                case scope
+                case reinvite
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CalendarSharePrivacyRequest`.
+        public struct CalendarSharePrivacyRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CalendarSharePrivacyRequest/source_entry_id`.
+            public var sourceEntryId: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CalendarSharePrivacyRequest/scope`.
+            public struct ScopePayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CalendarSharePrivacyRequest/scope/value1`.
+                public var value1: Components.Schemas.ScopeEnum
+                /// Creates a new `ScopePayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.ScopeEnum) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try decoder.decodeFromSingleValueContainer()
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeToSingleValueContainer(self.value1)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CalendarSharePrivacyRequest/scope`.
+            public var scope: Components.Schemas.CalendarSharePrivacyRequest.ScopePayload?
+            /// Creates a new `CalendarSharePrivacyRequest`.
+            ///
+            /// - Parameters:
+            ///   - sourceEntryId:
+            ///   - scope:
+            public init(
+                sourceEntryId: Swift.Int,
+                scope: Components.Schemas.CalendarSharePrivacyRequest.ScopePayload? = nil
+            ) {
+                self.sourceEntryId = sourceEntryId
+                self.scope = scope
+            }
+            public enum CodingKeys: String, CodingKey {
+                case sourceEntryId = "source_entry_id"
+                case scope
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/Capabilities`.
         public struct Capabilities: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/Capabilities/manage_roles`.
@@ -4764,6 +5663,26 @@ public enum Components {
                 case cleared
             }
         }
+        /// * `coral` - Coral
+        /// * `amber` - Amber
+        /// * `sage` - Sage
+        /// * `teal` - Teal
+        /// * `sky` - Sky
+        /// * `lavender` - Lavender
+        /// * `rose` - Rose
+        /// * `slate` - Slate
+        ///
+        /// - Remark: Generated from `#/components/schemas/ColorEnum`.
+        @frozen public enum ColorEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case coral = "coral"
+            case amber = "amber"
+            case sage = "sage"
+            case teal = "teal"
+            case sky = "sky"
+            case lavender = "lavender"
+            case rose = "rose"
+            case slate = "slate"
+        }
         /// - Remark: Generated from `#/components/schemas/CommunitySpotlight`.
         public struct CommunitySpotlight: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CommunitySpotlight/announcement`.
@@ -4817,6 +5736,211 @@ public enum Components {
             case imagePng = "image/png"
             case imageWebp = "image/webp"
         }
+        /// - Remark: Generated from `#/components/schemas/Cookbook`.
+        public struct Cookbook: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Cookbook/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Cookbook/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Cookbook/recipe_count`.
+            public var recipeCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Cookbook/capacity`.
+            public var capacity: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Cookbook/created_at`.
+            public var createdAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/Cookbook/updated_at`.
+            public var updatedAt: Foundation.Date
+            /// Creates a new `Cookbook`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - name:
+            ///   - recipeCount:
+            ///   - capacity:
+            ///   - createdAt:
+            ///   - updatedAt:
+            public init(
+                id: Swift.Int,
+                name: Swift.String,
+                recipeCount: Swift.Int,
+                capacity: Swift.Int,
+                createdAt: Foundation.Date,
+                updatedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.name = name
+                self.recipeCount = recipeCount
+                self.capacity = capacity
+                self.createdAt = createdAt
+                self.updatedAt = updatedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case name
+                case recipeCount = "recipe_count"
+                case capacity
+                case createdAt = "created_at"
+                case updatedAt = "updated_at"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CookbookDestinationRequest`.
+        public struct CookbookDestinationRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CookbookDestinationRequest/cookbook`.
+            public var cookbook: Swift.Int64
+            /// Creates a new `CookbookDestinationRequest`.
+            ///
+            /// - Parameters:
+            ///   - cookbook:
+            public init(cookbook: Swift.Int64) {
+                self.cookbook = cookbook
+            }
+            public enum CodingKeys: String, CodingKey {
+                case cookbook
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CookbookIngredient`.
+        public struct CookbookIngredient: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/source_id`.
+            public var sourceId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/serving_description`.
+            public var servingDescription: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/reference_quantity`.
+            public var referenceQuantity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/reference_unit`.
+            public var referenceUnit: Swift.String?
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/nutrients`.
+            public struct NutrientsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `NutrientsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/nutrients`.
+            public var nutrients: Components.Schemas.CookbookIngredient.NutrientsPayload?
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/servings`.
+            public var servings: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/calories`.
+            public var calories: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/protein_grams`.
+            public var proteinGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/carbohydrate_grams`.
+            public var carbohydrateGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CookbookIngredient/fat_grams`.
+            public var fatGrams: Swift.String
+            /// Creates a new `CookbookIngredient`.
+            ///
+            /// - Parameters:
+            ///   - sourceId:
+            ///   - servingDescription:
+            ///   - referenceQuantity:
+            ///   - referenceUnit:
+            ///   - nutrients: Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///   - name:
+            ///   - servings:
+            ///   - calories:
+            ///   - proteinGrams:
+            ///   - carbohydrateGrams:
+            ///   - fatGrams:
+            public init(
+                sourceId: Swift.String? = nil,
+                servingDescription: Swift.String? = nil,
+                referenceQuantity: Swift.String? = nil,
+                referenceUnit: Swift.String? = nil,
+                nutrients: Components.Schemas.CookbookIngredient.NutrientsPayload? = nil,
+                name: Swift.String,
+                servings: Swift.String,
+                calories: Swift.String,
+                proteinGrams: Swift.String,
+                carbohydrateGrams: Swift.String,
+                fatGrams: Swift.String
+            ) {
+                self.sourceId = sourceId
+                self.servingDescription = servingDescription
+                self.referenceQuantity = referenceQuantity
+                self.referenceUnit = referenceUnit
+                self.nutrients = nutrients
+                self.name = name
+                self.servings = servings
+                self.calories = calories
+                self.proteinGrams = proteinGrams
+                self.carbohydrateGrams = carbohydrateGrams
+                self.fatGrams = fatGrams
+            }
+            public enum CodingKeys: String, CodingKey {
+                case sourceId = "source_id"
+                case servingDescription = "serving_description"
+                case referenceQuantity = "reference_quantity"
+                case referenceUnit = "reference_unit"
+                case nutrients
+                case name
+                case servings
+                case calories
+                case proteinGrams = "protein_grams"
+                case carbohydrateGrams = "carbohydrate_grams"
+                case fatGrams = "fat_grams"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CookbookRecipe`.
+        public struct CookbookRecipe: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CookbookRecipe/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CookbookRecipe/cooking_instructions`.
+            public var cookingInstructions: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CookbookRecipe/ingredients`.
+            public var ingredients: [Components.Schemas.CookbookIngredient]
+            /// Creates a new `CookbookRecipe`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            ///   - cookingInstructions:
+            ///   - ingredients:
+            public init(
+                name: Swift.String,
+                cookingInstructions: Swift.String,
+                ingredients: [Components.Schemas.CookbookIngredient]
+            ) {
+                self.name = name
+                self.cookingInstructions = cookingInstructions
+                self.ingredients = ingredients
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case cookingInstructions = "cooking_instructions"
+                case ingredients
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CookbookRequest`.
+        public struct CookbookRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CookbookRequest/name`.
+            public var name: Swift.String
+            /// Creates a new `CookbookRequest`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            public init(name: Swift.String) {
+                self.name = name
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+            }
+        }
         /// Which day to copy the eating from, and which day to put it on.
         ///
         /// Two dates rather than "yesterday": the rule about which day is being
@@ -4849,6 +5973,7 @@ public enum Components {
         }
         /// * `workout` - Workout
         /// * `meal` - Meal
+        /// * `cookbook` - Cookbook
         /// * `planner` - Planner
         /// * `media` - Photo or video
         ///
@@ -4856,6 +5981,7 @@ public enum Components {
         @frozen public enum CreatePostKindEnum: String, Codable, Hashable, Sendable, CaseIterable {
             case workout = "workout"
             case meal = "meal"
+            case cookbook = "cookbook"
             case planner = "planner"
             case media = "media"
         }
@@ -4915,6 +6041,44 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CreatePostRequest/expects_video`.
             public var expectsVideo: Swift.Bool?
+            /// The post this is a take of. It must be one you can see, that everybody can see, and whose author allows takes. A repost's id stands for the post it passes on.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/source_post_id`.
+            public var sourcePostId: Swift.Int64?
+            /// A sound to set this post's clip to, if it uses one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/sound_id`.
+            public var soundId: Swift.Int64?
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/reuse_permission`.
+            public struct ReusePermissionPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CreatePostRequest/reuse_permission/value1`.
+                public var value1: Components.Schemas.ReusePermissionEnum
+                /// Creates a new `ReusePermissionPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.ReusePermissionEnum) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try decoder.decodeFromSingleValueContainer()
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeToSingleValueContainer(self.value1)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/reuse_permission`.
+            public var reusePermission: Components.Schemas.CreatePostRequest.ReusePermissionPayload?
+            /// The language the caption is written in, as a tag such as en or pt-BR.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/language`.
+            public var language: Swift.String?
+            /// What the post is about: up to five codes for a type of training (type:running) or a discipline (discipline:powerlifting).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/topics`.
+            public var topics: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/CreatePostRequest/prompt`.
+            public var prompt: Swift.String?
             /// Creates a new `CreatePostRequest`.
             ///
             /// - Parameters:
@@ -4927,6 +6091,12 @@ public enum Components {
             ///   - imageBase64: The image bytes, base64 encoded, without a data: prefix.
             ///   - cookingInstructions: How the meal was made, for a meal post. Ignored for other kinds.
             ///   - expectsVideo: True when a clip will be uploaded to this post next. Required for a media post without a photo, which stays visible only to its author until the clip is ready to watch.
+            ///   - sourcePostId: The post this is a take of. It must be one you can see, that everybody can see, and whose author allows takes. A repost's id stands for the post it passes on.
+            ///   - soundId: A sound to set this post's clip to, if it uses one.
+            ///   - reusePermission:
+            ///   - language: The language the caption is written in, as a tag such as en or pt-BR.
+            ///   - topics: What the post is about: up to five codes for a type of training (type:running) or a discipline (discipline:powerlifting).
+            ///   - prompt:
             public init(
                 kind: Components.Schemas.CreatePostKindEnum,
                 sourceId: Swift.Int? = nil,
@@ -4936,7 +6106,13 @@ public enum Components {
                 contentType: Components.Schemas.ContentTypeEnum? = nil,
                 imageBase64: Swift.String? = nil,
                 cookingInstructions: Swift.String? = nil,
-                expectsVideo: Swift.Bool? = nil
+                expectsVideo: Swift.Bool? = nil,
+                sourcePostId: Swift.Int64? = nil,
+                soundId: Swift.Int64? = nil,
+                reusePermission: Components.Schemas.CreatePostRequest.ReusePermissionPayload? = nil,
+                language: Swift.String? = nil,
+                topics: [Swift.String]? = nil,
+                prompt: Swift.String? = nil
             ) {
                 self.kind = kind
                 self.sourceId = sourceId
@@ -4947,6 +6123,12 @@ public enum Components {
                 self.imageBase64 = imageBase64
                 self.cookingInstructions = cookingInstructions
                 self.expectsVideo = expectsVideo
+                self.sourcePostId = sourcePostId
+                self.soundId = soundId
+                self.reusePermission = reusePermission
+                self.language = language
+                self.topics = topics
+                self.prompt = prompt
             }
             public enum CodingKeys: String, CodingKey {
                 case kind
@@ -4958,6 +6140,106 @@ public enum Components {
                 case imageBase64 = "image_base64"
                 case cookingInstructions = "cooking_instructions"
                 case expectsVideo = "expects_video"
+                case sourcePostId = "source_post_id"
+                case soundId = "sound_id"
+                case reusePermission = "reuse_permission"
+                case language
+                case topics
+                case prompt
+            }
+        }
+        /// What an author says when they make a post's audio a sound.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CreateSoundRequest`.
+        public struct CreateSoundRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CreateSoundRequest/title`.
+            public var title: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/CreateSoundRequest/reuse_permission`.
+            public struct ReusePermissionPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CreateSoundRequest/reuse_permission/value1`.
+                public var value1: Components.Schemas.ReusePermissionEnum
+                /// Creates a new `ReusePermissionPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.ReusePermissionEnum) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try decoder.decodeFromSingleValueContainer()
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeToSingleValueContainer(self.value1)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CreateSoundRequest/reuse_permission`.
+            public var reusePermission: Components.Schemas.CreateSoundRequest.ReusePermissionPayload?
+            /// - Remark: Generated from `#/components/schemas/CreateSoundRequest/post`.
+            public var post: Swift.Int64
+            /// Creates a new `CreateSoundRequest`.
+            ///
+            /// - Parameters:
+            ///   - title:
+            ///   - reusePermission:
+            ///   - post:
+            public init(
+                title: Swift.String? = nil,
+                reusePermission: Components.Schemas.CreateSoundRequest.ReusePermissionPayload? = nil,
+                post: Swift.Int64
+            ) {
+                self.title = title
+                self.reusePermission = reusePermission
+                self.post = post
+            }
+            public enum CodingKeys: String, CodingKey {
+                case title
+                case reusePermission = "reuse_permission"
+                case post
+            }
+        }
+        /// Whoever a credit line names: enough to print "by Mia Chen" and link to
+        /// the profile, and nothing a credit does not need. A whole public profile
+        /// here would be a second author on every card.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CreditedPerson`.
+        public struct CreditedPerson: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CreditedPerson/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/CreditedPerson/username`.
+            public var username: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CreditedPerson/first_name`.
+            public var firstName: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CreditedPerson/last_name`.
+            public var lastName: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CreditedPerson/profile_photo_url`.
+            public var profilePhotoUrl: Swift.String?
+            /// Creates a new `CreditedPerson`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - username:
+            ///   - firstName:
+            ///   - lastName:
+            ///   - profilePhotoUrl:
+            public init(
+                id: Swift.Int,
+                username: Swift.String,
+                firstName: Swift.String,
+                lastName: Swift.String,
+                profilePhotoUrl: Swift.String? = nil
+            ) {
+                self.id = id
+                self.username = username
+                self.firstName = firstName
+                self.lastName = lastName
+                self.profilePhotoUrl = profilePhotoUrl
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case username
+                case firstName = "first_name"
+                case lastName = "last_name"
+                case profilePhotoUrl = "profile_photo_url"
             }
         }
         /// When the new rotation takes over.
@@ -5485,6 +6767,40 @@ public enum Components {
                 case createdAt = "created_at"
             }
         }
+        /// A search candidate, not nutrition and never a loggable food entry.
+        ///
+        /// Resolve source_id through food/search with barcode:<GTIN> before showing
+        /// portions or saving. The search index does not preserve a reliable basis.
+        ///
+        /// - Remark: Generated from `#/components/schemas/FoodDiscoveryResult`.
+        public struct FoodDiscoveryResult: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/FoodDiscoveryResult/source_id`.
+            public var sourceId: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodDiscoveryResult/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodDiscoveryResult/brand`.
+            public var brand: Swift.String
+            /// Creates a new `FoodDiscoveryResult`.
+            ///
+            /// - Parameters:
+            ///   - sourceId:
+            ///   - name:
+            ///   - brand:
+            public init(
+                sourceId: Swift.String,
+                name: Swift.String,
+                brand: Swift.String
+            ) {
+                self.sourceId = sourceId
+                self.name = name
+                self.brand = brand
+            }
+            public enum CodingKeys: String, CodingKey {
+                case sourceId = "source_id"
+                case name
+                case brand
+            }
+        }
         /// One food. Nutrition is per serving; totals are derived, never stored,
         /// so a serving count and its totals cannot drift apart.
         ///
@@ -5494,6 +6810,38 @@ public enum Components {
             public var id: Swift.Int
             /// - Remark: Generated from `#/components/schemas/FoodEntry/meal`.
             public var meal: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/source_id`.
+            public var sourceId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/serving_description`.
+            public var servingDescription: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/reference_quantity`.
+            public var referenceQuantity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/reference_unit`.
+            public var referenceUnit: Swift.String?
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/nutrients`.
+            public struct NutrientsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `NutrientsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FoodEntry/nutrients`.
+            public var nutrients: Components.Schemas.FoodEntry.NutrientsPayload?
             /// - Remark: Generated from `#/components/schemas/FoodEntry/name`.
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/FoodEntry/servings`.
@@ -5525,6 +6873,11 @@ public enum Components {
             /// - Parameters:
             ///   - id:
             ///   - meal:
+            ///   - sourceId:
+            ///   - servingDescription:
+            ///   - referenceQuantity:
+            ///   - referenceUnit:
+            ///   - nutrients: Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
             ///   - name:
             ///   - servings:
             ///   - calories:
@@ -5541,6 +6894,11 @@ public enum Components {
             public init(
                 id: Swift.Int,
                 meal: Swift.Int,
+                sourceId: Swift.String? = nil,
+                servingDescription: Swift.String? = nil,
+                referenceQuantity: Swift.String? = nil,
+                referenceUnit: Swift.String? = nil,
+                nutrients: Components.Schemas.FoodEntry.NutrientsPayload? = nil,
                 name: Swift.String,
                 servings: Swift.String? = nil,
                 calories: Swift.String? = nil,
@@ -5557,6 +6915,11 @@ public enum Components {
             ) {
                 self.id = id
                 self.meal = meal
+                self.sourceId = sourceId
+                self.servingDescription = servingDescription
+                self.referenceQuantity = referenceQuantity
+                self.referenceUnit = referenceUnit
+                self.nutrients = nutrients
                 self.name = name
                 self.servings = servings
                 self.calories = calories
@@ -5574,6 +6937,11 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case id
                 case meal
+                case sourceId = "source_id"
+                case servingDescription = "serving_description"
+                case referenceQuantity = "reference_quantity"
+                case referenceUnit = "reference_unit"
+                case nutrients
                 case name
                 case servings
                 case calories
@@ -5596,6 +6964,38 @@ public enum Components {
         public struct FoodEntryRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/meal`.
             public var meal: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/source_id`.
+            public var sourceId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/serving_description`.
+            public var servingDescription: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/reference_quantity`.
+            public var referenceQuantity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/reference_unit`.
+            public var referenceUnit: Swift.String?
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/nutrients`.
+            public struct NutrientsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `NutrientsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/nutrients`.
+            public var nutrients: Components.Schemas.FoodEntryRequest.NutrientsPayload?
             /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/name`.
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/FoodEntryRequest/servings`.
@@ -5614,6 +7014,11 @@ public enum Components {
             ///
             /// - Parameters:
             ///   - meal:
+            ///   - sourceId:
+            ///   - servingDescription:
+            ///   - referenceQuantity:
+            ///   - referenceUnit:
+            ///   - nutrients: Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
             ///   - name:
             ///   - servings:
             ///   - calories:
@@ -5623,6 +7028,11 @@ public enum Components {
             ///   - position:
             public init(
                 meal: Swift.Int,
+                sourceId: Swift.String? = nil,
+                servingDescription: Swift.String? = nil,
+                referenceQuantity: Swift.String? = nil,
+                referenceUnit: Swift.String? = nil,
+                nutrients: Components.Schemas.FoodEntryRequest.NutrientsPayload? = nil,
                 name: Swift.String,
                 servings: Swift.String? = nil,
                 calories: Swift.String? = nil,
@@ -5632,6 +7042,11 @@ public enum Components {
                 position: Swift.Int64? = nil
             ) {
                 self.meal = meal
+                self.sourceId = sourceId
+                self.servingDescription = servingDescription
+                self.referenceQuantity = referenceQuantity
+                self.referenceUnit = referenceUnit
+                self.nutrients = nutrients
                 self.name = name
                 self.servings = servings
                 self.calories = calories
@@ -5642,6 +7057,11 @@ public enum Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case meal
+                case sourceId = "source_id"
+                case servingDescription = "serving_description"
+                case referenceQuantity = "reference_quantity"
+                case referenceUnit = "reference_unit"
+                case nutrients
                 case name
                 case servings
                 case calories
@@ -5774,12 +7194,40 @@ public enum Components {
         public struct FoodSearchResult: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/FoodSearchResult/source_id`.
             public var sourceId: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/serving_description`.
+            public var servingDescription: Swift.String
+            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/reference_quantity`.
+            public var referenceQuantity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/reference_unit`.
+            public var referenceUnit: Swift.String?
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/nutrients`.
+            public struct NutrientsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `NutrientsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/nutrients`.
+            public var nutrients: Components.Schemas.FoodSearchResult.NutrientsPayload?
             /// - Remark: Generated from `#/components/schemas/FoodSearchResult/name`.
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/FoodSearchResult/brand`.
             public var brand: Swift.String
-            /// - Remark: Generated from `#/components/schemas/FoodSearchResult/serving_description`.
-            public var servingDescription: Swift.String
             /// - Remark: Generated from `#/components/schemas/FoodSearchResult/calories`.
             public var calories: Swift.String
             /// - Remark: Generated from `#/components/schemas/FoodSearchResult/protein_grams`.
@@ -5792,27 +7240,36 @@ public enum Components {
             ///
             /// - Parameters:
             ///   - sourceId:
+            ///   - servingDescription:
+            ///   - referenceQuantity:
+            ///   - referenceUnit:
+            ///   - nutrients: Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
             ///   - name:
             ///   - brand:
-            ///   - servingDescription:
             ///   - calories:
             ///   - proteinGrams:
             ///   - carbohydrateGrams:
             ///   - fatGrams:
             public init(
                 sourceId: Swift.String,
+                servingDescription: Swift.String,
+                referenceQuantity: Swift.String? = nil,
+                referenceUnit: Swift.String? = nil,
+                nutrients: Components.Schemas.FoodSearchResult.NutrientsPayload? = nil,
                 name: Swift.String,
                 brand: Swift.String,
-                servingDescription: Swift.String,
                 calories: Swift.String,
                 proteinGrams: Swift.String,
                 carbohydrateGrams: Swift.String,
                 fatGrams: Swift.String
             ) {
                 self.sourceId = sourceId
+                self.servingDescription = servingDescription
+                self.referenceQuantity = referenceQuantity
+                self.referenceUnit = referenceUnit
+                self.nutrients = nutrients
                 self.name = name
                 self.brand = brand
-                self.servingDescription = servingDescription
                 self.calories = calories
                 self.proteinGrams = proteinGrams
                 self.carbohydrateGrams = carbohydrateGrams
@@ -5820,9 +7277,12 @@ public enum Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case sourceId = "source_id"
+                case servingDescription = "serving_description"
+                case referenceQuantity = "reference_quantity"
+                case referenceUnit = "reference_unit"
+                case nutrients
                 case name
                 case brand
-                case servingDescription = "serving_description"
                 case calories
                 case proteinGrams = "protein_grams"
                 case carbohydrateGrams = "carbohydrate_grams"
@@ -5976,6 +7436,26 @@ public enum Components {
             }
             /// - Remark: Generated from `#/components/schemas/ForYouPost/planner`.
             public var planner: Components.Schemas.ForYouPost.PlannerPayload?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/cookbook`.
+            public struct CookbookPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/ForYouPost/cookbook/value1`.
+                public var value1: Components.Schemas.PostCookbook
+                /// Creates a new `CookbookPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostCookbook) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/cookbook`.
+            public var cookbook: Components.Schemas.ForYouPost.CookbookPayload?
             /// - Remark: Generated from `#/components/schemas/ForYouPost/source_id`.
             public var sourceId: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/ForYouPost/viewer_follows_author`.
@@ -6024,6 +7504,70 @@ public enum Components {
             public var moderationStatus: Swift.String
             /// - Remark: Generated from `#/components/schemas/ForYouPost/updated_at`.
             public var updatedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/is_take`.
+            public var isTake: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/source`.
+            public struct SourcePayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/ForYouPost/source/value1`.
+                public var value1: Components.Schemas.PostSource
+                /// Creates a new `SourcePayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostSource) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/source`.
+            public var source: Components.Schemas.ForYouPost.SourcePayload?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/sound`.
+            public struct SoundPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/ForYouPost/sound/value1`.
+                public var value1: Components.Schemas.PostSound
+                /// Creates a new `SoundPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostSound) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/sound`.
+            public var sound: Components.Schemas.ForYouPost.SoundPayload?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/hashtags`.
+            public var hashtags: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/topics`.
+            public var topics: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/language`.
+            public var language: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/attachment_version`.
+            public var attachmentVersion: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/audience`.
+            public var audience: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/reuse_permission`.
+            public var reusePermission: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/prompt`.
+            public var prompt: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/viewer_can_take`.
+            public var viewerCanTake: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/take_count`.
+            public var takeCount: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/tried_count`.
+            public var triedCount: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ForYouPost/viewer_has_tried`.
+            public var viewerHasTried: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/ForYouPost/recommendation`.
             public struct RecommendationPayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/ForYouPost/recommendation/value1`.
@@ -6058,6 +7602,7 @@ public enum Components {
             ///   - workout:
             ///   - meal:
             ///   - planner:
+            ///   - cookbook:
             ///   - sourceId:
             ///   - viewerFollowsAuthor:
             ///   - showsWeights:
@@ -6073,6 +7618,20 @@ public enum Components {
             ///   - publishedAt:
             ///   - moderationStatus:
             ///   - updatedAt:
+            ///   - isTake:
+            ///   - source:
+            ///   - sound:
+            ///   - hashtags:
+            ///   - topics:
+            ///   - language:
+            ///   - attachmentVersion:
+            ///   - audience:
+            ///   - reusePermission:
+            ///   - prompt:
+            ///   - viewerCanTake:
+            ///   - takeCount:
+            ///   - triedCount:
+            ///   - viewerHasTried:
             ///   - recommendation:
             public init(
                 id: Swift.Int,
@@ -6086,6 +7645,7 @@ public enum Components {
                 workout: Components.Schemas.ForYouPost.WorkoutPayload? = nil,
                 meal: Components.Schemas.ForYouPost.MealPayload? = nil,
                 planner: Components.Schemas.ForYouPost.PlannerPayload? = nil,
+                cookbook: Components.Schemas.ForYouPost.CookbookPayload? = nil,
                 sourceId: Swift.Int? = nil,
                 viewerFollowsAuthor: Swift.Bool,
                 showsWeights: Swift.Bool,
@@ -6101,6 +7661,20 @@ public enum Components {
                 publishedAt: Foundation.Date? = nil,
                 moderationStatus: Swift.String,
                 updatedAt: Foundation.Date,
+                isTake: Swift.Bool? = nil,
+                source: Components.Schemas.ForYouPost.SourcePayload? = nil,
+                sound: Components.Schemas.ForYouPost.SoundPayload? = nil,
+                hashtags: [Swift.String]? = nil,
+                topics: [Swift.String]? = nil,
+                language: Swift.String? = nil,
+                attachmentVersion: Swift.Int? = nil,
+                audience: Swift.String? = nil,
+                reusePermission: Swift.String? = nil,
+                prompt: Swift.String? = nil,
+                viewerCanTake: Swift.Bool? = nil,
+                takeCount: Swift.Int? = nil,
+                triedCount: Swift.Int? = nil,
+                viewerHasTried: Swift.Bool? = nil,
                 recommendation: Components.Schemas.ForYouPost.RecommendationPayload
             ) {
                 self.id = id
@@ -6114,6 +7688,7 @@ public enum Components {
                 self.workout = workout
                 self.meal = meal
                 self.planner = planner
+                self.cookbook = cookbook
                 self.sourceId = sourceId
                 self.viewerFollowsAuthor = viewerFollowsAuthor
                 self.showsWeights = showsWeights
@@ -6129,6 +7704,20 @@ public enum Components {
                 self.publishedAt = publishedAt
                 self.moderationStatus = moderationStatus
                 self.updatedAt = updatedAt
+                self.isTake = isTake
+                self.source = source
+                self.sound = sound
+                self.hashtags = hashtags
+                self.topics = topics
+                self.language = language
+                self.attachmentVersion = attachmentVersion
+                self.audience = audience
+                self.reusePermission = reusePermission
+                self.prompt = prompt
+                self.viewerCanTake = viewerCanTake
+                self.takeCount = takeCount
+                self.triedCount = triedCount
+                self.viewerHasTried = viewerHasTried
                 self.recommendation = recommendation
             }
             public enum CodingKeys: String, CodingKey {
@@ -6143,6 +7732,7 @@ public enum Components {
                 case workout
                 case meal
                 case planner
+                case cookbook
                 case sourceId = "source_id"
                 case viewerFollowsAuthor = "viewer_follows_author"
                 case showsWeights = "shows_weights"
@@ -6158,6 +7748,20 @@ public enum Components {
                 case publishedAt = "published_at"
                 case moderationStatus = "moderation_status"
                 case updatedAt = "updated_at"
+                case isTake = "is_take"
+                case source
+                case sound
+                case hashtags
+                case topics
+                case language
+                case attachmentVersion = "attachment_version"
+                case audience
+                case reusePermission = "reuse_permission"
+                case prompt
+                case viewerCanTake = "viewer_can_take"
+                case takeCount = "take_count"
+                case triedCount = "tried_count"
+                case viewerHasTried = "viewer_has_tried"
                 case recommendation
             }
         }
@@ -6483,11 +8087,6 @@ public enum Components {
                 case country
             }
         }
-        /// What the import did, counted rather than described.
-        ///
-        /// Three numbers rather than one, because "nothing happened" has three very
-        /// different causes and a user who imported nothing deserves to know which.
-        ///
         /// - Remark: Generated from `#/components/schemas/HealthImportResult`.
         public struct HealthImportResult: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/HealthImportResult/imported`.
@@ -6496,25 +8095,37 @@ public enum Components {
             public var skippedOverlapping: Swift.Int
             /// - Remark: Generated from `#/components/schemas/HealthImportResult/already_imported`.
             public var alreadyImported: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/HealthImportResult/updated`.
+            public var updated: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/HealthImportResult/linked`.
+            public var linked: Swift.Int?
             /// Creates a new `HealthImportResult`.
             ///
             /// - Parameters:
             ///   - imported:
             ///   - skippedOverlapping:
             ///   - alreadyImported:
+            ///   - updated:
+            ///   - linked:
             public init(
                 imported: Swift.Int,
                 skippedOverlapping: Swift.Int,
-                alreadyImported: Swift.Int
+                alreadyImported: Swift.Int,
+                updated: Swift.Int? = nil,
+                linked: Swift.Int? = nil
             ) {
                 self.imported = imported
                 self.skippedOverlapping = skippedOverlapping
                 self.alreadyImported = alreadyImported
+                self.updated = updated
+                self.linked = linked
             }
             public enum CodingKeys: String, CodingKey {
                 case imported
                 case skippedOverlapping = "skipped_overlapping"
                 case alreadyImported = "already_imported"
+                case updated
+                case linked
             }
         }
         /// - Remark: Generated from `#/components/schemas/HealthWorkoutImportRequest`.
@@ -6532,62 +8143,241 @@ public enum Components {
                 case workouts
             }
         }
-        /// One finished workout on its way in from Apple Health.
-        ///
         /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest`.
         public struct HealthWorkoutRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/external_id`.
             public var externalId: Swift.String
             /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/activity`.
             public var activity: Components.Schemas.WorkoutTypeEnum
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/workout_activity`.
+            public var workoutActivity: Swift.String?
             /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/started_at`.
             public var startedAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/ended_at`.
             public var endedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/duration_seconds`.
+            public var durationSeconds: Swift.Double?
             /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/distance_km`.
             public var distanceKm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/active_energy_kcal`.
+            public var activeEnergyKcal: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/average_heart_rate_bpm`.
+            public var averageHeartRateBpm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/max_heart_rate_bpm`.
+            public var maxHeartRateBpm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/source_name`.
+            public var sourceName: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/source_bundle_id`.
+            public var sourceBundleId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutRequest/device_name`.
+            public var deviceName: Swift.String?
             /// Creates a new `HealthWorkoutRequest`.
             ///
             /// - Parameters:
             ///   - externalId:
             ///   - activity:
+            ///   - workoutActivity:
             ///   - startedAt:
             ///   - endedAt:
+            ///   - durationSeconds:
             ///   - distanceKm:
+            ///   - activeEnergyKcal:
+            ///   - averageHeartRateBpm:
+            ///   - maxHeartRateBpm:
+            ///   - sourceName:
+            ///   - sourceBundleId:
+            ///   - deviceName:
             public init(
                 externalId: Swift.String,
                 activity: Components.Schemas.WorkoutTypeEnum,
+                workoutActivity: Swift.String? = nil,
                 startedAt: Foundation.Date,
                 endedAt: Foundation.Date,
-                distanceKm: Swift.String? = nil
+                durationSeconds: Swift.Double? = nil,
+                distanceKm: Swift.String? = nil,
+                activeEnergyKcal: Swift.String? = nil,
+                averageHeartRateBpm: Swift.String? = nil,
+                maxHeartRateBpm: Swift.String? = nil,
+                sourceName: Swift.String? = nil,
+                sourceBundleId: Swift.String? = nil,
+                deviceName: Swift.String? = nil
             ) {
                 self.externalId = externalId
                 self.activity = activity
+                self.workoutActivity = workoutActivity
                 self.startedAt = startedAt
                 self.endedAt = endedAt
+                self.durationSeconds = durationSeconds
                 self.distanceKm = distanceKm
+                self.activeEnergyKcal = activeEnergyKcal
+                self.averageHeartRateBpm = averageHeartRateBpm
+                self.maxHeartRateBpm = maxHeartRateBpm
+                self.sourceName = sourceName
+                self.sourceBundleId = sourceBundleId
+                self.deviceName = deviceName
             }
             public enum CodingKeys: String, CodingKey {
                 case externalId = "external_id"
                 case activity
+                case workoutActivity = "workout_activity"
                 case startedAt = "started_at"
                 case endedAt = "ended_at"
+                case durationSeconds = "duration_seconds"
                 case distanceKm = "distance_km"
+                case activeEnergyKcal = "active_energy_kcal"
+                case averageHeartRateBpm = "average_heart_rate_bpm"
+                case maxHeartRateBpm = "max_heart_rate_bpm"
+                case sourceName = "source_name"
+                case sourceBundleId = "source_bundle_id"
+                case deviceName = "device_name"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary`.
+        public struct HealthWorkoutSummary: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/session`.
+            public var session: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/external_id`.
+            public var externalId: Swift.String
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/provider`.
+            public var provider: Swift.String
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/source`.
+            public var source: Swift.String
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/source_name`.
+            public var sourceName: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/source_bundle_id`.
+            public var sourceBundleId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/device_name`.
+            public var deviceName: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/workout_activity`.
+            public var workoutActivity: Swift.String
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/started_at`.
+            public var startedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/ended_at`.
+            public var endedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/duration_seconds`.
+            public var durationSeconds: Swift.Double
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/distance_km`.
+            public var distanceKm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/active_energy_kcal`.
+            public var activeEnergyKcal: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/average_heart_rate_bpm`.
+            public var averageHeartRateBpm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/max_heart_rate_bpm`.
+            public var maxHeartRateBpm: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/HealthWorkoutSummary/updated_at`.
+            public var updatedAt: Foundation.Date
+            /// Creates a new `HealthWorkoutSummary`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - session:
+            ///   - externalId:
+            ///   - provider:
+            ///   - source:
+            ///   - sourceName:
+            ///   - sourceBundleId:
+            ///   - deviceName:
+            ///   - workoutActivity:
+            ///   - startedAt:
+            ///   - endedAt:
+            ///   - durationSeconds:
+            ///   - distanceKm:
+            ///   - activeEnergyKcal:
+            ///   - averageHeartRateBpm:
+            ///   - maxHeartRateBpm:
+            ///   - updatedAt:
+            public init(
+                id: Swift.Int,
+                session: Swift.Int,
+                externalId: Swift.String,
+                provider: Swift.String,
+                source: Swift.String,
+                sourceName: Swift.String? = nil,
+                sourceBundleId: Swift.String? = nil,
+                deviceName: Swift.String? = nil,
+                workoutActivity: Swift.String,
+                startedAt: Foundation.Date,
+                endedAt: Foundation.Date,
+                durationSeconds: Swift.Double,
+                distanceKm: Swift.String? = nil,
+                activeEnergyKcal: Swift.String? = nil,
+                averageHeartRateBpm: Swift.String? = nil,
+                maxHeartRateBpm: Swift.String? = nil,
+                updatedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.session = session
+                self.externalId = externalId
+                self.provider = provider
+                self.source = source
+                self.sourceName = sourceName
+                self.sourceBundleId = sourceBundleId
+                self.deviceName = deviceName
+                self.workoutActivity = workoutActivity
+                self.startedAt = startedAt
+                self.endedAt = endedAt
+                self.durationSeconds = durationSeconds
+                self.distanceKm = distanceKm
+                self.activeEnergyKcal = activeEnergyKcal
+                self.averageHeartRateBpm = averageHeartRateBpm
+                self.maxHeartRateBpm = maxHeartRateBpm
+                self.updatedAt = updatedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case session
+                case externalId = "external_id"
+                case provider
+                case source
+                case sourceName = "source_name"
+                case sourceBundleId = "source_bundle_id"
+                case deviceName = "device_name"
+                case workoutActivity = "workout_activity"
+                case startedAt = "started_at"
+                case endedAt = "ended_at"
+                case durationSeconds = "duration_seconds"
+                case distanceKm = "distance_km"
+                case activeEnergyKcal = "active_energy_kcal"
+                case averageHeartRateBpm = "average_heart_rate_bpm"
+                case maxHeartRateBpm = "max_heart_rate_bpm"
+                case updatedAt = "updated_at"
             }
         }
         /// - Remark: Generated from `#/components/schemas/ImpressionBatchRequest`.
         public struct ImpressionBatchRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/ImpressionBatchRequest/events`.
             public var events: [Components.Schemas.ImpressionRequest]
+            /// - Remark: Generated from `#/components/schemas/ImpressionBatchRequest/schema_version`.
+            public var schemaVersion: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ImpressionBatchRequest/batch_id`.
+            public var batchId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/ImpressionBatchRequest/session_id`.
+            public var sessionId: Swift.String?
             /// Creates a new `ImpressionBatchRequest`.
             ///
             /// - Parameters:
             ///   - events:
-            public init(events: [Components.Schemas.ImpressionRequest]) {
+            ///   - schemaVersion:
+            ///   - batchId:
+            ///   - sessionId:
+            public init(
+                events: [Components.Schemas.ImpressionRequest],
+                schemaVersion: Swift.Int? = nil,
+                batchId: Swift.String? = nil,
+                sessionId: Swift.String? = nil
+            ) {
                 self.events = events
+                self.schemaVersion = schemaVersion
+                self.batchId = batchId
+                self.sessionId = sessionId
             }
             public enum CodingKeys: String, CodingKey {
                 case events
+                case schemaVersion = "schema_version"
+                case batchId = "batch_id"
+                case sessionId = "session_id"
             }
         }
         /// One post having been on somebody's screen.
@@ -6627,6 +8417,24 @@ public enum Components {
             }
             /// - Remark: Generated from `#/components/schemas/ImpressionRequest/surface`.
             public var surface: Components.Schemas.ImpressionRequest.SurfacePayload?
+            /// - Remark: Generated from `#/components/schemas/ImpressionRequest/sequence`.
+            public var sequence: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ImpressionRequest/observed_at`.
+            public var observedAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/ImpressionRequest/active_dwell_ms`.
+            public var activeDwellMs: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ImpressionRequest/playback_ms`.
+            public var playbackMs: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ImpressionRequest/coverage_ms`.
+            public var coverageMs: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ImpressionRequest/rewatch_ms`.
+            public var rewatchMs: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/ImpressionRequest/playback_failed`.
+            public var playbackFailed: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/ImpressionRequest/attachment_opened`.
+            public var attachmentOpened: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/ImpressionRequest/attachment_read_ms`.
+            public var attachmentReadMs: Swift.Int?
             /// Creates a new `ImpressionRequest`.
             ///
             /// - Parameters:
@@ -6635,18 +8443,45 @@ public enum Components {
             ///   - watchMs:
             ///   - completed:
             ///   - surface:
+            ///   - sequence:
+            ///   - observedAt:
+            ///   - activeDwellMs:
+            ///   - playbackMs:
+            ///   - coverageMs:
+            ///   - rewatchMs:
+            ///   - playbackFailed:
+            ///   - attachmentOpened:
+            ///   - attachmentReadMs:
             public init(
                 post: Swift.Int,
                 dwellMs: Swift.Int? = nil,
                 watchMs: Swift.Int? = nil,
                 completed: Swift.Bool? = nil,
-                surface: Components.Schemas.ImpressionRequest.SurfacePayload? = nil
+                surface: Components.Schemas.ImpressionRequest.SurfacePayload? = nil,
+                sequence: Swift.Int? = nil,
+                observedAt: Foundation.Date? = nil,
+                activeDwellMs: Swift.Int? = nil,
+                playbackMs: Swift.Int? = nil,
+                coverageMs: Swift.Int? = nil,
+                rewatchMs: Swift.Int? = nil,
+                playbackFailed: Swift.Bool? = nil,
+                attachmentOpened: Swift.Bool? = nil,
+                attachmentReadMs: Swift.Int? = nil
             ) {
                 self.post = post
                 self.dwellMs = dwellMs
                 self.watchMs = watchMs
                 self.completed = completed
                 self.surface = surface
+                self.sequence = sequence
+                self.observedAt = observedAt
+                self.activeDwellMs = activeDwellMs
+                self.playbackMs = playbackMs
+                self.coverageMs = coverageMs
+                self.rewatchMs = rewatchMs
+                self.playbackFailed = playbackFailed
+                self.attachmentOpened = attachmentOpened
+                self.attachmentReadMs = attachmentReadMs
             }
             public enum CodingKeys: String, CodingKey {
                 case post
@@ -6654,21 +8489,38 @@ public enum Components {
                 case watchMs = "watch_ms"
                 case completed
                 case surface
+                case sequence
+                case observedAt = "observed_at"
+                case activeDwellMs = "active_dwell_ms"
+                case playbackMs = "playback_ms"
+                case coverageMs = "coverage_ms"
+                case rewatchMs = "rewatch_ms"
+                case playbackFailed = "playback_failed"
+                case attachmentOpened = "attachment_opened"
+                case attachmentReadMs = "attachment_read_ms"
             }
         }
         /// - Remark: Generated from `#/components/schemas/ImpressionResult`.
         public struct ImpressionResult: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/ImpressionResult/recorded`.
             public var recorded: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/ImpressionResult/duplicate`.
+            public var duplicate: Swift.Bool?
             /// Creates a new `ImpressionResult`.
             ///
             /// - Parameters:
             ///   - recorded:
-            public init(recorded: Swift.Int) {
+            ///   - duplicate:
+            public init(
+                recorded: Swift.Int,
+                duplicate: Swift.Bool? = nil
+            ) {
                 self.recorded = recorded
+                self.duplicate = duplicate
             }
             public enum CodingKeys: String, CodingKey {
                 case recorded
+                case duplicate
             }
         }
         /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise`.
@@ -6697,6 +8549,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExercise/planned_sets`.
+            public var plannedSets: [Components.Schemas.WorkoutPlannedSet]?
             /// Creates a new `InitialWorkoutExercise`.
             ///
             /// - Parameters:
@@ -6709,6 +8565,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 exercise: Swift.Int,
                 order: Swift.Int64? = nil,
@@ -6718,7 +8575,8 @@ public enum Components {
                 notes: Swift.String? = nil,
                 restSeconds: Swift.Int? = nil,
                 supersetGroup: Swift.Int? = nil,
-                setTypes: [Components.Schemas.SetTypeEnum]? = nil
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil,
+                plannedSets: [Components.Schemas.WorkoutPlannedSet]? = nil
             ) {
                 self.exercise = exercise
                 self.order = order
@@ -6729,6 +8587,7 @@ public enum Components {
                 self.restSeconds = restSeconds
                 self.supersetGroup = supersetGroup
                 self.setTypes = setTypes
+                self.plannedSets = plannedSets
             }
             public enum CodingKeys: String, CodingKey {
                 case exercise
@@ -6740,6 +8599,7 @@ public enum Components {
                 case restSeconds = "rest_seconds"
                 case supersetGroup = "superset_group"
                 case setTypes = "set_types"
+                case plannedSets = "planned_sets"
             }
         }
         /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest`.
@@ -6768,6 +8628,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///
+            /// - Remark: Generated from `#/components/schemas/InitialWorkoutExerciseRequest/planned_sets`.
+            public var plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]?
             /// Creates a new `InitialWorkoutExerciseRequest`.
             ///
             /// - Parameters:
@@ -6780,6 +8644,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 exercise: Swift.Int,
                 order: Swift.Int64? = nil,
@@ -6789,7 +8654,8 @@ public enum Components {
                 notes: Swift.String? = nil,
                 restSeconds: Swift.Int? = nil,
                 supersetGroup: Swift.Int? = nil,
-                setTypes: [Components.Schemas.SetTypeEnum]? = nil
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil,
+                plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]? = nil
             ) {
                 self.exercise = exercise
                 self.order = order
@@ -6800,6 +8666,7 @@ public enum Components {
                 self.restSeconds = restSeconds
                 self.supersetGroup = supersetGroup
                 self.setTypes = setTypes
+                self.plannedSets = plannedSets
             }
             public enum CodingKeys: String, CodingKey {
                 case exercise
@@ -6811,6 +8678,7 @@ public enum Components {
                 case restSeconds = "rest_seconds"
                 case supersetGroup = "superset_group"
                 case setTypes = "set_types"
+                case plannedSets = "planned_sets"
             }
         }
         /// One topic the For You page has picked up about the reader.
@@ -7312,6 +9180,111 @@ public enum Components {
                 case results
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PaginatedCalendarPersonList`.
+        public struct PaginatedCalendarPersonList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedCalendarPersonList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedCalendarPersonList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedCalendarPersonList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedCalendarPersonList/results`.
+            public var results: [Components.Schemas.CalendarPerson]
+            /// Creates a new `PaginatedCalendarPersonList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.CalendarPerson]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PaginatedCalendarShareList`.
+        public struct PaginatedCalendarShareList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedCalendarShareList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedCalendarShareList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedCalendarShareList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedCalendarShareList/results`.
+            public var results: [Components.Schemas.CalendarShare]
+            /// Creates a new `PaginatedCalendarShareList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.CalendarShare]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PaginatedCookbookList`.
+        public struct PaginatedCookbookList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedCookbookList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedCookbookList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedCookbookList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedCookbookList/results`.
+            public var results: [Components.Schemas.Cookbook]
+            /// Creates a new `PaginatedCookbookList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.Cookbook]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PaginatedDailyStepCountList`.
         public struct PaginatedDailyStepCountList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PaginatedDailyStepCountList/count`.
@@ -7544,6 +9517,41 @@ public enum Components {
                 next: Swift.String? = nil,
                 previous: Swift.String? = nil,
                 results: [Components.Schemas.Gym]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PaginatedHealthWorkoutSummaryList`.
+        public struct PaginatedHealthWorkoutSummaryList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedHealthWorkoutSummaryList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedHealthWorkoutSummaryList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedHealthWorkoutSummaryList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedHealthWorkoutSummaryList/results`.
+            public var results: [Components.Schemas.HealthWorkoutSummary]
+            /// Creates a new `PaginatedHealthWorkoutSummaryList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.HealthWorkoutSummary]
             ) {
                 self.count = count
                 self.next = next
@@ -7866,6 +9874,41 @@ public enum Components {
                 case results
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PaginatedSharedCalendarItemList`.
+        public struct PaginatedSharedCalendarItemList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PaginatedSharedCalendarItemList/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PaginatedSharedCalendarItemList/next`.
+            public var next: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedSharedCalendarItemList/previous`.
+            public var previous: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PaginatedSharedCalendarItemList/results`.
+            public var results: [Components.Schemas.SharedCalendarItem]
+            /// Creates a new `PaginatedSharedCalendarItemList`.
+            ///
+            /// - Parameters:
+            ///   - count:
+            ///   - next:
+            ///   - previous:
+            ///   - results:
+            public init(
+                count: Swift.Int,
+                next: Swift.String? = nil,
+                previous: Swift.String? = nil,
+                results: [Components.Schemas.SharedCalendarItem]
+            ) {
+                self.count = count
+                self.next = next
+                self.previous = previous
+                self.results = results
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case next
+                case previous
+                case results
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PaginatedWorkoutCycleList`.
         public struct PaginatedWorkoutCycleList: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PaginatedWorkoutCycleList/count`.
@@ -8132,6 +10175,29 @@ public enum Components {
                 case email
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PatchedAppleHealthConnectionUpdateRequest`.
+        public struct PatchedAppleHealthConnectionUpdateRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PatchedAppleHealthConnectionUpdateRequest/enabled`.
+            public var enabled: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/PatchedAppleHealthConnectionUpdateRequest/consent_version`.
+            public var consentVersion: Swift.String?
+            /// Creates a new `PatchedAppleHealthConnectionUpdateRequest`.
+            ///
+            /// - Parameters:
+            ///   - enabled:
+            ///   - consentVersion:
+            public init(
+                enabled: Swift.Bool? = nil,
+                consentVersion: Swift.String? = nil
+            ) {
+                self.enabled = enabled
+                self.consentVersion = consentVersion
+            }
+            public enum CodingKeys: String, CodingKey {
+                case enabled
+                case consentVersion = "consent_version"
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PatchedBodyWeightEntryRequest`.
         public struct PatchedBodyWeightEntryRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PatchedBodyWeightEntryRequest/weight_kg`.
@@ -8159,6 +10225,21 @@ public enum Components {
                 case weightKg = "weight_kg"
                 case recordedAt = "recorded_at"
                 case notes
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PatchedCookbookRequest`.
+        public struct PatchedCookbookRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PatchedCookbookRequest/name`.
+            public var name: Swift.String?
+            /// Creates a new `PatchedCookbookRequest`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            public init(name: Swift.String? = nil) {
+                self.name = name
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
             }
         }
         /// - Remark: Generated from `#/components/schemas/PatchedExerciseRequest`.
@@ -8191,6 +10272,38 @@ public enum Components {
         public struct PatchedFoodEntryRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/meal`.
             public var meal: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/source_id`.
+            public var sourceId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/serving_description`.
+            public var servingDescription: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/reference_quantity`.
+            public var referenceQuantity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/reference_unit`.
+            public var referenceUnit: Swift.String?
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/nutrients`.
+            public struct NutrientsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `NutrientsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/nutrients`.
+            public var nutrients: Components.Schemas.PatchedFoodEntryRequest.NutrientsPayload?
             /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/name`.
             public var name: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedFoodEntryRequest/servings`.
@@ -8209,6 +10322,11 @@ public enum Components {
             ///
             /// - Parameters:
             ///   - meal:
+            ///   - sourceId:
+            ///   - servingDescription:
+            ///   - referenceQuantity:
+            ///   - referenceUnit:
+            ///   - nutrients: Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
             ///   - name:
             ///   - servings:
             ///   - calories:
@@ -8218,6 +10336,11 @@ public enum Components {
             ///   - position:
             public init(
                 meal: Swift.Int? = nil,
+                sourceId: Swift.String? = nil,
+                servingDescription: Swift.String? = nil,
+                referenceQuantity: Swift.String? = nil,
+                referenceUnit: Swift.String? = nil,
+                nutrients: Components.Schemas.PatchedFoodEntryRequest.NutrientsPayload? = nil,
                 name: Swift.String? = nil,
                 servings: Swift.String? = nil,
                 calories: Swift.String? = nil,
@@ -8227,6 +10350,11 @@ public enum Components {
                 position: Swift.Int64? = nil
             ) {
                 self.meal = meal
+                self.sourceId = sourceId
+                self.servingDescription = servingDescription
+                self.referenceQuantity = referenceQuantity
+                self.referenceUnit = referenceUnit
+                self.nutrients = nutrients
                 self.name = name
                 self.servings = servings
                 self.calories = calories
@@ -8237,6 +10365,11 @@ public enum Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case meal
+                case sourceId = "source_id"
+                case servingDescription = "serving_description"
+                case referenceQuantity = "reference_quantity"
+                case referenceUnit = "reference_unit"
+                case nutrients
                 case name
                 case servings
                 case calories
@@ -8476,6 +10609,45 @@ public enum Components {
             public var scheduledDate: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/scheduled_time`.
             public var scheduledTime: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/color`.
+            @frozen public enum ColorPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/color/case1`.
+                case ColorEnum(Components.Schemas.ColorEnum)
+                /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/color/case2`.
+                case BlankEnum(Components.Schemas.BlankEnum)
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
+                    do {
+                        self = .ColorEnum(try decoder.decodeFromSingleValueContainer())
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    do {
+                        self = .BlankEnum(try .init(from: decoder))
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
+                        type: Self.self,
+                        codingPath: decoder.codingPath,
+                        errors: errors
+                    )
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    switch self {
+                    case let .ColorEnum(value):
+                        try encoder.encodeToSingleValueContainer(value)
+                    case let .BlankEnum(value):
+                        try value.encode(to: encoder)
+                    }
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/color`.
+            public var color: Components.Schemas.PatchedPlannerEntryRequest.ColorPayload?
+            /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/scheduling_timezone`.
+            public var schedulingTimezone: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/duration_minutes`.
             public var durationMinutes: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PatchedPlannerEntryRequest/is_complete`.
@@ -8503,6 +10675,8 @@ public enum Components {
             ///   - priority:
             ///   - scheduledDate:
             ///   - scheduledTime:
+            ///   - color:
+            ///   - schedulingTimezone:
             ///   - durationMinutes:
             ///   - isComplete:
             ///   - workout:
@@ -8518,6 +10692,8 @@ public enum Components {
                 priority: Components.Schemas.PriorityEnum? = nil,
                 scheduledDate: Swift.String? = nil,
                 scheduledTime: Swift.String? = nil,
+                color: Components.Schemas.PatchedPlannerEntryRequest.ColorPayload? = nil,
+                schedulingTimezone: Swift.String? = nil,
                 durationMinutes: Swift.Int? = nil,
                 isComplete: Swift.Bool? = nil,
                 workout: Swift.Int? = nil,
@@ -8533,6 +10709,8 @@ public enum Components {
                 self.priority = priority
                 self.scheduledDate = scheduledDate
                 self.scheduledTime = scheduledTime
+                self.color = color
+                self.schedulingTimezone = schedulingTimezone
                 self.durationMinutes = durationMinutes
                 self.isComplete = isComplete
                 self.workout = workout
@@ -8549,6 +10727,8 @@ public enum Components {
                 case priority
                 case scheduledDate = "scheduled_date"
                 case scheduledTime = "scheduled_time"
+                case color
+                case schedulingTimezone = "scheduling_timezone"
                 case durationMinutes = "duration_minutes"
                 case isComplete = "is_complete"
                 case workout
@@ -8728,6 +10908,10 @@ public enum Components {
         public struct PatchedSavedFoodMealRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PatchedSavedFoodMealRequest/name`.
             public var name: Swift.String?
+            /// Required on creation. Omit on edits to keep the recipe in its existing cookbook.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedSavedFoodMealRequest/cookbook`.
+            public var cookbook: Swift.Int64?
             /// - Remark: Generated from `#/components/schemas/PatchedSavedFoodMealRequest/ingredients`.
             public var ingredients: [Components.Schemas.SavedFoodIngredientRequest]?
             /// - Remark: Generated from `#/components/schemas/PatchedSavedFoodMealRequest/cooking_instructions`.
@@ -8736,19 +10920,23 @@ public enum Components {
             ///
             /// - Parameters:
             ///   - name:
+            ///   - cookbook: Required on creation. Omit on edits to keep the recipe in its existing cookbook.
             ///   - ingredients:
             ///   - cookingInstructions:
             public init(
                 name: Swift.String? = nil,
+                cookbook: Swift.Int64? = nil,
                 ingredients: [Components.Schemas.SavedFoodIngredientRequest]? = nil,
                 cookingInstructions: Swift.String? = nil
             ) {
                 self.name = name
+                self.cookbook = cookbook
                 self.ingredients = ingredients
                 self.cookingInstructions = cookingInstructions
             }
             public enum CodingKeys: String, CodingKey {
                 case name
+                case cookbook
                 case ingredients
                 case cookingInstructions = "cooking_instructions"
             }
@@ -8878,11 +11066,15 @@ public enum Components {
                 case addedTopics = "added_topics"
             }
         }
-        /// The two things about a post that can still change.
+        /// What about a post can still change: its words, and who it is for.
         ///
         /// The snapshot is not among them. It is the record of what happened, and one
         /// that could be edited into a different workout after people had read it would
-        /// be worth nothing as a record.
+        /// be worth nothing as a record. Nor is what it is a take of, or its sound:
+        /// those are what it was published as.
+        ///
+        /// Closing a post to takes stops new ones. The takes already made of it are
+        /// their authors' own posts and stay.
         ///
         /// - Remark: Generated from `#/components/schemas/PatchedUpdatePostRequest`.
         public struct PatchedUpdatePostRequest: Codable, Hashable, Sendable {
@@ -8890,21 +11082,70 @@ public enum Components {
             public var caption: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PatchedUpdatePostRequest/visibility`.
             public var visibility: Components.Schemas.VisibilityEnum?
+            /// - Remark: Generated from `#/components/schemas/PatchedUpdatePostRequest/reuse_permission`.
+            public var reusePermission: Components.Schemas.ReusePermissionEnum?
+            /// - Remark: Generated from `#/components/schemas/PatchedUpdatePostRequest/language`.
+            public var language: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedUpdatePostRequest/topics`.
+            public var topics: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/PatchedUpdatePostRequest/prompt`.
+            public var prompt: Swift.String?
             /// Creates a new `PatchedUpdatePostRequest`.
             ///
             /// - Parameters:
             ///   - caption:
             ///   - visibility:
+            ///   - reusePermission:
+            ///   - language:
+            ///   - topics:
+            ///   - prompt:
             public init(
                 caption: Swift.String? = nil,
-                visibility: Components.Schemas.VisibilityEnum? = nil
+                visibility: Components.Schemas.VisibilityEnum? = nil,
+                reusePermission: Components.Schemas.ReusePermissionEnum? = nil,
+                language: Swift.String? = nil,
+                topics: [Swift.String]? = nil,
+                prompt: Swift.String? = nil
             ) {
                 self.caption = caption
                 self.visibility = visibility
+                self.reusePermission = reusePermission
+                self.language = language
+                self.topics = topics
+                self.prompt = prompt
             }
             public enum CodingKeys: String, CodingKey {
                 case caption
                 case visibility
+                case reusePermission = "reuse_permission"
+                case language
+                case topics
+                case prompt
+            }
+        }
+        /// What an author says when they make a post's audio a sound.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PatchedUpdateSoundRequest`.
+        public struct PatchedUpdateSoundRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PatchedUpdateSoundRequest/title`.
+            public var title: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PatchedUpdateSoundRequest/reuse_permission`.
+            public var reusePermission: Components.Schemas.ReusePermissionEnum?
+            /// Creates a new `PatchedUpdateSoundRequest`.
+            ///
+            /// - Parameters:
+            ///   - title:
+            ///   - reusePermission:
+            public init(
+                title: Swift.String? = nil,
+                reusePermission: Components.Schemas.ReusePermissionEnum? = nil
+            ) {
+                self.title = title
+                self.reusePermission = reusePermission
+            }
+            public enum CodingKeys: String, CodingKey {
+                case title
+                case reusePermission = "reuse_permission"
             }
         }
         /// - Remark: Generated from `#/components/schemas/PatchedWorkoutCycleRequest`.
@@ -8976,6 +11217,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PatchedWorkoutExerciseRequest/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutExerciseRequest/planned_sets`.
+            public var plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]?
             /// Creates a new `PatchedWorkoutExerciseRequest`.
             ///
             /// - Parameters:
@@ -8989,6 +11234,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 workout: Swift.Int? = nil,
                 exercise: Swift.Int? = nil,
@@ -8999,7 +11245,8 @@ public enum Components {
                 notes: Swift.String? = nil,
                 restSeconds: Swift.Int? = nil,
                 supersetGroup: Swift.Int? = nil,
-                setTypes: [Components.Schemas.SetTypeEnum]? = nil
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil,
+                plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]? = nil
             ) {
                 self.workout = workout
                 self.exercise = exercise
@@ -9011,6 +11258,7 @@ public enum Components {
                 self.restSeconds = restSeconds
                 self.supersetGroup = supersetGroup
                 self.setTypes = setTypes
+                self.plannedSets = plannedSets
             }
             public enum CodingKeys: String, CodingKey {
                 case workout
@@ -9023,6 +11271,7 @@ public enum Components {
                 case restSeconds = "rest_seconds"
                 case supersetGroup = "superset_group"
                 case setTypes = "set_types"
+                case plannedSets = "planned_sets"
             }
         }
         /// - Remark: Generated from `#/components/schemas/PatchedWorkoutScheduleRequest`.
@@ -9200,6 +11449,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/exercise_plan`.
             public var exercisePlan: [Components.Schemas.WorkoutPlanExerciseRequest]?
+            /// Send 1 after checking workouts/capabilities/ when intentionally replacing/removing explicit per-set exercise plans.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PatchedWorkoutTemplateRequest/planned_sets_version`.
+            public var plannedSetsVersion: Swift.Int?
             /// Creates a new `PatchedWorkoutTemplateRequest`.
             ///
             /// - Parameters:
@@ -9212,6 +11465,7 @@ public enum Components {
             ///   - initialExercises: Create-only: save all initial exercises in the same transaction as the template.
             ///   - initialDate: Create-only: optionally schedule the new template in the same transaction.
             ///   - exercisePlan: Update-only: atomically replace the exercise plan, preserving supplied relation IDs.
+            ///   - plannedSetsVersion: Send 1 after checking workouts/capabilities/ when intentionally replacing/removing explicit per-set exercise plans.
             public init(
                 name: Swift.String? = nil,
                 workoutType: Components.Schemas.WorkoutTypeEnum? = nil,
@@ -9221,7 +11475,8 @@ public enum Components {
                 description: Swift.String? = nil,
                 initialExercises: [Components.Schemas.InitialWorkoutExerciseRequest]? = nil,
                 initialDate: Swift.String? = nil,
-                exercisePlan: [Components.Schemas.WorkoutPlanExerciseRequest]? = nil
+                exercisePlan: [Components.Schemas.WorkoutPlanExerciseRequest]? = nil,
+                plannedSetsVersion: Swift.Int? = nil
             ) {
                 self.name = name
                 self.workoutType = workoutType
@@ -9232,6 +11487,7 @@ public enum Components {
                 self.initialExercises = initialExercises
                 self.initialDate = initialDate
                 self.exercisePlan = exercisePlan
+                self.plannedSetsVersion = plannedSetsVersion
             }
             public enum CodingKeys: String, CodingKey {
                 case name
@@ -9243,6 +11499,7 @@ public enum Components {
                 case initialExercises = "initial_exercises"
                 case initialDate = "initial_date"
                 case exercisePlan = "exercise_plan"
+                case plannedSetsVersion = "planned_sets_version"
             }
         }
         /// A best set during a session that beat everything logged before it.
@@ -9416,6 +11673,47 @@ public enum Components {
             public var scheduledDate: Swift.String
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/scheduled_time`.
             public var scheduledTime: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/color`.
+            @frozen public enum ColorPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlannerEntry/color/case1`.
+                case ColorEnum(Components.Schemas.ColorEnum)
+                /// - Remark: Generated from `#/components/schemas/PlannerEntry/color/case2`.
+                case BlankEnum(Components.Schemas.BlankEnum)
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
+                    do {
+                        self = .ColorEnum(try decoder.decodeFromSingleValueContainer())
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    do {
+                        self = .BlankEnum(try .init(from: decoder))
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
+                        type: Self.self,
+                        codingPath: decoder.codingPath,
+                        errors: errors
+                    )
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    switch self {
+                    case let .ColorEnum(value):
+                        try encoder.encodeToSingleValueContainer(value)
+                    case let .BlankEnum(value):
+                        try value.encode(to: encoder)
+                    }
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/color`.
+            public var color: Components.Schemas.PlannerEntry.ColorPayload?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/scheduling_timezone`.
+            public var schedulingTimezone: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntry/recurrence_id`.
+            public var recurrenceId: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/duration_minutes`.
             public var durationMinutes: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PlannerEntry/is_complete`.
@@ -9455,6 +11753,9 @@ public enum Components {
             ///   - priority:
             ///   - scheduledDate:
             ///   - scheduledTime:
+            ///   - color:
+            ///   - schedulingTimezone:
+            ///   - recurrenceId:
             ///   - durationMinutes:
             ///   - isComplete:
             ///   - completedAt:
@@ -9478,6 +11779,9 @@ public enum Components {
                 priority: Components.Schemas.PriorityEnum? = nil,
                 scheduledDate: Swift.String,
                 scheduledTime: Swift.String? = nil,
+                color: Components.Schemas.PlannerEntry.ColorPayload? = nil,
+                schedulingTimezone: Swift.String? = nil,
+                recurrenceId: Swift.Int? = nil,
                 durationMinutes: Swift.Int? = nil,
                 isComplete: Swift.Bool? = nil,
                 completedAt: Foundation.Date? = nil,
@@ -9501,6 +11805,9 @@ public enum Components {
                 self.priority = priority
                 self.scheduledDate = scheduledDate
                 self.scheduledTime = scheduledTime
+                self.color = color
+                self.schedulingTimezone = schedulingTimezone
+                self.recurrenceId = recurrenceId
                 self.durationMinutes = durationMinutes
                 self.isComplete = isComplete
                 self.completedAt = completedAt
@@ -9525,6 +11832,9 @@ public enum Components {
                 case priority
                 case scheduledDate = "scheduled_date"
                 case scheduledTime = "scheduled_time"
+                case color
+                case schedulingTimezone = "scheduling_timezone"
+                case recurrenceId = "recurrence_id"
                 case durationMinutes = "duration_minutes"
                 case isComplete = "is_complete"
                 case completedAt = "completed_at"
@@ -9587,6 +11897,45 @@ public enum Components {
             public var scheduledDate: Swift.String
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/scheduled_time`.
             public var scheduledTime: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/color`.
+            @frozen public enum ColorPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/color/case1`.
+                case ColorEnum(Components.Schemas.ColorEnum)
+                /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/color/case2`.
+                case BlankEnum(Components.Schemas.BlankEnum)
+                public init(from decoder: any Swift.Decoder) throws {
+                    var errors: [any Swift.Error] = []
+                    do {
+                        self = .ColorEnum(try decoder.decodeFromSingleValueContainer())
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    do {
+                        self = .BlankEnum(try .init(from: decoder))
+                        return
+                    } catch {
+                        errors.append(error)
+                    }
+                    throw Swift.DecodingError.failedToDecodeOneOfSchema(
+                        type: Self.self,
+                        codingPath: decoder.codingPath,
+                        errors: errors
+                    )
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    switch self {
+                    case let .ColorEnum(value):
+                        try encoder.encodeToSingleValueContainer(value)
+                    case let .BlankEnum(value):
+                        try value.encode(to: encoder)
+                    }
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/color`.
+            public var color: Components.Schemas.PlannerEntryRequest.ColorPayload?
+            /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/scheduling_timezone`.
+            public var schedulingTimezone: Swift.String?
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/duration_minutes`.
             public var durationMinutes: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/PlannerEntryRequest/is_complete`.
@@ -9614,6 +11963,8 @@ public enum Components {
             ///   - priority:
             ///   - scheduledDate:
             ///   - scheduledTime:
+            ///   - color:
+            ///   - schedulingTimezone:
             ///   - durationMinutes:
             ///   - isComplete:
             ///   - workout:
@@ -9629,6 +11980,8 @@ public enum Components {
                 priority: Components.Schemas.PriorityEnum? = nil,
                 scheduledDate: Swift.String,
                 scheduledTime: Swift.String? = nil,
+                color: Components.Schemas.PlannerEntryRequest.ColorPayload? = nil,
+                schedulingTimezone: Swift.String? = nil,
                 durationMinutes: Swift.Int? = nil,
                 isComplete: Swift.Bool? = nil,
                 workout: Swift.Int? = nil,
@@ -9644,6 +11997,8 @@ public enum Components {
                 self.priority = priority
                 self.scheduledDate = scheduledDate
                 self.scheduledTime = scheduledTime
+                self.color = color
+                self.schedulingTimezone = schedulingTimezone
                 self.durationMinutes = durationMinutes
                 self.isComplete = isComplete
                 self.workout = workout
@@ -9660,6 +12015,8 @@ public enum Components {
                 case priority
                 case scheduledDate = "scheduled_date"
                 case scheduledTime = "scheduled_time"
+                case color
+                case schedulingTimezone = "scheduling_timezone"
                 case durationMinutes = "duration_minutes"
                 case isComplete = "is_complete"
                 case workout
@@ -9914,6 +12271,26 @@ public enum Components {
             }
             /// - Remark: Generated from `#/components/schemas/Post/planner`.
             public var planner: Components.Schemas.Post.PlannerPayload?
+            /// - Remark: Generated from `#/components/schemas/Post/cookbook`.
+            public struct CookbookPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/Post/cookbook/value1`.
+                public var value1: Components.Schemas.PostCookbook
+                /// Creates a new `CookbookPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostCookbook) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/Post/cookbook`.
+            public var cookbook: Components.Schemas.Post.CookbookPayload?
             /// - Remark: Generated from `#/components/schemas/Post/source_id`.
             public var sourceId: Swift.Int?
             /// - Remark: Generated from `#/components/schemas/Post/viewer_follows_author`.
@@ -9962,6 +12339,70 @@ public enum Components {
             public var moderationStatus: Swift.String
             /// - Remark: Generated from `#/components/schemas/Post/updated_at`.
             public var updatedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/Post/is_take`.
+            public var isTake: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/Post/source`.
+            public struct SourcePayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/Post/source/value1`.
+                public var value1: Components.Schemas.PostSource
+                /// Creates a new `SourcePayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostSource) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/Post/source`.
+            public var source: Components.Schemas.Post.SourcePayload?
+            /// - Remark: Generated from `#/components/schemas/Post/sound`.
+            public struct SoundPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/Post/sound/value1`.
+                public var value1: Components.Schemas.PostSound
+                /// Creates a new `SoundPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostSound) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/Post/sound`.
+            public var sound: Components.Schemas.Post.SoundPayload?
+            /// - Remark: Generated from `#/components/schemas/Post/hashtags`.
+            public var hashtags: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/Post/topics`.
+            public var topics: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/Post/language`.
+            public var language: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Post/attachment_version`.
+            public var attachmentVersion: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/Post/audience`.
+            public var audience: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Post/reuse_permission`.
+            public var reusePermission: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Post/prompt`.
+            public var prompt: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Post/viewer_can_take`.
+            public var viewerCanTake: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/Post/take_count`.
+            public var takeCount: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/Post/tried_count`.
+            public var triedCount: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/Post/viewer_has_tried`.
+            public var viewerHasTried: Swift.Bool?
             /// Creates a new `Post`.
             ///
             /// - Parameters:
@@ -9976,6 +12417,7 @@ public enum Components {
             ///   - workout:
             ///   - meal:
             ///   - planner:
+            ///   - cookbook:
             ///   - sourceId:
             ///   - viewerFollowsAuthor:
             ///   - showsWeights:
@@ -9991,6 +12433,20 @@ public enum Components {
             ///   - publishedAt:
             ///   - moderationStatus:
             ///   - updatedAt:
+            ///   - isTake:
+            ///   - source:
+            ///   - sound:
+            ///   - hashtags:
+            ///   - topics:
+            ///   - language:
+            ///   - attachmentVersion:
+            ///   - audience:
+            ///   - reusePermission:
+            ///   - prompt:
+            ///   - viewerCanTake:
+            ///   - takeCount:
+            ///   - triedCount:
+            ///   - viewerHasTried:
             public init(
                 id: Swift.Int,
                 author: Components.Schemas.Post.AuthorPayload,
@@ -10003,6 +12459,7 @@ public enum Components {
                 workout: Components.Schemas.Post.WorkoutPayload? = nil,
                 meal: Components.Schemas.Post.MealPayload? = nil,
                 planner: Components.Schemas.Post.PlannerPayload? = nil,
+                cookbook: Components.Schemas.Post.CookbookPayload? = nil,
                 sourceId: Swift.Int? = nil,
                 viewerFollowsAuthor: Swift.Bool,
                 showsWeights: Swift.Bool,
@@ -10017,7 +12474,21 @@ public enum Components {
                 createdAt: Foundation.Date,
                 publishedAt: Foundation.Date? = nil,
                 moderationStatus: Swift.String,
-                updatedAt: Foundation.Date
+                updatedAt: Foundation.Date,
+                isTake: Swift.Bool? = nil,
+                source: Components.Schemas.Post.SourcePayload? = nil,
+                sound: Components.Schemas.Post.SoundPayload? = nil,
+                hashtags: [Swift.String]? = nil,
+                topics: [Swift.String]? = nil,
+                language: Swift.String? = nil,
+                attachmentVersion: Swift.Int? = nil,
+                audience: Swift.String? = nil,
+                reusePermission: Swift.String? = nil,
+                prompt: Swift.String? = nil,
+                viewerCanTake: Swift.Bool? = nil,
+                takeCount: Swift.Int? = nil,
+                triedCount: Swift.Int? = nil,
+                viewerHasTried: Swift.Bool? = nil
             ) {
                 self.id = id
                 self.author = author
@@ -10030,6 +12501,7 @@ public enum Components {
                 self.workout = workout
                 self.meal = meal
                 self.planner = planner
+                self.cookbook = cookbook
                 self.sourceId = sourceId
                 self.viewerFollowsAuthor = viewerFollowsAuthor
                 self.showsWeights = showsWeights
@@ -10045,6 +12517,20 @@ public enum Components {
                 self.publishedAt = publishedAt
                 self.moderationStatus = moderationStatus
                 self.updatedAt = updatedAt
+                self.isTake = isTake
+                self.source = source
+                self.sound = sound
+                self.hashtags = hashtags
+                self.topics = topics
+                self.language = language
+                self.attachmentVersion = attachmentVersion
+                self.audience = audience
+                self.reusePermission = reusePermission
+                self.prompt = prompt
+                self.viewerCanTake = viewerCanTake
+                self.takeCount = takeCount
+                self.triedCount = triedCount
+                self.viewerHasTried = viewerHasTried
             }
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -10058,6 +12544,7 @@ public enum Components {
                 case workout
                 case meal
                 case planner
+                case cookbook
                 case sourceId = "source_id"
                 case viewerFollowsAuthor = "viewer_follows_author"
                 case showsWeights = "shows_weights"
@@ -10073,6 +12560,20 @@ public enum Components {
                 case publishedAt = "published_at"
                 case moderationStatus = "moderation_status"
                 case updatedAt = "updated_at"
+                case isTake = "is_take"
+                case source
+                case sound
+                case hashtags
+                case topics
+                case language
+                case attachmentVersion = "attachment_version"
+                case audience
+                case reusePermission = "reuse_permission"
+                case prompt
+                case viewerCanTake = "viewer_can_take"
+                case takeCount = "take_count"
+                case triedCount = "tried_count"
+                case viewerHasTried = "viewer_has_tried"
             }
         }
         /// A comment, and the replies hanging off it.
@@ -10199,6 +12700,29 @@ public enum Components {
                 case body
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PostCookbook`.
+        public struct PostCookbook: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PostCookbook/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostCookbook/recipe_count`.
+            public var recipeCount: Swift.Int
+            /// Creates a new `PostCookbook`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            ///   - recipeCount:
+            public init(
+                name: Swift.String,
+                recipeCount: Swift.Int
+            ) {
+                self.name = name
+                self.recipeCount = recipeCount
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case recipeCount = "recipe_count"
+            }
+        }
         /// A posted meal, frozen at the moment it was posted.
         ///
         /// Totals are derived from the foods nested underneath, exactly as
@@ -10224,6 +12748,10 @@ public enum Components {
             public var totalCarbohydrateGrams: Swift.String
             /// - Remark: Generated from `#/components/schemas/PostMeal/total_fat_grams`.
             public var totalFatGrams: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostMeal/entry_count`.
+            public var entryCount: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PostMeal/details_included`.
+            public var detailsIncluded: Swift.Bool?
             /// Creates a new `PostMeal`.
             ///
             /// - Parameters:
@@ -10235,6 +12763,8 @@ public enum Components {
             ///   - totalProteinGrams:
             ///   - totalCarbohydrateGrams:
             ///   - totalFatGrams:
+            ///   - entryCount:
+            ///   - detailsIncluded:
             public init(
                 name: Swift.String,
                 date: Swift.String,
@@ -10243,7 +12773,9 @@ public enum Components {
                 totalCalories: Swift.String,
                 totalProteinGrams: Swift.String,
                 totalCarbohydrateGrams: Swift.String,
-                totalFatGrams: Swift.String
+                totalFatGrams: Swift.String,
+                entryCount: Swift.Int? = nil,
+                detailsIncluded: Swift.Bool? = nil
             ) {
                 self.name = name
                 self.date = date
@@ -10253,6 +12785,8 @@ public enum Components {
                 self.totalProteinGrams = totalProteinGrams
                 self.totalCarbohydrateGrams = totalCarbohydrateGrams
                 self.totalFatGrams = totalFatGrams
+                self.entryCount = entryCount
+                self.detailsIncluded = detailsIncluded
             }
             public enum CodingKeys: String, CodingKey {
                 case name
@@ -10263,6 +12797,8 @@ public enum Components {
                 case totalProteinGrams = "total_protein_grams"
                 case totalCarbohydrateGrams = "total_carbohydrate_grams"
                 case totalFatGrams = "total_fat_grams"
+                case entryCount = "entry_count"
+                case detailsIncluded = "details_included"
             }
         }
         /// One food inside a posted meal, per serving with its servings beside it.
@@ -10271,6 +12807,38 @@ public enum Components {
         public struct PostMealEntry: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PostMealEntry/id`.
             public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/source_id`.
+            public var sourceId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/serving_description`.
+            public var servingDescription: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/reference_quantity`.
+            public var referenceQuantity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/reference_unit`.
+            public var referenceUnit: Swift.String?
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/nutrients`.
+            public struct NutrientsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `NutrientsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PostMealEntry/nutrients`.
+            public var nutrients: Components.Schemas.PostMealEntry.NutrientsPayload?
             /// - Remark: Generated from `#/components/schemas/PostMealEntry/name`.
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/PostMealEntry/servings`.
@@ -10297,6 +12865,11 @@ public enum Components {
             ///
             /// - Parameters:
             ///   - id:
+            ///   - sourceId:
+            ///   - servingDescription:
+            ///   - referenceQuantity:
+            ///   - referenceUnit:
+            ///   - nutrients: Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
             ///   - name:
             ///   - servings:
             ///   - calories:
@@ -10310,6 +12883,11 @@ public enum Components {
             ///   - position:
             public init(
                 id: Swift.Int,
+                sourceId: Swift.String? = nil,
+                servingDescription: Swift.String? = nil,
+                referenceQuantity: Swift.String? = nil,
+                referenceUnit: Swift.String? = nil,
+                nutrients: Components.Schemas.PostMealEntry.NutrientsPayload? = nil,
                 name: Swift.String,
                 servings: Swift.String,
                 calories: Swift.String,
@@ -10323,6 +12901,11 @@ public enum Components {
                 position: Swift.Int
             ) {
                 self.id = id
+                self.sourceId = sourceId
+                self.servingDescription = servingDescription
+                self.referenceQuantity = referenceQuantity
+                self.referenceUnit = referenceUnit
+                self.nutrients = nutrients
                 self.name = name
                 self.servings = servings
                 self.calories = calories
@@ -10337,6 +12920,11 @@ public enum Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case id
+                case sourceId = "source_id"
+                case servingDescription = "serving_description"
+                case referenceQuantity = "reference_quantity"
+                case referenceUnit = "reference_unit"
+                case nutrients
                 case name
                 case servings
                 case calories
@@ -10512,6 +13100,146 @@ public enum Components {
                 case alreadyReported = "already_reported"
             }
         }
+        /// The sound a post's clip is set to, as its credit line.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PostSound`.
+        public struct PostSound: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PostSound/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PostSound/title`.
+            public var title: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PostSound/duration_ms`.
+            public var durationMs: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PostSound/owner`.
+            public struct OwnerPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PostSound/owner/value1`.
+                public var value1: Components.Schemas.CreditedPerson
+                /// Creates a new `OwnerPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.CreditedPerson) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PostSound/owner`.
+            public var owner: Components.Schemas.PostSound.OwnerPayload
+            /// - Remark: Generated from `#/components/schemas/PostSound/is_original`.
+            public var isOriginal: Swift.Bool
+            /// Creates a new `PostSound`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - title:
+            ///   - durationMs:
+            ///   - owner:
+            ///   - isOriginal:
+            public init(
+                id: Swift.Int,
+                title: Swift.String,
+                durationMs: Swift.Int? = nil,
+                owner: Components.Schemas.PostSound.OwnerPayload,
+                isOriginal: Swift.Bool
+            ) {
+                self.id = id
+                self.title = title
+                self.durationMs = durationMs
+                self.owner = owner
+                self.isOriginal = isOriginal
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case title
+                case durationMs = "duration_ms"
+                case owner
+                case isOriginal = "is_original"
+            }
+        }
+        /// The post a take answers, as its credit line.
+        ///
+        /// Present on every take and null on everything else. When the reader may
+        /// not see the source -- it was deleted, taken down, made private, its
+        /// author blocked them or was suspended -- `available` is false and every
+        /// other field is null: the card can say the original is unavailable, and
+        /// nothing here says what it was or whose.
+        ///
+        /// - Remark: Generated from `#/components/schemas/PostSource`.
+        public struct PostSource: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PostSource/available`.
+            public var available: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/PostSource/post_id`.
+            public var postId: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PostSource/original_post_id`.
+            public var originalPostId: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PostSource/kind`.
+            public var kind: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostSource/author`.
+            public struct AuthorPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PostSource/author/value1`.
+                public var value1: Components.Schemas.CreditedPerson
+                /// Creates a new `AuthorPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.CreditedPerson) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PostSource/author`.
+            public var author: Components.Schemas.PostSource.AuthorPayload?
+            /// - Remark: Generated from `#/components/schemas/PostSource/title`.
+            public var title: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostSource/attachment_version`.
+            public var attachmentVersion: Swift.Int?
+            /// Creates a new `PostSource`.
+            ///
+            /// - Parameters:
+            ///   - available:
+            ///   - postId:
+            ///   - originalPostId:
+            ///   - kind:
+            ///   - author:
+            ///   - title:
+            ///   - attachmentVersion:
+            public init(
+                available: Swift.Bool,
+                postId: Swift.Int? = nil,
+                originalPostId: Swift.Int? = nil,
+                kind: Swift.String? = nil,
+                author: Components.Schemas.PostSource.AuthorPayload? = nil,
+                title: Swift.String? = nil,
+                attachmentVersion: Swift.Int? = nil
+            ) {
+                self.available = available
+                self.postId = postId
+                self.originalPostId = originalPostId
+                self.kind = kind
+                self.author = author
+                self.title = title
+                self.attachmentVersion = attachmentVersion
+            }
+            public enum CodingKeys: String, CodingKey {
+                case available
+                case postId = "post_id"
+                case originalPostId = "original_post_id"
+                case kind
+                case author
+                case title
+                case attachmentVersion = "attachment_version"
+            }
+        }
         /// A post's clip, as its reader may see it.
         ///
         /// `status` and `content_type` go out as plain strings, as `kind` does on a
@@ -10641,6 +13369,8 @@ public enum Components {
             public var totalSetCount: Swift.Int
             /// - Remark: Generated from `#/components/schemas/PostWorkout/total_volume_kg`.
             public var totalVolumeKg: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PostWorkout/details_included`.
+            public var detailsIncluded: Swift.Bool?
             /// Creates a new `PostWorkout`.
             ///
             /// - Parameters:
@@ -10659,6 +13389,7 @@ public enum Components {
             ///   - exerciseCount:
             ///   - totalSetCount:
             ///   - totalVolumeKg:
+            ///   - detailsIncluded:
             public init(
                 title: Swift.String,
                 workoutType: Swift.String? = nil,
@@ -10674,7 +13405,8 @@ public enum Components {
                 exercises: [Components.Schemas.PostWorkoutExercise],
                 exerciseCount: Swift.Int,
                 totalSetCount: Swift.Int,
-                totalVolumeKg: Swift.String? = nil
+                totalVolumeKg: Swift.String? = nil,
+                detailsIncluded: Swift.Bool? = nil
             ) {
                 self.title = title
                 self.workoutType = workoutType
@@ -10691,6 +13423,7 @@ public enum Components {
                 self.exerciseCount = exerciseCount
                 self.totalSetCount = totalSetCount
                 self.totalVolumeKg = totalVolumeKg
+                self.detailsIncluded = detailsIncluded
             }
             public enum CodingKeys: String, CodingKey {
                 case title
@@ -10708,6 +13441,7 @@ public enum Components {
                 case exerciseCount = "exercise_count"
                 case totalSetCount = "total_set_count"
                 case totalVolumeKg = "total_volume_kg"
+                case detailsIncluded = "details_included"
             }
         }
         /// One exercise inside a posted workout.
@@ -11196,6 +13930,31 @@ public enum Components {
                 case socialLinks = "social_links"
             }
         }
+        /// A prompt a post can answer, by its code and the words to show.
+        ///
+        /// - Remark: Generated from `#/components/schemas/Prompt`.
+        public struct Prompt: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Prompt/code`.
+            public var code: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Prompt/label`.
+            public var label: Swift.String
+            /// Creates a new `Prompt`.
+            ///
+            /// - Parameters:
+            ///   - code:
+            ///   - label:
+            public init(
+                code: Swift.String,
+                label: Swift.String
+            ) {
+                self.code = code
+                self.label = label
+            }
+            public enum CodingKeys: String, CodingKey {
+                case code
+                case label
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser`.
         public struct PublicRepbaseUser: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PublicRepbaseUser/community_label`.
@@ -11416,6 +14175,35 @@ public enum Components {
                 case isProfilePublic = "is_profile_public"
             }
         }
+        /// - Remark: Generated from `#/components/schemas/PublishedCookbook`.
+        public struct PublishedCookbook: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PublishedCookbook/name`.
+            public var name: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PublishedCookbook/recipe_count`.
+            public var recipeCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/PublishedCookbook/recipes`.
+            public var recipes: [Components.Schemas.CookbookRecipe]
+            /// Creates a new `PublishedCookbook`.
+            ///
+            /// - Parameters:
+            ///   - name:
+            ///   - recipeCount:
+            ///   - recipes:
+            public init(
+                name: Swift.String,
+                recipeCount: Swift.Int,
+                recipes: [Components.Schemas.CookbookRecipe]
+            ) {
+                self.name = name
+                self.recipeCount = recipeCount
+                self.recipes = recipes
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case recipeCount = "recipe_count"
+                case recipes
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PushDeviceRegistrationRequest`.
         public struct PushDeviceRegistrationRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/PushDeviceRegistrationRequest/token`.
@@ -11521,6 +14309,38 @@ public enum Components {
         ///
         /// - Remark: Generated from `#/components/schemas/RecentFood`.
         public struct RecentFood: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/RecentFood/source_id`.
+            public var sourceId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RecentFood/serving_description`.
+            public var servingDescription: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RecentFood/reference_quantity`.
+            public var referenceQuantity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RecentFood/reference_unit`.
+            public var referenceUnit: Swift.String?
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RecentFood/nutrients`.
+            public struct NutrientsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `NutrientsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RecentFood/nutrients`.
+            public var nutrients: Components.Schemas.RecentFood.NutrientsPayload?
             /// - Remark: Generated from `#/components/schemas/RecentFood/name`.
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/RecentFood/servings`.
@@ -11536,6 +14356,11 @@ public enum Components {
             /// Creates a new `RecentFood`.
             ///
             /// - Parameters:
+            ///   - sourceId:
+            ///   - servingDescription:
+            ///   - referenceQuantity:
+            ///   - referenceUnit:
+            ///   - nutrients: Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
             ///   - name:
             ///   - servings:
             ///   - calories:
@@ -11543,6 +14368,11 @@ public enum Components {
             ///   - carbohydrateGrams:
             ///   - fatGrams:
             public init(
+                sourceId: Swift.String? = nil,
+                servingDescription: Swift.String? = nil,
+                referenceQuantity: Swift.String? = nil,
+                referenceUnit: Swift.String? = nil,
+                nutrients: Components.Schemas.RecentFood.NutrientsPayload? = nil,
                 name: Swift.String,
                 servings: Swift.String,
                 calories: Swift.String,
@@ -11550,6 +14380,11 @@ public enum Components {
                 carbohydrateGrams: Swift.String,
                 fatGrams: Swift.String
             ) {
+                self.sourceId = sourceId
+                self.servingDescription = servingDescription
+                self.referenceQuantity = referenceQuantity
+                self.referenceUnit = referenceUnit
+                self.nutrients = nutrients
                 self.name = name
                 self.servings = servings
                 self.calories = calories
@@ -11558,6 +14393,11 @@ public enum Components {
                 self.fatGrams = fatGrams
             }
             public enum CodingKeys: String, CodingKey {
+                case sourceId = "source_id"
+                case servingDescription = "serving_description"
+                case referenceQuantity = "reference_quantity"
+                case referenceUnit = "reference_unit"
+                case nutrients
                 case name
                 case servings
                 case calories
@@ -12122,10 +14962,86 @@ public enum Components {
             }
             /// - Remark: Generated from `#/components/schemas/RepostedPost/planner`.
             public var planner: Components.Schemas.RepostedPost.PlannerPayload?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/cookbook`.
+            public struct CookbookPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/RepostedPost/cookbook/value1`.
+                public var value1: Components.Schemas.PostCookbook
+                /// Creates a new `CookbookPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostCookbook) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/cookbook`.
+            public var cookbook: Components.Schemas.RepostedPost.CookbookPayload?
             /// - Remark: Generated from `#/components/schemas/RepostedPost/created_at`.
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/RepostedPost/published_at`.
             public var publishedAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/is_take`.
+            public var isTake: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/source`.
+            public struct SourcePayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/RepostedPost/source/value1`.
+                public var value1: Components.Schemas.PostSource
+                /// Creates a new `SourcePayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostSource) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/source`.
+            public var source: Components.Schemas.RepostedPost.SourcePayload?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/sound`.
+            public struct SoundPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/RepostedPost/sound/value1`.
+                public var value1: Components.Schemas.PostSound
+                /// Creates a new `SoundPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.PostSound) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/sound`.
+            public var sound: Components.Schemas.RepostedPost.SoundPayload?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/hashtags`.
+            public var hashtags: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/topics`.
+            public var topics: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/language`.
+            public var language: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/attachment_version`.
+            public var attachmentVersion: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/audience`.
+            public var audience: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/reuse_permission`.
+            public var reusePermission: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/RepostedPost/prompt`.
+            public var prompt: Swift.String?
             /// Creates a new `RepostedPost`.
             ///
             /// - Parameters:
@@ -12139,8 +15055,19 @@ public enum Components {
             ///   - workout:
             ///   - meal:
             ///   - planner:
+            ///   - cookbook:
             ///   - createdAt:
             ///   - publishedAt:
+            ///   - isTake:
+            ///   - source:
+            ///   - sound:
+            ///   - hashtags:
+            ///   - topics:
+            ///   - language:
+            ///   - attachmentVersion:
+            ///   - audience:
+            ///   - reusePermission:
+            ///   - prompt:
             public init(
                 id: Swift.Int,
                 author: Components.Schemas.RepostedPost.AuthorPayload,
@@ -12152,8 +15079,19 @@ public enum Components {
                 workout: Components.Schemas.RepostedPost.WorkoutPayload? = nil,
                 meal: Components.Schemas.RepostedPost.MealPayload? = nil,
                 planner: Components.Schemas.RepostedPost.PlannerPayload? = nil,
+                cookbook: Components.Schemas.RepostedPost.CookbookPayload? = nil,
                 createdAt: Foundation.Date,
-                publishedAt: Foundation.Date? = nil
+                publishedAt: Foundation.Date? = nil,
+                isTake: Swift.Bool? = nil,
+                source: Components.Schemas.RepostedPost.SourcePayload? = nil,
+                sound: Components.Schemas.RepostedPost.SoundPayload? = nil,
+                hashtags: [Swift.String]? = nil,
+                topics: [Swift.String]? = nil,
+                language: Swift.String? = nil,
+                attachmentVersion: Swift.Int? = nil,
+                audience: Swift.String? = nil,
+                reusePermission: Swift.String? = nil,
+                prompt: Swift.String? = nil
             ) {
                 self.id = id
                 self.author = author
@@ -12165,8 +15103,19 @@ public enum Components {
                 self.workout = workout
                 self.meal = meal
                 self.planner = planner
+                self.cookbook = cookbook
                 self.createdAt = createdAt
                 self.publishedAt = publishedAt
+                self.isTake = isTake
+                self.source = source
+                self.sound = sound
+                self.hashtags = hashtags
+                self.topics = topics
+                self.language = language
+                self.attachmentVersion = attachmentVersion
+                self.audience = audience
+                self.reusePermission = reusePermission
+                self.prompt = prompt
             }
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -12179,9 +15128,30 @@ public enum Components {
                 case workout
                 case meal
                 case planner
+                case cookbook
                 case createdAt = "created_at"
                 case publishedAt = "published_at"
+                case isTake = "is_take"
+                case source
+                case sound
+                case hashtags
+                case topics
+                case language
+                case attachmentVersion = "attachment_version"
+                case audience
+                case reusePermission = "reuse_permission"
+                case prompt
             }
+        }
+        /// * `everyone` - Anyone who can see it
+        /// * `followers` - People who follow me
+        /// * `nobody` - Nobody
+        ///
+        /// - Remark: Generated from `#/components/schemas/ReusePermissionEnum`.
+        @frozen public enum ReusePermissionEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case everyone = "everyone"
+            case followers = "followers"
+            case nobody = "nobody"
         }
         /// - Remark: Generated from `#/components/schemas/SafetyConsent`.
         public struct SafetyConsent: Codable, Hashable, Sendable {
@@ -12233,6 +15203,38 @@ public enum Components {
         public struct SavedFoodIngredient: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/id`.
             public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/source_id`.
+            public var sourceId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/serving_description`.
+            public var servingDescription: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/reference_quantity`.
+            public var referenceQuantity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/reference_unit`.
+            public var referenceUnit: Swift.String?
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/nutrients`.
+            public struct NutrientsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `NutrientsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/nutrients`.
+            public var nutrients: Components.Schemas.SavedFoodIngredient.NutrientsPayload?
             /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/name`.
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/SavedFoodIngredient/servings`.
@@ -12251,6 +15253,11 @@ public enum Components {
             ///
             /// - Parameters:
             ///   - id:
+            ///   - sourceId:
+            ///   - servingDescription:
+            ///   - referenceQuantity:
+            ///   - referenceUnit:
+            ///   - nutrients: Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
             ///   - name:
             ///   - servings:
             ///   - calories:
@@ -12260,6 +15267,11 @@ public enum Components {
             ///   - position:
             public init(
                 id: Swift.Int,
+                sourceId: Swift.String? = nil,
+                servingDescription: Swift.String? = nil,
+                referenceQuantity: Swift.String? = nil,
+                referenceUnit: Swift.String? = nil,
+                nutrients: Components.Schemas.SavedFoodIngredient.NutrientsPayload? = nil,
                 name: Swift.String,
                 servings: Swift.String? = nil,
                 calories: Swift.String? = nil,
@@ -12269,6 +15281,11 @@ public enum Components {
                 position: Swift.Int64? = nil
             ) {
                 self.id = id
+                self.sourceId = sourceId
+                self.servingDescription = servingDescription
+                self.referenceQuantity = referenceQuantity
+                self.referenceUnit = referenceUnit
+                self.nutrients = nutrients
                 self.name = name
                 self.servings = servings
                 self.calories = calories
@@ -12279,6 +15296,11 @@ public enum Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case id
+                case sourceId = "source_id"
+                case servingDescription = "serving_description"
+                case referenceQuantity = "reference_quantity"
+                case referenceUnit = "reference_unit"
+                case nutrients
                 case name
                 case servings
                 case calories
@@ -12290,6 +15312,38 @@ public enum Components {
         }
         /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest`.
         public struct SavedFoodIngredientRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/source_id`.
+            public var sourceId: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/serving_description`.
+            public var servingDescription: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/reference_quantity`.
+            public var referenceQuantity: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/reference_unit`.
+            public var referenceUnit: Swift.String?
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/nutrients`.
+            public struct NutrientsPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Swift.String]
+                /// Creates a new `NutrientsPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Swift.String] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/nutrients`.
+            public var nutrients: Components.Schemas.SavedFoodIngredientRequest.NutrientsPayload?
             /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/name`.
             public var name: Swift.String
             /// - Remark: Generated from `#/components/schemas/SavedFoodIngredientRequest/servings`.
@@ -12307,6 +15361,11 @@ public enum Components {
             /// Creates a new `SavedFoodIngredientRequest`.
             ///
             /// - Parameters:
+            ///   - sourceId:
+            ///   - servingDescription:
+            ///   - referenceQuantity:
+            ///   - referenceUnit:
+            ///   - nutrients: Per-reference amounts. Missing keys are unknown; keys carry canonical g/mg/ug units.
             ///   - name:
             ///   - servings:
             ///   - calories:
@@ -12315,6 +15374,11 @@ public enum Components {
             ///   - fatGrams:
             ///   - position:
             public init(
+                sourceId: Swift.String? = nil,
+                servingDescription: Swift.String? = nil,
+                referenceQuantity: Swift.String? = nil,
+                referenceUnit: Swift.String? = nil,
+                nutrients: Components.Schemas.SavedFoodIngredientRequest.NutrientsPayload? = nil,
                 name: Swift.String,
                 servings: Swift.String? = nil,
                 calories: Swift.String? = nil,
@@ -12323,6 +15387,11 @@ public enum Components {
                 fatGrams: Swift.String? = nil,
                 position: Swift.Int64? = nil
             ) {
+                self.sourceId = sourceId
+                self.servingDescription = servingDescription
+                self.referenceQuantity = referenceQuantity
+                self.referenceUnit = referenceUnit
+                self.nutrients = nutrients
                 self.name = name
                 self.servings = servings
                 self.calories = calories
@@ -12332,6 +15401,11 @@ public enum Components {
                 self.position = position
             }
             public enum CodingKeys: String, CodingKey {
+                case sourceId = "source_id"
+                case servingDescription = "serving_description"
+                case referenceQuantity = "reference_quantity"
+                case referenceUnit = "reference_unit"
+                case nutrients
                 case name
                 case servings
                 case calories
@@ -12350,6 +15424,10 @@ public enum Components {
             public var id: Swift.Int
             /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/name`.
             public var name: Swift.String
+            /// Required on creation. Omit on edits to keep the recipe in its existing cookbook.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/cookbook`.
+            public var cookbook: Swift.Int64?
             /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/ingredients`.
             public var ingredients: [Components.Schemas.SavedFoodIngredient]
             /// - Remark: Generated from `#/components/schemas/SavedFoodMeal/cooking_instructions`.
@@ -12363,6 +15441,7 @@ public enum Components {
             /// - Parameters:
             ///   - id:
             ///   - name:
+            ///   - cookbook: Required on creation. Omit on edits to keep the recipe in its existing cookbook.
             ///   - ingredients:
             ///   - cookingInstructions:
             ///   - createdAt:
@@ -12370,6 +15449,7 @@ public enum Components {
             public init(
                 id: Swift.Int,
                 name: Swift.String,
+                cookbook: Swift.Int64? = nil,
                 ingredients: [Components.Schemas.SavedFoodIngredient],
                 cookingInstructions: Swift.String? = nil,
                 createdAt: Foundation.Date,
@@ -12377,6 +15457,7 @@ public enum Components {
             ) {
                 self.id = id
                 self.name = name
+                self.cookbook = cookbook
                 self.ingredients = ingredients
                 self.cookingInstructions = cookingInstructions
                 self.createdAt = createdAt
@@ -12385,6 +15466,7 @@ public enum Components {
             public enum CodingKeys: String, CodingKey {
                 case id
                 case name
+                case cookbook
                 case ingredients
                 case cookingInstructions = "cooking_instructions"
                 case createdAt = "created_at"
@@ -12398,6 +15480,10 @@ public enum Components {
         public struct SavedFoodMealRequest: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SavedFoodMealRequest/name`.
             public var name: Swift.String
+            /// Required on creation. Omit on edits to keep the recipe in its existing cookbook.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedFoodMealRequest/cookbook`.
+            public var cookbook: Swift.Int64?
             /// - Remark: Generated from `#/components/schemas/SavedFoodMealRequest/ingredients`.
             public var ingredients: [Components.Schemas.SavedFoodIngredientRequest]
             /// - Remark: Generated from `#/components/schemas/SavedFoodMealRequest/cooking_instructions`.
@@ -12406,19 +15492,23 @@ public enum Components {
             ///
             /// - Parameters:
             ///   - name:
+            ///   - cookbook: Required on creation. Omit on edits to keep the recipe in its existing cookbook.
             ///   - ingredients:
             ///   - cookingInstructions:
             public init(
                 name: Swift.String,
+                cookbook: Swift.Int64? = nil,
                 ingredients: [Components.Schemas.SavedFoodIngredientRequest],
                 cookingInstructions: Swift.String? = nil
             ) {
                 self.name = name
+                self.cookbook = cookbook
                 self.ingredients = ingredients
                 self.cookingInstructions = cookingInstructions
             }
             public enum CodingKeys: String, CodingKey {
                 case name
+                case cookbook
                 case ingredients
                 case cookingInstructions = "cooking_instructions"
             }
@@ -12517,6 +15607,14 @@ public enum Components {
                 case alreadySaved = "already_saved"
             }
         }
+        /// * `occurrence` - occurrence
+        /// * `series` - series
+        ///
+        /// - Remark: Generated from `#/components/schemas/ScopeEnum`.
+        @frozen public enum ScopeEnum: String, Codable, Hashable, Sendable, CaseIterable {
+            case occurrence = "occurrence"
+            case series = "series"
+        }
         /// A cardio finisher performed after a session's exercises.
         ///
         /// - Remark: Generated from `#/components/schemas/SessionCardioRequest`.
@@ -12562,6 +15660,16 @@ public enum Components {
             public var order: Swift.Int64?
             /// - Remark: Generated from `#/components/schemas/SessionExercise/notes`.
             public var notes: Swift.String?
+            /// Immutable plan snapshot at session creation. Null is unknown historical data; [] is a known empty plan. Never completed sets.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SessionExercise/planned_sets`.
+            public var plannedSets: [Components.Schemas.WorkoutPlannedSet]?
+            /// - Remark: Generated from `#/components/schemas/SessionExercise/workout_exercise_id`.
+            public var workoutExerciseId: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/SessionExercise/rest_seconds`.
+            public var restSeconds: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/SessionExercise/superset_group`.
+            public var supersetGroup: Swift.Int?
             /// Creates a new `SessionExercise`.
             ///
             /// - Parameters:
@@ -12571,13 +15679,21 @@ public enum Components {
             ///   - exerciseName:
             ///   - order:
             ///   - notes:
+            ///   - plannedSets: Immutable plan snapshot at session creation. Null is unknown historical data; [] is a known empty plan. Never completed sets.
+            ///   - workoutExerciseId:
+            ///   - restSeconds:
+            ///   - supersetGroup:
             public init(
                 id: Swift.Int,
                 session: Swift.Int,
                 exercise: Swift.Int,
                 exerciseName: Swift.String,
                 order: Swift.Int64? = nil,
-                notes: Swift.String? = nil
+                notes: Swift.String? = nil,
+                plannedSets: [Components.Schemas.WorkoutPlannedSet]? = nil,
+                workoutExerciseId: Swift.Int? = nil,
+                restSeconds: Swift.Int? = nil,
+                supersetGroup: Swift.Int? = nil
             ) {
                 self.id = id
                 self.session = session
@@ -12585,6 +15701,10 @@ public enum Components {
                 self.exerciseName = exerciseName
                 self.order = order
                 self.notes = notes
+                self.plannedSets = plannedSets
+                self.workoutExerciseId = workoutExerciseId
+                self.restSeconds = restSeconds
+                self.supersetGroup = supersetGroup
             }
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -12593,6 +15713,10 @@ public enum Components {
                 case exerciseName = "exercise_name"
                 case order
                 case notes
+                case plannedSets = "planned_sets"
+                case workoutExerciseId = "workout_exercise_id"
+                case restSeconds = "rest_seconds"
+                case supersetGroup = "superset_group"
             }
         }
         /// - Remark: Generated from `#/components/schemas/SessionExerciseRequest`.
@@ -12947,6 +16071,292 @@ public enum Components {
             case drop = "drop"
             case failure = "failure"
         }
+        /// - Remark: Generated from `#/components/schemas/SharedCalendarDaySummary`.
+        public struct SharedCalendarDaySummary: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarDaySummary/date`.
+            public var date: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarDaySummary/total`.
+            public var total: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarDaySummary/items`.
+            public var items: [Components.Schemas.SharedCalendarItem]
+            /// Creates a new `SharedCalendarDaySummary`.
+            ///
+            /// - Parameters:
+            ///   - date:
+            ///   - total:
+            ///   - items:
+            public init(
+                date: Swift.String,
+                total: Swift.Int,
+                items: [Components.Schemas.SharedCalendarItem]
+            ) {
+                self.date = date
+                self.total = total
+                self.items = items
+            }
+            public enum CodingKeys: String, CodingKey {
+                case date
+                case total
+                case items
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SharedCalendarItem`.
+        public struct SharedCalendarItem: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/share_id`.
+            public var shareId: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/owner`.
+            public var owner: Components.Schemas.CalendarPerson
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/kind`.
+            public var kind: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/title`.
+            public var title: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/category`.
+            public var category: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/color`.
+            public var color: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/scheduling_timezone`.
+            public var schedulingTimezone: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/scheduled_date`.
+            public var scheduledDate: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/scheduled_time`.
+            public var scheduledTime: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/duration_minutes`.
+            public var durationMinutes: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/is_recurring`.
+            public var isRecurring: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarItem/is_complete`.
+            public var isComplete: Swift.Bool
+            /// Creates a new `SharedCalendarItem`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - shareId:
+            ///   - owner:
+            ///   - kind:
+            ///   - title:
+            ///   - category:
+            ///   - color:
+            ///   - schedulingTimezone:
+            ///   - scheduledDate:
+            ///   - scheduledTime:
+            ///   - durationMinutes:
+            ///   - isRecurring:
+            ///   - isComplete:
+            public init(
+                id: Swift.String,
+                shareId: Swift.Int,
+                owner: Components.Schemas.CalendarPerson,
+                kind: Swift.String,
+                title: Swift.String,
+                category: Swift.String,
+                color: Swift.String,
+                schedulingTimezone: Swift.String,
+                scheduledDate: Swift.String,
+                scheduledTime: Swift.String? = nil,
+                durationMinutes: Swift.Int? = nil,
+                isRecurring: Swift.Bool,
+                isComplete: Swift.Bool
+            ) {
+                self.id = id
+                self.shareId = shareId
+                self.owner = owner
+                self.kind = kind
+                self.title = title
+                self.category = category
+                self.color = color
+                self.schedulingTimezone = schedulingTimezone
+                self.scheduledDate = scheduledDate
+                self.scheduledTime = scheduledTime
+                self.durationMinutes = durationMinutes
+                self.isRecurring = isRecurring
+                self.isComplete = isComplete
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case shareId = "share_id"
+                case owner
+                case kind
+                case title
+                case category
+                case color
+                case schedulingTimezone = "scheduling_timezone"
+                case scheduledDate = "scheduled_date"
+                case scheduledTime = "scheduled_time"
+                case durationMinutes = "duration_minutes"
+                case isRecurring = "is_recurring"
+                case isComplete = "is_complete"
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SharedCalendarMonth`.
+        public struct SharedCalendarMonth: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SharedCalendarMonth/days`.
+            public var days: [Components.Schemas.SharedCalendarDaySummary]
+            /// Creates a new `SharedCalendarMonth`.
+            ///
+            /// - Parameters:
+            ///   - days:
+            public init(days: [Components.Schemas.SharedCalendarDaySummary]) {
+                self.days = days
+            }
+            public enum CodingKeys: String, CodingKey {
+                case days
+            }
+        }
+        /// Which parts of the new Social are on for the account (`core.rollout`).
+        /// Every one may be missing from an older server, and missing means off.
+        ///
+        /// - Remark: Generated from `#/components/schemas/SocialFeatures`.
+        public struct SocialFeatures: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SocialFeatures/new_feed`.
+            public var newFeed: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/SocialFeatures/autoplay`.
+            public var autoplay: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/SocialFeatures/measurement_v2`.
+            public var measurementV2: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/SocialFeatures/measured_ranking`.
+            public var measuredRanking: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/SocialFeatures/sounds`.
+            public var sounds: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/SocialFeatures/takes`.
+            public var takes: Swift.Bool?
+            /// - Remark: Generated from `#/components/schemas/SocialFeatures/ranked_for_you`.
+            public var rankedForYou: Swift.Bool?
+            /// Creates a new `SocialFeatures`.
+            ///
+            /// - Parameters:
+            ///   - newFeed:
+            ///   - autoplay:
+            ///   - measurementV2:
+            ///   - measuredRanking:
+            ///   - sounds:
+            ///   - takes:
+            ///   - rankedForYou:
+            public init(
+                newFeed: Swift.Bool? = nil,
+                autoplay: Swift.Bool? = nil,
+                measurementV2: Swift.Bool? = nil,
+                measuredRanking: Swift.Bool? = nil,
+                sounds: Swift.Bool? = nil,
+                takes: Swift.Bool? = nil,
+                rankedForYou: Swift.Bool? = nil
+            ) {
+                self.newFeed = newFeed
+                self.autoplay = autoplay
+                self.measurementV2 = measurementV2
+                self.measuredRanking = measuredRanking
+                self.sounds = sounds
+                self.takes = takes
+                self.rankedForYou = rankedForYou
+            }
+            public enum CodingKeys: String, CodingKey {
+                case newFeed = "new_feed"
+                case autoplay
+                case measurementV2 = "measurement_v2"
+                case measuredRanking = "measured_ranking"
+                case sounds
+                case takes
+                case rankedForYou = "ranked_for_you"
+            }
+        }
+        /// A sound, as anybody who may use or hear it reads it.
+        ///
+        /// - Remark: Generated from `#/components/schemas/Sound`.
+        public struct Sound: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Sound/id`.
+            public var id: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Sound/title`.
+            public var title: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Sound/owner`.
+            public struct OwnerPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/Sound/owner/value1`.
+                public var value1: Components.Schemas.CreditedPerson
+                /// Creates a new `OwnerPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.CreditedPerson) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/Sound/owner`.
+            public var owner: Components.Schemas.Sound.OwnerPayload
+            /// - Remark: Generated from `#/components/schemas/Sound/duration_ms`.
+            public var durationMs: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/Sound/reuse_permission`.
+            public var reusePermission: Swift.String
+            /// - Remark: Generated from `#/components/schemas/Sound/origin_post_id`.
+            public var originPostId: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/Sound/audio_url`.
+            public var audioUrl: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Sound/use_count`.
+            public var useCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/Sound/viewer_is_owner`.
+            public var viewerIsOwner: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/Sound/viewer_can_use`.
+            public var viewerCanUse: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/Sound/created_at`.
+            public var createdAt: Foundation.Date
+            /// Creates a new `Sound`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - title:
+            ///   - owner:
+            ///   - durationMs:
+            ///   - reusePermission:
+            ///   - originPostId:
+            ///   - audioUrl:
+            ///   - useCount:
+            ///   - viewerIsOwner:
+            ///   - viewerCanUse:
+            ///   - createdAt:
+            public init(
+                id: Swift.Int,
+                title: Swift.String,
+                owner: Components.Schemas.Sound.OwnerPayload,
+                durationMs: Swift.Int? = nil,
+                reusePermission: Swift.String,
+                originPostId: Swift.Int? = nil,
+                audioUrl: Swift.String? = nil,
+                useCount: Swift.Int,
+                viewerIsOwner: Swift.Bool,
+                viewerCanUse: Swift.Bool,
+                createdAt: Foundation.Date
+            ) {
+                self.id = id
+                self.title = title
+                self.owner = owner
+                self.durationMs = durationMs
+                self.reusePermission = reusePermission
+                self.originPostId = originPostId
+                self.audioUrl = audioUrl
+                self.useCount = useCount
+                self.viewerIsOwner = viewerIsOwner
+                self.viewerCanUse = viewerCanUse
+                self.createdAt = createdAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case title
+                case owner
+                case durationMs = "duration_ms"
+                case reusePermission = "reuse_permission"
+                case originPostId = "origin_post_id"
+                case audioUrl = "audio_url"
+                case useCount = "use_count"
+                case viewerIsOwner = "viewer_is_owner"
+                case viewerCanUse = "viewer_can_use"
+                case createdAt = "created_at"
+            }
+        }
         /// * `planned` - Planned
         /// * `active` - Active
         /// * `completed` - Completed
@@ -13282,6 +16692,21 @@ public enum Components {
             case _5 = 5
             case _6 = 6
         }
+        /// - Remark: Generated from `#/components/schemas/WorkoutCapabilities`.
+        public struct WorkoutCapabilities: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WorkoutCapabilities/planned_sets_version`.
+            public var plannedSetsVersion: Swift.Int
+            /// Creates a new `WorkoutCapabilities`.
+            ///
+            /// - Parameters:
+            ///   - plannedSetsVersion:
+            public init(plannedSetsVersion: Swift.Int) {
+                self.plannedSetsVersion = plannedSetsVersion
+            }
+            public enum CodingKeys: String, CodingKey {
+                case plannedSetsVersion = "planned_sets_version"
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/WorkoutCycle`.
         public struct WorkoutCycle: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/WorkoutCycle/id`.
@@ -13520,6 +16945,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutExercise/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutExercise/planned_sets`.
+            public var plannedSets: [Components.Schemas.WorkoutPlannedSet]?
             /// Creates a new `WorkoutExercise`.
             ///
             /// - Parameters:
@@ -13535,6 +16964,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 id: Swift.Int,
                 workout: Swift.Int,
@@ -13547,7 +16977,8 @@ public enum Components {
                 notes: Swift.String? = nil,
                 restSeconds: Swift.Int? = nil,
                 supersetGroup: Swift.Int? = nil,
-                setTypes: [Components.Schemas.SetTypeEnum]? = nil
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil,
+                plannedSets: [Components.Schemas.WorkoutPlannedSet]? = nil
             ) {
                 self.id = id
                 self.workout = workout
@@ -13561,6 +16992,7 @@ public enum Components {
                 self.restSeconds = restSeconds
                 self.supersetGroup = supersetGroup
                 self.setTypes = setTypes
+                self.plannedSets = plannedSets
             }
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -13575,6 +17007,7 @@ public enum Components {
                 case restSeconds = "rest_seconds"
                 case supersetGroup = "superset_group"
                 case setTypes = "set_types"
+                case plannedSets = "planned_sets"
             }
         }
         /// - Remark: Generated from `#/components/schemas/WorkoutExerciseRequest`.
@@ -13605,6 +17038,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutExerciseRequest/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutExerciseRequest/planned_sets`.
+            public var plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]?
             /// Creates a new `WorkoutExerciseRequest`.
             ///
             /// - Parameters:
@@ -13618,6 +17055,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 workout: Swift.Int,
                 exercise: Swift.Int,
@@ -13628,7 +17066,8 @@ public enum Components {
                 notes: Swift.String? = nil,
                 restSeconds: Swift.Int? = nil,
                 supersetGroup: Swift.Int? = nil,
-                setTypes: [Components.Schemas.SetTypeEnum]? = nil
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil,
+                plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]? = nil
             ) {
                 self.workout = workout
                 self.exercise = exercise
@@ -13640,6 +17079,7 @@ public enum Components {
                 self.restSeconds = restSeconds
                 self.supersetGroup = supersetGroup
                 self.setTypes = setTypes
+                self.plannedSets = plannedSets
             }
             public enum CodingKeys: String, CodingKey {
                 case workout
@@ -13652,6 +17092,7 @@ public enum Components {
                 case restSeconds = "rest_seconds"
                 case supersetGroup = "superset_group"
                 case setTypes = "set_types"
+                case plannedSets = "planned_sets"
             }
         }
         /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise`.
@@ -13682,6 +17123,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExercise/planned_sets`.
+            public var plannedSets: [Components.Schemas.WorkoutPlannedSet]?
             /// Creates a new `WorkoutPlanExercise`.
             ///
             /// - Parameters:
@@ -13695,6 +17140,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 relationId: Swift.Int? = nil,
                 exercise: Swift.Int,
@@ -13705,7 +17151,8 @@ public enum Components {
                 notes: Swift.String? = nil,
                 restSeconds: Swift.Int? = nil,
                 supersetGroup: Swift.Int? = nil,
-                setTypes: [Components.Schemas.SetTypeEnum]? = nil
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil,
+                plannedSets: [Components.Schemas.WorkoutPlannedSet]? = nil
             ) {
                 self.relationId = relationId
                 self.exercise = exercise
@@ -13717,6 +17164,7 @@ public enum Components {
                 self.restSeconds = restSeconds
                 self.supersetGroup = supersetGroup
                 self.setTypes = setTypes
+                self.plannedSets = plannedSets
             }
             public enum CodingKeys: String, CodingKey {
                 case relationId = "relation_id"
@@ -13729,6 +17177,7 @@ public enum Components {
                 case restSeconds = "rest_seconds"
                 case supersetGroup = "superset_group"
                 case setTypes = "set_types"
+                case plannedSets = "planned_sets"
             }
         }
         /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest`.
@@ -13759,6 +17208,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest/set_types`.
             public var setTypes: [Components.Schemas.SetTypeEnum]?
+            /// Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlanExerciseRequest/planned_sets`.
+            public var plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]?
             /// Creates a new `WorkoutPlanExerciseRequest`.
             ///
             /// - Parameters:
@@ -13772,6 +17225,7 @@ public enum Components {
             ///   - restSeconds: Rest after each set, in seconds. Null uses the person's own default rest; 0 means no rest timer.
             ///   - supersetGroup: Exercises of one workout sharing this number are a superset, performed back to back in their order. Null is not in one.
             ///   - setTypes: The type of each planned set, in order. Empty means every set is normal; sets past the end of the list are normal. Never longer than target_sets.
+            ///   - plannedSets: Ordered explicit targets. Nonempty rows define target_sets and set_types and clear aggregate target_reps/target_weight_kg. Empty uses legacy aggregate targets; omission preserves existing rows.
             public init(
                 relationId: Swift.Int? = nil,
                 exercise: Swift.Int,
@@ -13782,7 +17236,8 @@ public enum Components {
                 notes: Swift.String? = nil,
                 restSeconds: Swift.Int? = nil,
                 supersetGroup: Swift.Int? = nil,
-                setTypes: [Components.Schemas.SetTypeEnum]? = nil
+                setTypes: [Components.Schemas.SetTypeEnum]? = nil,
+                plannedSets: [Components.Schemas.WorkoutPlannedSetRequest]? = nil
             ) {
                 self.relationId = relationId
                 self.exercise = exercise
@@ -13794,6 +17249,7 @@ public enum Components {
                 self.restSeconds = restSeconds
                 self.supersetGroup = supersetGroup
                 self.setTypes = setTypes
+                self.plannedSets = plannedSets
             }
             public enum CodingKeys: String, CodingKey {
                 case relationId = "relation_id"
@@ -13806,6 +17262,81 @@ public enum Components {
                 case restSeconds = "rest_seconds"
                 case supersetGroup = "superset_group"
                 case setTypes = "set_types"
+                case plannedSets = "planned_sets"
+            }
+        }
+        /// One ordered target, not a completed/logged set. Null means unspecified.
+        ///
+        /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSet`.
+        public struct WorkoutPlannedSet: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSet/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSet/set_type`.
+            public var setType: Components.Schemas.SetTypeEnum
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSet/target_reps`.
+            public var targetReps: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSet/target_weight_kg`.
+            public var targetWeightKg: Swift.String?
+            /// Creates a new `WorkoutPlannedSet`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - setType:
+            ///   - targetReps:
+            ///   - targetWeightKg:
+            public init(
+                id: Swift.String,
+                setType: Components.Schemas.SetTypeEnum,
+                targetReps: Swift.Int? = nil,
+                targetWeightKg: Swift.String? = nil
+            ) {
+                self.id = id
+                self.setType = setType
+                self.targetReps = targetReps
+                self.targetWeightKg = targetWeightKg
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case setType = "set_type"
+                case targetReps = "target_reps"
+                case targetWeightKg = "target_weight_kg"
+            }
+        }
+        /// One ordered target, not a completed/logged set. Null means unspecified.
+        ///
+        /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSetRequest`.
+        public struct WorkoutPlannedSetRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSetRequest/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSetRequest/set_type`.
+            public var setType: Components.Schemas.SetTypeEnum
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSetRequest/target_reps`.
+            public var targetReps: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/WorkoutPlannedSetRequest/target_weight_kg`.
+            public var targetWeightKg: Swift.String?
+            /// Creates a new `WorkoutPlannedSetRequest`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - setType:
+            ///   - targetReps:
+            ///   - targetWeightKg:
+            public init(
+                id: Swift.String,
+                setType: Components.Schemas.SetTypeEnum,
+                targetReps: Swift.Int? = nil,
+                targetWeightKg: Swift.String? = nil
+            ) {
+                self.id = id
+                self.setType = setType
+                self.targetReps = targetReps
+                self.targetWeightKg = targetWeightKg
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case setType = "set_type"
+                case targetReps = "target_reps"
+                case targetWeightKg = "target_weight_kg"
             }
         }
         /// A workout repeating weekly.
@@ -14036,6 +17567,26 @@ public enum Components {
         }
         /// - Remark: Generated from `#/components/schemas/WorkoutSession`.
         public struct WorkoutSession: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/health_summary`.
+            public struct HealthSummaryPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/WorkoutSession/health_summary/value1`.
+                public var value1: Components.Schemas.HealthWorkoutSummary
+                /// Creates a new `HealthSummaryPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                public init(value1: Components.Schemas.HealthWorkoutSummary) {
+                    self.value1 = value1
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/WorkoutSession/health_summary`.
+            public var healthSummary: Components.Schemas.WorkoutSession.HealthSummaryPayload?
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/id`.
             public var id: Swift.Int
             /// - Remark: Generated from `#/components/schemas/WorkoutSession/repbase_user`.
@@ -14190,6 +17741,7 @@ public enum Components {
             /// Creates a new `WorkoutSession`.
             ///
             /// - Parameters:
+            ///   - healthSummary:
             ///   - id:
             ///   - repbaseUser:
             ///   - workout:
@@ -14225,6 +17777,7 @@ public enum Components {
             ///   - createdAt:
             ///   - updatedAt:
             public init(
+                healthSummary: Components.Schemas.WorkoutSession.HealthSummaryPayload? = nil,
                 id: Swift.Int,
                 repbaseUser: Swift.Int,
                 workout: Swift.Int? = nil,
@@ -14260,6 +17813,7 @@ public enum Components {
                 createdAt: Foundation.Date,
                 updatedAt: Foundation.Date
             ) {
+                self.healthSummary = healthSummary
                 self.id = id
                 self.repbaseUser = repbaseUser
                 self.workout = workout
@@ -14296,6 +17850,7 @@ public enum Components {
                 self.updatedAt = updatedAt
             }
             public enum CodingKeys: String, CodingKey {
+                case healthSummary = "health_summary"
                 case id
                 case repbaseUser = "repbase_user"
                 case workout
@@ -14478,6 +18033,8 @@ public enum Components {
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/updated_at`.
             public var updatedAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/WorkoutTemplate/supports_planned_sets`.
+            public var supportsPlannedSets: Swift.Bool?
             /// Creates a new `WorkoutTemplate`.
             ///
             /// - Parameters:
@@ -14493,6 +18050,7 @@ public enum Components {
             ///   - lastPerformedAt:
             ///   - createdAt:
             ///   - updatedAt:
+            ///   - supportsPlannedSets:
             public init(
                 id: Swift.Int,
                 owner: Swift.Int,
@@ -14505,7 +18063,8 @@ public enum Components {
                 exercises: [Components.Schemas.WorkoutExercise],
                 lastPerformedAt: Foundation.Date? = nil,
                 createdAt: Foundation.Date,
-                updatedAt: Foundation.Date
+                updatedAt: Foundation.Date,
+                supportsPlannedSets: Swift.Bool? = nil
             ) {
                 self.id = id
                 self.owner = owner
@@ -14519,6 +18078,7 @@ public enum Components {
                 self.lastPerformedAt = lastPerformedAt
                 self.createdAt = createdAt
                 self.updatedAt = updatedAt
+                self.supportsPlannedSets = supportsPlannedSets
             }
             public enum CodingKeys: String, CodingKey {
                 case id
@@ -14533,6 +18093,7 @@ public enum Components {
                 case lastPerformedAt = "last_performed_at"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
+                case supportsPlannedSets = "supports_planned_sets"
             }
         }
         /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest`.
@@ -14598,6 +18159,10 @@ public enum Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/exercise_plan`.
             public var exercisePlan: [Components.Schemas.WorkoutPlanExerciseRequest]?
+            /// Send 1 after checking workouts/capabilities/ when intentionally replacing/removing explicit per-set exercise plans.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WorkoutTemplateRequest/planned_sets_version`.
+            public var plannedSetsVersion: Swift.Int?
             /// Creates a new `WorkoutTemplateRequest`.
             ///
             /// - Parameters:
@@ -14610,6 +18175,7 @@ public enum Components {
             ///   - initialExercises: Create-only: save all initial exercises in the same transaction as the template.
             ///   - initialDate: Create-only: optionally schedule the new template in the same transaction.
             ///   - exercisePlan: Update-only: atomically replace the exercise plan, preserving supplied relation IDs.
+            ///   - plannedSetsVersion: Send 1 after checking workouts/capabilities/ when intentionally replacing/removing explicit per-set exercise plans.
             public init(
                 name: Swift.String,
                 workoutType: Components.Schemas.WorkoutTypeEnum? = nil,
@@ -14619,7 +18185,8 @@ public enum Components {
                 description: Swift.String? = nil,
                 initialExercises: [Components.Schemas.InitialWorkoutExerciseRequest]? = nil,
                 initialDate: Swift.String? = nil,
-                exercisePlan: [Components.Schemas.WorkoutPlanExerciseRequest]? = nil
+                exercisePlan: [Components.Schemas.WorkoutPlanExerciseRequest]? = nil,
+                plannedSetsVersion: Swift.Int? = nil
             ) {
                 self.name = name
                 self.workoutType = workoutType
@@ -14630,6 +18197,7 @@ public enum Components {
                 self.initialExercises = initialExercises
                 self.initialDate = initialDate
                 self.exercisePlan = exercisePlan
+                self.plannedSetsVersion = plannedSetsVersion
             }
             public enum CodingKeys: String, CodingKey {
                 case name
@@ -14641,6 +18209,7 @@ public enum Components {
                 case initialExercises = "initial_exercises"
                 case initialDate = "initial_date"
                 case exercisePlan = "exercise_plan"
+                case plannedSetsVersion = "planned_sets_version"
             }
         }
         /// * `lifting` - Lifting
@@ -16787,6 +20356,1598 @@ public enum Operations {
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
         }
     }
+    /// Questions addressed only to the signed-in follower; no social push.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/invitations/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/invitations//get(calendar_invitations_list)`.
+    public enum CalendarInvitationsList {
+        public static let id: Swift.String = "calendar_invitations_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                public init(page: Swift.Int? = nil) {
+                    self.page = page
+                }
+            }
+            public var query: Operations.CalendarInvitationsList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarInvitationsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarInvitationsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarInvitationsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.CalendarInvitationsList.Input.Query = .init(),
+                headers: Operations.CalendarInvitationsList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedCalendarShareList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedCalendarShareList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarInvitationsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarInvitationsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/invitations//get(calendar_invitations_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarInvitationsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarInvitationsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Questions addressed only to the signed-in follower; no social push.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/invitations/{id}/accept/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/accept//post(calendar_invitations_accept_create)`.
+    public enum CalendarInvitationsAcceptCreate {
+        public static let id: Swift.String = "calendar_invitations_accept_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/accept/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/accept/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.CalendarInvitationsAcceptCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/accept/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarInvitationsAcceptCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarInvitationsAcceptCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarInvitationsAcceptCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.CalendarInvitationsAcceptCreate.Input.Path,
+                headers: Operations.CalendarInvitationsAcceptCreate.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/accept/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/accept/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.CalendarShare)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.CalendarShare {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarInvitationsAcceptCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarInvitationsAcceptCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/accept//post(calendar_invitations_accept_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarInvitationsAcceptCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarInvitationsAcceptCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Conflict: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/accept/POST/responses/409/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/accept/POST/responses/409/content/application\/json`.
+                    case json(Components.Schemas.CalendarShareConflict)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.CalendarShareConflict {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarInvitationsAcceptCreate.Output.Conflict.Body
+                /// Creates a new `Conflict`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarInvitationsAcceptCreate.Output.Conflict.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/accept//post(calendar_invitations_accept_create)/responses/409`.
+            ///
+            /// HTTP response code: `409 conflict`.
+            case conflict(Operations.CalendarInvitationsAcceptCreate.Output.Conflict)
+            /// The associated value of the enum case if `self` is `.conflict`.
+            ///
+            /// - Throws: An error if `self` is not `.conflict`.
+            /// - SeeAlso: `.conflict`.
+            public var conflict: Operations.CalendarInvitationsAcceptCreate.Output.Conflict {
+                get throws {
+                    switch self {
+                    case let .conflict(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "conflict",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Questions addressed only to the signed-in follower; no social push.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/invitations/{id}/decline/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/decline//post(calendar_invitations_decline_create)`.
+    public enum CalendarInvitationsDeclineCreate {
+        public static let id: Swift.String = "calendar_invitations_decline_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/decline/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/decline/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.CalendarInvitationsDeclineCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/decline/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarInvitationsDeclineCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarInvitationsDeclineCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarInvitationsDeclineCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.CalendarInvitationsDeclineCreate.Input.Path,
+                headers: Operations.CalendarInvitationsDeclineCreate.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/decline/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/decline/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.CalendarShare)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.CalendarShare {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarInvitationsDeclineCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarInvitationsDeclineCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/decline//post(calendar_invitations_decline_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarInvitationsDeclineCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarInvitationsDeclineCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Conflict: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/decline/POST/responses/409/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/invitations/{id}/decline/POST/responses/409/content/application\/json`.
+                    case json(Components.Schemas.CalendarShareConflict)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.CalendarShareConflict {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarInvitationsDeclineCreate.Output.Conflict.Body
+                /// Creates a new `Conflict`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarInvitationsDeclineCreate.Output.Conflict.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/invitations/{id}/decline//post(calendar_invitations_decline_create)/responses/409`.
+            ///
+            /// HTTP response code: `409 conflict`.
+            case conflict(Operations.CalendarInvitationsDeclineCreate.Output.Conflict)
+            /// The associated value of the enum case if `self` is `.conflict`.
+            ///
+            /// - Throws: An error if `self` is not `.conflict`.
+            /// - SeeAlso: `.conflict`.
+            public var conflict: Operations.CalendarInvitationsDeclineCreate.Output.Conflict {
+                get throws {
+                    switch self {
+                    case let .conflict(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "conflict",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `GET /api/v1/calendar/share-recipients/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/share-recipients//get(calendar_share_recipients_list)`.
+    public enum CalendarShareRecipientsList {
+        public static let id: Swift.String = "calendar_share_recipients_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/share-recipients/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/calendar/share-recipients/GET/query/page`.
+                public var page: Swift.Int?
+                /// Search your followers, not the people you follow. At most 80 characters are matched.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/calendar/share-recipients/GET/query/search`.
+                public var search: Swift.String?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                ///   - search: Search your followers, not the people you follow. At most 80 characters are matched.
+                public init(
+                    page: Swift.Int? = nil,
+                    search: Swift.String? = nil
+                ) {
+                    self.page = page
+                    self.search = search
+                }
+            }
+            public var query: Operations.CalendarShareRecipientsList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/calendar/share-recipients/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarShareRecipientsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarShareRecipientsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarShareRecipientsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.CalendarShareRecipientsList.Input.Query = .init(),
+                headers: Operations.CalendarShareRecipientsList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/share-recipients/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/share-recipients/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedCalendarPersonList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedCalendarPersonList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarShareRecipientsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarShareRecipientsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/share-recipients//get(calendar_share_recipients_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarShareRecipientsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarShareRecipientsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Read-only shared items, separate from own tasks, counters and reminders.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shared/day/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shared/day//get(calendar_shared_day_list)`.
+    public enum CalendarSharedDayList {
+        public static let id: Swift.String = "calendar_shared_day_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shared/day/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/day/GET/query/date`.
+                public var date: Swift.String
+                /// Optional comma-separated visible shared owner ids (at most 250). Omit for all accepted calendars; explicit empty value hides all. Applied before counts and the two-item preview.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/day/GET/query/owner_ids`.
+                public var ownerIds: Swift.String?
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/day/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - date:
+                ///   - ownerIds: Optional comma-separated visible shared owner ids (at most 250). Omit for all accepted calendars; explicit empty value hides all. Applied before counts and the two-item preview.
+                ///   - page: A page number within the paginated result set.
+                public init(
+                    date: Swift.String,
+                    ownerIds: Swift.String? = nil,
+                    page: Swift.Int? = nil
+                ) {
+                    self.date = date
+                    self.ownerIds = ownerIds
+                    self.page = page
+                }
+            }
+            public var query: Operations.CalendarSharedDayList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shared/day/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharedDayList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharedDayList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarSharedDayList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.CalendarSharedDayList.Input.Query,
+                headers: Operations.CalendarSharedDayList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/day/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/shared/day/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedSharedCalendarItemList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedSharedCalendarItemList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarSharedDayList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarSharedDayList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shared/day//get(calendar_shared_day_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarSharedDayList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarSharedDayList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Read-only shared items, separate from own tasks, counters and reminders.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shared/month/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shared/month//get(calendar_shared_month_retrieve)`.
+    public enum CalendarSharedMonthRetrieve {
+        public static let id: Swift.String = "calendar_shared_month_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shared/month/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/month/GET/query/end`.
+                public var end: Swift.String
+                /// Optional comma-separated visible shared owner ids (at most 250). Omit for all accepted calendars; explicit empty value hides all. Applied before counts and the two-item preview.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/month/GET/query/owner_ids`.
+                public var ownerIds: Swift.String?
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/month/GET/query/start`.
+                public var start: Swift.String
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - end:
+                ///   - ownerIds: Optional comma-separated visible shared owner ids (at most 250). Omit for all accepted calendars; explicit empty value hides all. Applied before counts and the two-item preview.
+                ///   - start:
+                public init(
+                    end: Swift.String,
+                    ownerIds: Swift.String? = nil,
+                    start: Swift.String
+                ) {
+                    self.end = end
+                    self.ownerIds = ownerIds
+                    self.start = start
+                }
+            }
+            public var query: Operations.CalendarSharedMonthRetrieve.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shared/month/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharedMonthRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharedMonthRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarSharedMonthRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.CalendarSharedMonthRetrieve.Input.Query,
+                headers: Operations.CalendarSharedMonthRetrieve.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/month/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/shared/month/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.SharedCalendarMonth)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.SharedCalendarMonth {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarSharedMonthRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarSharedMonthRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shared/month//get(calendar_shared_month_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarSharedMonthRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarSharedMonthRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Read-only shared items, separate from own tasks, counters and reminders.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shared/people/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shared/people//get(calendar_shared_people_list)`.
+    public enum CalendarSharedPeopleList {
+        public static let id: Swift.String = "calendar_shared_people_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shared/people/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/people/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                public init(page: Swift.Int? = nil) {
+                    self.page = page
+                }
+            }
+            public var query: Operations.CalendarSharedPeopleList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shared/people/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharedPeopleList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharedPeopleList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarSharedPeopleList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.CalendarSharedPeopleList.Input.Query = .init(),
+                headers: Operations.CalendarSharedPeopleList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shared/people/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/shared/people/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedCalendarPersonList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedCalendarPersonList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarSharedPeopleList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarSharedPeopleList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shared/people//get(calendar_shared_people_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarSharedPeopleList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarSharedPeopleList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Owner management; never reads another account's private planner row.
+    ///
+    /// - Remark: HTTP `GET /api/v1/calendar/shares/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares//get(calendar_shares_list)`.
+    public enum CalendarSharesList {
+        public static let id: Swift.String = "calendar_shares_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shares/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/GET/query/page`.
+                public var page: Swift.Int?
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/GET/query/source_entry_id`.
+                public var sourceEntryId: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                ///   - sourceEntryId:
+                public init(
+                    page: Swift.Int? = nil,
+                    sourceEntryId: Swift.Int? = nil
+                ) {
+                    self.page = page
+                    self.sourceEntryId = sourceEntryId
+                }
+            }
+            public var query: Operations.CalendarSharesList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shares/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharesList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharesList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarSharesList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.CalendarSharesList.Input.Query = .init(),
+                headers: Operations.CalendarSharesList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/shares/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedCalendarShareList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedCalendarShareList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarSharesList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarSharesList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shares//get(calendar_shares_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarSharesList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarSharesList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Invite up to 20 current followers. Default scope is only this occurrence. An old declined/revoked invitation requires explicit reinvite=true; retries never silently reactivate it.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/shares/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares//post(calendar_shares_create)`.
+    public enum CalendarSharesCreate {
+        public static let id: Swift.String = "calendar_shares_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shares/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharesCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharesCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarSharesCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shares/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.CalendarShareCreateRequest)
+            }
+            public var body: Operations.CalendarSharesCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.CalendarSharesCreate.Input.Headers = .init(),
+                body: Operations.CalendarSharesCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/shares/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.CalendarShareBatch)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.CalendarShareBatch {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarSharesCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarSharesCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shares//post(calendar_shares_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.CalendarSharesCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.CalendarSharesCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/shares/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.CalendarShareBatch)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.CalendarShareBatch {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarSharesCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarSharesCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shares//post(calendar_shares_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarSharesCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarSharesCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Conflict: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/POST/responses/409/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/shares/POST/responses/409/content/application\/json`.
+                    case json(Components.Schemas.CalendarShareConflict)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.CalendarShareConflict {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarSharesCreate.Output.Conflict.Body
+                /// Creates a new `Conflict`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarSharesCreate.Output.Conflict.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shares//post(calendar_shares_create)/responses/409`.
+            ///
+            /// HTTP response code: `409 conflict`.
+            case conflict(Operations.CalendarSharesCreate.Output.Conflict)
+            /// The associated value of the enum case if `self` is `.conflict`.
+            ///
+            /// - Throws: An error if `self` is not `.conflict`.
+            /// - SeeAlso: `.conflict`.
+            public var conflict: Operations.CalendarSharesCreate.Output.Conflict {
+                get throws {
+                    switch self {
+                    case let .conflict(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "conflict",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Owner management; never reads another account's private planner row.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/shares/{id}/revoke/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares/{id}/revoke//post(calendar_shares_revoke_create)`.
+    public enum CalendarSharesRevokeCreate {
+        public static let id: Swift.String = "calendar_shares_revoke_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shares/{id}/revoke/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/{id}/revoke/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.CalendarSharesRevokeCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shares/{id}/revoke/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharesRevokeCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.CalendarSharesRevokeCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.CalendarSharesRevokeCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.CalendarSharesRevokeCreate.Input.Path,
+                headers: Operations.CalendarSharesRevokeCreate.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/{id}/revoke/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/calendar/shares/{id}/revoke/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.CalendarShare)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.CalendarShare {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.CalendarSharesRevokeCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.CalendarSharesRevokeCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shares/{id}/revoke//post(calendar_shares_revoke_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.CalendarSharesRevokeCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.CalendarSharesRevokeCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Make only this occurrence private, or stop sharing its entire repeating lineage. Privacy exceptions survive date moves and future-rule edits.
+    ///
+    /// - Remark: HTTP `POST /api/v1/calendar/shares/privacy/`.
+    /// - Remark: Generated from `#/paths//api/v1/calendar/shares/privacy//post(calendar_shares_privacy_create)`.
+    public enum CalendarSharesPrivacyCreate {
+        public static let id: Swift.String = "calendar_shares_privacy_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/calendar/shares/privacy/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/calendar/shares/privacy/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.CalendarSharePrivacyRequest)
+            }
+            public var body: Operations.CalendarSharesPrivacyCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - body:
+            public init(body: Operations.CalendarSharesPrivacyCreate.Input.Body) {
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shares/privacy//post(calendar_shares_privacy_create)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.CalendarSharesPrivacyCreate.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/calendar/shares/privacy//post(calendar_shares_privacy_create)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.CalendarSharesPrivacyCreate.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
     /// Rotations that repeat every N days rather than every week.
     ///
     /// - Remark: HTTP `GET /api/v1/cycles/`.
@@ -18850,6 +24011,864 @@ public enum Operations {
             ///
             /// A response with a code that is not documented in the OpenAPI document.
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// - Remark: HTTP `GET /api/v1/food/cookbooks/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks//get(food_cookbooks_list)`.
+    public enum FoodCookbooksList {
+        public static let id: Swift.String = "food_cookbooks_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/GET/query/page`.
+                public var page: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                public init(page: Swift.Int? = nil) {
+                    self.page = page
+                }
+            }
+            public var query: Operations.FoodCookbooksList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodCookbooksList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.FoodCookbooksList.Input.Query = .init(),
+                headers: Operations.FoodCookbooksList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedCookbookList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedCookbookList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodCookbooksList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodCookbooksList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/cookbooks//get(food_cookbooks_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodCookbooksList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodCookbooksList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `POST /api/v1/food/cookbooks/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks//post(food_cookbooks_create)`.
+    public enum FoodCookbooksCreate {
+        public static let id: Swift.String = "food_cookbooks_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                /// Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/POST/header/Idempotency-Key`.
+                public var idempotencyKey: Swift.String?
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - idempotencyKey: Persist a fresh UUID per intended create and reuse it with the same JSON body on retry. Successful responses are replayed without a second create. Reusing the key with changed input returns 409. Keys are scoped to the authenticated account and endpoint and retained until account deletion.
+                ///   - accept:
+                public init(
+                    idempotencyKey: Swift.String? = nil,
+                    accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksCreate.AcceptableContentType>] = .defaultValues()
+                ) {
+                    self.idempotencyKey = idempotencyKey
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodCookbooksCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.CookbookRequest)
+            }
+            public var body: Operations.FoodCookbooksCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.FoodCookbooksCreate.Input.Headers = .init(),
+                body: Operations.FoodCookbooksCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.Cookbook)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Cookbook {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodCookbooksCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodCookbooksCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/cookbooks//post(food_cookbooks_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.FoodCookbooksCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.FoodCookbooksCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `GET /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//get(food_cookbooks_retrieve)`.
+    public enum FoodCookbooksRetrieve {
+        public static let id: Swift.String = "food_cookbooks_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this cookbook.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this cookbook.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodCookbooksRetrieve.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodCookbooksRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.FoodCookbooksRetrieve.Input.Path,
+                headers: Operations.FoodCookbooksRetrieve.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Cookbook)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Cookbook {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodCookbooksRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodCookbooksRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//get(food_cookbooks_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodCookbooksRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodCookbooksRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `PATCH /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//patch(food_cookbooks_partial_update)`.
+    public enum FoodCookbooksPartialUpdate {
+        public static let id: Swift.String = "food_cookbooks_partial_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PATCH/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this cookbook.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PATCH/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this cookbook.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodCookbooksPartialUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PATCH/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksPartialUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodCookbooksPartialUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PATCH/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PATCH/requestBody/content/application\/json`.
+                case json(Components.Schemas.PatchedCookbookRequest)
+            }
+            public var body: Operations.FoodCookbooksPartialUpdate.Input.Body?
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.FoodCookbooksPartialUpdate.Input.Path,
+                headers: Operations.FoodCookbooksPartialUpdate.Input.Headers = .init(),
+                body: Operations.FoodCookbooksPartialUpdate.Input.Body? = nil
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PATCH/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PATCH/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Cookbook)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Cookbook {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodCookbooksPartialUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodCookbooksPartialUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//patch(food_cookbooks_partial_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodCookbooksPartialUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodCookbooksPartialUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `PUT /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//put(food_cookbooks_update)`.
+    public enum FoodCookbooksUpdate {
+        public static let id: Swift.String = "food_cookbooks_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PUT/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this cookbook.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PUT/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this cookbook.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodCookbooksUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PUT/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodCookbooksUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodCookbooksUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PUT/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PUT/requestBody/content/application\/json`.
+                case json(Components.Schemas.CookbookRequest)
+            }
+            public var body: Operations.FoodCookbooksUpdate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.FoodCookbooksUpdate.Input.Path,
+                headers: Operations.FoodCookbooksUpdate.Input.Headers = .init(),
+                body: Operations.FoodCookbooksUpdate.Input.Body
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PUT/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/PUT/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Cookbook)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Cookbook {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodCookbooksUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodCookbooksUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//put(food_cookbooks_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodCookbooksUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodCookbooksUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `DELETE /api/v1/food/cookbooks/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//delete(food_cookbooks_destroy)`.
+    public enum FoodCookbooksDestroy {
+        public static let id: Swift.String = "food_cookbooks_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this cookbook.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/cookbooks/{id}/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this cookbook.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.FoodCookbooksDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.FoodCookbooksDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//delete(food_cookbooks_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.FoodCookbooksDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/cookbooks/{id}//delete(food_cookbooks_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.FoodCookbooksDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Searches the Open Food Facts index for product identities only. Candidates contain no nutrition or serving basis. Before offering portions or logging, resolve the source_id barcode with food/search. Attribute Open Food Facts (ODbL).
+    ///
+    /// - Remark: HTTP `GET /api/v1/food/discover/`.
+    /// - Remark: Generated from `#/paths//api/v1/food/discover//get(food_discover_list)`.
+    public enum FoodDiscoverList {
+        public static let id: Swift.String = "food_discover_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/food/discover/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// Submit a food/brand search (two characters minimum), not every keystroke.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/discover/GET/query/q`.
+                public var q: Swift.String
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - q: Submit a food/brand search (two characters minimum), not every keystroke.
+                public init(q: Swift.String) {
+                    self.q = q
+                }
+            }
+            public var query: Operations.FoodDiscoverList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/food/discover/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodDiscoverList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.FoodDiscoverList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.FoodDiscoverList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.FoodDiscoverList.Input.Query,
+                headers: Operations.FoodDiscoverList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/food/discover/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/food/discover/GET/responses/200/content/application\/json`.
+                    case json([Components.Schemas.FoodDiscoveryResult])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.FoodDiscoveryResult] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.FoodDiscoverList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.FoodDiscoverList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/food/discover//get(food_discover_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.FoodDiscoverList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.FoodDiscoverList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
         }
     }
     /// Foods inside meals. Ownership is the meal's owner, one step away.
@@ -20952,6 +26971,10 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/GET/query`.
             public struct Query: Sendable, Hashable {
+                /// Only recipes in this owned cookbook; omitted returns the owner's complete recipe library.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/GET/query/cookbook`.
+                public var cookbook: Swift.Int?
                 /// A page number within the paginated result set.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/food/saved-meals/GET/query/page`.
@@ -20959,8 +26982,13 @@ public enum Operations {
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
+                ///   - cookbook: Only recipes in this owned cookbook; omitted returns the owner's complete recipe library.
                 ///   - page: A page number within the paginated result set.
-                public init(page: Swift.Int? = nil) {
+                public init(
+                    cookbook: Swift.Int? = nil,
+                    page: Swift.Int? = nil
+                ) {
+                    self.cookbook = cookbook
                     self.page = page
                 }
             }
@@ -23606,6 +29634,380 @@ public enum Operations {
             /// - Throws: An error if `self` is not `.ok`.
             /// - SeeAlso: `.ok`.
             public var ok: Operations.GymsMembersList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `GET /api/v1/integrations/apple-health/`.
+    /// - Remark: Generated from `#/paths//api/v1/integrations/apple-health//get(integrations_apple_health_retrieve)`.
+    public enum IntegrationsAppleHealthRetrieve {
+        public static let id: Swift.String = "integrations_apple_health_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/integrations/apple-health/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.IntegrationsAppleHealthRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.IntegrationsAppleHealthRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.IntegrationsAppleHealthRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.IntegrationsAppleHealthRetrieve.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/integrations/apple-health/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/integrations/apple-health/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.AppleHealthConnection)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.AppleHealthConnection {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.IntegrationsAppleHealthRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.IntegrationsAppleHealthRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/integrations/apple-health//get(integrations_apple_health_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.IntegrationsAppleHealthRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.IntegrationsAppleHealthRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `PATCH /api/v1/integrations/apple-health/`.
+    /// - Remark: Generated from `#/paths//api/v1/integrations/apple-health//patch(integrations_apple_health_partial_update)`.
+    public enum IntegrationsAppleHealthPartialUpdate {
+        public static let id: Swift.String = "integrations_apple_health_partial_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/integrations/apple-health/PATCH/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.IntegrationsAppleHealthPartialUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.IntegrationsAppleHealthPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.IntegrationsAppleHealthPartialUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/integrations/apple-health/PATCH/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/integrations/apple-health/PATCH/requestBody/content/application\/json`.
+                case json(Components.Schemas.PatchedAppleHealthConnectionUpdateRequest)
+            }
+            public var body: Operations.IntegrationsAppleHealthPartialUpdate.Input.Body?
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.IntegrationsAppleHealthPartialUpdate.Input.Headers = .init(),
+                body: Operations.IntegrationsAppleHealthPartialUpdate.Input.Body? = nil
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/integrations/apple-health/PATCH/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/integrations/apple-health/PATCH/responses/200/content/application\/json`.
+                    case json(Components.Schemas.AppleHealthConnection)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.AppleHealthConnection {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.IntegrationsAppleHealthPartialUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.IntegrationsAppleHealthPartialUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/integrations/apple-health//patch(integrations_apple_health_partial_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.IntegrationsAppleHealthPartialUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.IntegrationsAppleHealthPartialUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `GET /api/v1/integrations/workouts/`.
+    /// - Remark: Generated from `#/paths//api/v1/integrations/workouts//get(integrations_workouts_list)`.
+    public enum IntegrationsWorkoutsList {
+        public static let id: Swift.String = "integrations_workouts_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/integrations/workouts/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// A page number within the paginated result set.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/integrations/workouts/GET/query/page`.
+                public var page: Swift.Int?
+                /// Inclusive start date, YYYY-MM-DD.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/integrations/workouts/GET/query/since`.
+                public var since: Swift.String?
+                /// - Remark: Generated from `#/paths/api/v1/integrations/workouts/GET/query/source`.
+                @frozen public enum SourcePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case appleHealth = "apple_health"
+                    case garmin = "garmin"
+                }
+                /// - Remark: Generated from `#/paths/api/v1/integrations/workouts/GET/query/source`.
+                public var source: Operations.IntegrationsWorkoutsList.Input.Query.SourcePayload?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - page: A page number within the paginated result set.
+                ///   - since: Inclusive start date, YYYY-MM-DD.
+                ///   - source:
+                public init(
+                    page: Swift.Int? = nil,
+                    since: Swift.String? = nil,
+                    source: Operations.IntegrationsWorkoutsList.Input.Query.SourcePayload? = nil
+                ) {
+                    self.page = page
+                    self.since = since
+                    self.source = source
+                }
+            }
+            public var query: Operations.IntegrationsWorkoutsList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/integrations/workouts/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.IntegrationsWorkoutsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.IntegrationsWorkoutsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.IntegrationsWorkoutsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - query:
+            ///   - headers:
+            public init(
+                query: Operations.IntegrationsWorkoutsList.Input.Query = .init(),
+                headers: Operations.IntegrationsWorkoutsList.Input.Headers = .init()
+            ) {
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/integrations/workouts/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/integrations/workouts/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedHealthWorkoutSummaryList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedHealthWorkoutSummaryList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.IntegrationsWorkoutsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.IntegrationsWorkoutsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/integrations/workouts//get(integrations_workouts_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.IntegrationsWorkoutsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.IntegrationsWorkoutsList.Output.Ok {
                 get throws {
                     switch self {
                     case let .ok(response):
@@ -26313,6 +32715,26 @@ public enum Operations {
                 }
             }
             public var path: Operations.PlannerPartialUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PATCH/query`.
+            public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PATCH/query/scope`.
+                @frozen public enum ScopePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case following = "following"
+                    case occurrence = "occurrence"
+                }
+                /// Occurrence edits one entry. Following may change repeat_every_days, repeat_on_weekdays or repeat_ends_on for this and future unfinished occurrences. Read access to a shared calendar never permits editing.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PATCH/query/scope`.
+                public var scope: Operations.PlannerPartialUpdate.Input.Query.ScopePayload?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - scope: Occurrence edits one entry. Following may change repeat_every_days, repeat_on_weekdays or repeat_ends_on for this and future unfinished occurrences. Read access to a shared calendar never permits editing.
+                public init(scope: Operations.PlannerPartialUpdate.Input.Query.ScopePayload? = nil) {
+                    self.scope = scope
+                }
+            }
+            public var query: Operations.PlannerPartialUpdate.Input.Query
             /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PATCH/header`.
             public struct Headers: Sendable, Hashable {
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.PlannerPartialUpdate.AcceptableContentType>]
@@ -26335,14 +32757,17 @@ public enum Operations {
             ///
             /// - Parameters:
             ///   - path:
+            ///   - query:
             ///   - headers:
             ///   - body:
             public init(
                 path: Operations.PlannerPartialUpdate.Input.Path,
+                query: Operations.PlannerPartialUpdate.Input.Query = .init(),
                 headers: Operations.PlannerPartialUpdate.Input.Headers = .init(),
                 body: Operations.PlannerPartialUpdate.Input.Body? = nil
             ) {
                 self.path = path
+                self.query = query
                 self.headers = headers
                 self.body = body
             }
@@ -26455,6 +32880,26 @@ public enum Operations {
                 }
             }
             public var path: Operations.PlannerUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PUT/query`.
+            public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PUT/query/scope`.
+                @frozen public enum ScopePayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case following = "following"
+                    case occurrence = "occurrence"
+                }
+                /// Occurrence edits one entry. Following splits its repeat from this original occurrence onward; earlier and completed occurrences are unchanged.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PUT/query/scope`.
+                public var scope: Operations.PlannerUpdate.Input.Query.ScopePayload?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - scope: Occurrence edits one entry. Following splits its repeat from this original occurrence onward; earlier and completed occurrences are unchanged.
+                public init(scope: Operations.PlannerUpdate.Input.Query.ScopePayload? = nil) {
+                    self.scope = scope
+                }
+            }
+            public var query: Operations.PlannerUpdate.Input.Query
             /// - Remark: Generated from `#/paths/api/v1/planner/{id}/PUT/header`.
             public struct Headers: Sendable, Hashable {
                 public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.PlannerUpdate.AcceptableContentType>]
@@ -26477,14 +32922,17 @@ public enum Operations {
             ///
             /// - Parameters:
             ///   - path:
+            ///   - query:
             ///   - headers:
             ///   - body:
             public init(
                 path: Operations.PlannerUpdate.Input.Path,
+                query: Operations.PlannerUpdate.Input.Query = .init(),
                 headers: Operations.PlannerUpdate.Input.Headers = .init(),
                 body: Operations.PlannerUpdate.Input.Body
             ) {
                 self.path = path
+                self.query = query
                 self.headers = headers
                 self.body = body
             }
@@ -26602,15 +33050,16 @@ public enum Operations {
                 /// - Remark: Generated from `#/paths/api/v1/planner/{id}/DELETE/query/scope`.
                 @frozen public enum ScopePayload: String, Codable, Hashable, Sendable, CaseIterable {
                     case following = "following"
+                    case occurrence = "occurrence"
                 }
-                /// `following` ends a repeating task from this day on, clearing the unfinished days after it. Omitted, only this day is removed -- a delete that quietly took a year of tasks with it is the worst kind of surprise, so the wider act has to be asked for. Days already ticked off are kept either way: ending a habit is not saying it never happened.
+                /// Following ends this repeat from the addressed original occurrence and removes unfinished future projections, preserving completed history and earlier dates. A completed occurrence cannot use following scope. Occurrence (the default) deletes only the addressed entry.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/planner/{id}/DELETE/query/scope`.
                 public var scope: Operations.PlannerDestroy.Input.Query.ScopePayload?
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
-                ///   - scope: `following` ends a repeating task from this day on, clearing the unfinished days after it. Omitted, only this day is removed -- a delete that quietly took a year of tasks with it is the worst kind of surprise, so the wider act has to be asked for. Days already ticked off are kept either way: ending a habit is not saying it never happened.
+                ///   - scope: Following ends this repeat from the addressed original occurrence and removes unfinished future projections, preserving completed history and earlier dates. A completed occurrence cannot use following scope. Occurrence (the default) deletes only the addressed entry.
                 public init(scope: Operations.PlannerDestroy.Input.Query.ScopePayload? = nil) {
                     self.scope = scope
                 }
@@ -33432,6 +39881,116 @@ public enum Operations {
             }
         }
     }
+    /// Which parts of the new Social this account has been given. The app asks at launch and when it returns to the foreground, and treats a part it is not told about, or a failed request, as off. The server enforces the ones that are its to enforce -- takes, sounds, measurement and ranking -- whatever the app does.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/features/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/features//get(social_features_retrieve)`.
+    public enum SocialFeaturesRetrieve {
+        public static let id: Swift.String = "social_features_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/features/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialFeaturesRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialFeaturesRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialFeaturesRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.SocialFeaturesRetrieve.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/features/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/features/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.SocialFeatures)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.SocialFeatures {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialFeaturesRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialFeaturesRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/features//get(social_features_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialFeaturesRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialFeaturesRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
     /// What the people you follow have posted, newest first.
     ///
     /// Fanned out on read: a page is one indexed walk over the posts of everyone
@@ -33452,6 +40011,15 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/social/feed/GET/query`.
             public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/feed/GET/query/attachments`.
+                @frozen public enum AttachmentsPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case full = "full"
+                    case summary = "summary"
+                }
+                /// How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/feed/GET/query/attachments`.
+                public var attachments: Operations.SocialFeedList.Input.Query.AttachmentsPayload?
                 /// The position carried by the previous page's `next` link. Absent means start at the newest post.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/social/feed/GET/query/cursor`.
@@ -33463,12 +40031,15 @@ public enum Operations {
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
+                ///   - attachments: How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
                 ///   - cursor: The position carried by the previous page's `next` link. Absent means start at the newest post.
                 ///   - pageSize: How many posts to return, at most 50. Asking for more is refused rather than reduced, so a page is always the size it was asked for.
                 public init(
+                    attachments: Operations.SocialFeedList.Input.Query.AttachmentsPayload? = nil,
                     cursor: Swift.String? = nil,
                     pageSize: Swift.Int? = nil
                 ) {
+                    self.attachments = attachments
                     self.cursor = cursor
                     self.pageSize = pageSize
                 }
@@ -33892,6 +40463,15 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/social/for-you/GET/query`.
             public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/for-you/GET/query/attachments`.
+                @frozen public enum AttachmentsPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case full = "full"
+                    case summary = "summary"
+                }
+                /// How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/for-you/GET/query/attachments`.
+                public var attachments: Operations.SocialForYouList.Input.Query.AttachmentsPayload?
                 /// The position carried by the previous page's `next` link. Absent means rank afresh and start at the top.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/social/for-you/GET/query/cursor`.
@@ -33903,12 +40483,15 @@ public enum Operations {
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
+                ///   - attachments: How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
                 ///   - cursor: The position carried by the previous page's `next` link. Absent means rank afresh and start at the top.
                 ///   - pageSize: How many posts to return, at most 50. Asking for more is refused rather than reduced.
                 public init(
+                    attachments: Operations.SocialForYouList.Input.Query.AttachmentsPayload? = nil,
                     cursor: Swift.String? = nil,
                     pageSize: Swift.Int? = nil
                 ) {
+                    self.attachments = attachments
                     self.cursor = cursor
                     self.pageSize = pageSize
                 }
@@ -34367,6 +40950,8 @@ public enum Operations {
         }
     }
     /// Record a batch of views. Posts the reader cannot see, and their own posts, are ignored rather than refused, so a client does not need to know which of the posts it showed have since gone.
+    ///
+    /// With `schema_version` 2 each event is a summary of one exposure measured on the device, and the batch carries a `batch_id`: sending the same batch again adds nothing and answers with `duplicate` true. Figures beyond what could have happened are brought down to it, not refused. A body over 64 kB is a 413.
     ///
     /// - Remark: HTTP `POST /api/v1/social/impressions/`.
     /// - Remark: Generated from `#/paths//api/v1/social/impressions//post(social_impressions_create)`.
@@ -34868,6 +41453,15 @@ public enum Operations {
         public struct Input: Sendable, Hashable {
             /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query`.
             public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/attachments`.
+                @frozen public enum AttachmentsPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case full = "full"
+                    case summary = "summary"
+                }
+                /// How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/attachments`.
+                public var attachments: Operations.SocialPostsList.Input.Query.AttachmentsPayload?
                 /// Return only posts by this user, still filtered by what the reader is allowed to see.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/author`.
@@ -34880,6 +41474,10 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/page`.
                 public var page: Swift.Int?
+                /// Return only posts answering this prompt, by its code.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/prompt`.
+                public var prompt: Swift.String?
                 /// Return only posts matching this, ignoring case: the caption, the author's username or name, the title of the workout, meal or planner entry attached, or the name of a food or exercise inside it — so a meal posted as "Meal 1" is still found by the chicken in it. Narrows what the reader is already allowed to see and never widens it, so a post hidden from them stays hidden however well it matches. Combines with `author` when both are given.
                 ///
                 /// - Remark: Generated from `#/paths/api/v1/social/posts/GET/query/search`.
@@ -34887,19 +41485,25 @@ public enum Operations {
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
+                ///   - attachments: How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
                 ///   - author: Return only posts by this user, still filtered by what the reader is allowed to see.
                 ///   - fromFollowing: Split the list by whether the reader follows the author. `true` is the people they follow; `false` is the people they do not, and also drops the reader's own posts, because a page for finding new people should not open with your own. Omitted, the list is everybody. Anything other than true or false is a 400 rather than a guess.
                 ///   - page: A page number within the paginated result set.
+                ///   - prompt: Return only posts answering this prompt, by its code.
                 ///   - search: Return only posts matching this, ignoring case: the caption, the author's username or name, the title of the workout, meal or planner entry attached, or the name of a food or exercise inside it — so a meal posted as "Meal 1" is still found by the chicken in it. Narrows what the reader is already allowed to see and never widens it, so a post hidden from them stays hidden however well it matches. Combines with `author` when both are given.
                 public init(
+                    attachments: Operations.SocialPostsList.Input.Query.AttachmentsPayload? = nil,
                     author: Swift.Int? = nil,
                     fromFollowing: Swift.Bool? = nil,
                     page: Swift.Int? = nil,
+                    prompt: Swift.String? = nil,
                     search: Swift.String? = nil
                 ) {
+                    self.attachments = attachments
                     self.author = author
                     self.fromFollowing = fromFollowing
                     self.page = page
+                    self.prompt = prompt
                     self.search = search
                 }
             }
@@ -35280,7 +41884,7 @@ public enum Operations {
             }
         }
     }
-    /// Change the caption or who can see this post. The snapshot records what happened and is not editable.
+    /// Change the caption, who can see this post, who may post a take of it, its language or its topics. The snapshot records what happened and is not editable, and neither is what the post is a take of. Closing a post to takes stops new ones; takes already posted stay.
     ///
     /// - Remark: HTTP `PATCH /api/v1/social/posts/{id}/`.
     /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}//patch(social_posts_partial_update)`.
@@ -35504,6 +42108,142 @@ public enum Operations {
             ///
             /// A response with a code that is not documented in the OpenAPI document.
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/{id}/cookbook/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/cookbook//get(social_posts_cookbook_retrieve)`.
+    public enum SocialPostsCookbookRetrieve {
+        public static let id: Swift.String = "social_posts_cookbook_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/cookbook/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/cookbook/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsCookbookRetrieve.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/cookbook/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsCookbookRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsCookbookRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsCookbookRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialPostsCookbookRetrieve.Input.Path,
+                headers: Operations.SocialPostsCookbookRetrieve.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/cookbook/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/cookbook/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PublishedCookbook)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PublishedCookbook {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsCookbookRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsCookbookRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/cookbook//get(social_posts_cookbook_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsCookbookRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsCookbookRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
         }
     }
     /// Ask for fewer posts like this one on your For You page. It leaves the page at once, and its kind of content -- its topics and the exercises in it -- is shown less from then on; its author only a little less, unlike "not interested". Replaces "not interested" or "more like this" on the same post. Saying it twice is not an error.
@@ -36648,6 +43388,193 @@ public enum Operations {
             }
         }
     }
+    /// Posts: what someone has chosen to show other people.
+    ///
+    /// Reading and writing use different querysets on purpose. A reader gets
+    /// everything the visibility rules allow; an author gets their own rows and
+    /// nothing else, so somebody else's post is a 404 to a PATCH for the same
+    /// reason it is a 404 to a GET of a session that is not theirs — it was never
+    /// in the set.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/save-cookbook/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-cookbook//post(social_posts_save_cookbook_create)`.
+    public enum SocialPostsSaveCookbookCreate {
+        public static let id: Swift.String = "social_posts_save_cookbook_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-cookbook/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-cookbook/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsSaveCookbookCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-cookbook/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsSaveCookbookCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsSaveCookbookCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsSaveCookbookCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialPostsSaveCookbookCreate.Input.Path,
+                headers: Operations.SocialPostsSaveCookbookCreate.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-cookbook/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-cookbook/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Cookbook)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Cookbook {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsSaveCookbookCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsSaveCookbookCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-cookbook//post(social_posts_save_cookbook_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsSaveCookbookCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsSaveCookbookCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-cookbook/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-cookbook/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.Cookbook)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Cookbook {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsSaveCookbookCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsSaveCookbookCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/save-cookbook//post(social_posts_save_cookbook_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.SocialPostsSaveCookbookCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.SocialPostsSaveCookbookCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
     /// Copy a posted meal into your own saved meals. The foods and their servings are taken whole, so applying it to a day later gives the same numbers the post showed.
     ///
     /// Saving the same post again does not make a second copy: the one already saved is returned with already_saved true, and a 200 rather than a 201, because nothing was created.
@@ -36684,17 +43611,26 @@ public enum Operations {
                 }
             }
             public var headers: Operations.SocialPostsSaveMealCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-meal/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/save-meal/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.CookbookDestinationRequest)
+            }
+            public var body: Operations.SocialPostsSaveMealCreate.Input.Body
             /// Creates a new `Input`.
             ///
             /// - Parameters:
             ///   - path:
             ///   - headers:
+            ///   - body:
             public init(
                 path: Operations.SocialPostsSaveMealCreate.Input.Path,
-                headers: Operations.SocialPostsSaveMealCreate.Input.Headers = .init()
+                headers: Operations.SocialPostsSaveMealCreate.Input.Headers = .init(),
+                body: Operations.SocialPostsSaveMealCreate.Input.Body
             ) {
                 self.path = path
                 self.headers = headers
+                self.body = body
             }
         }
         @frozen public enum Output: Sendable, Hashable {
@@ -36978,6 +43914,435 @@ public enum Operations {
                     default:
                         try throwUnexpectedResponseStatus(
                             expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// The takes people have posted of this post, newest first: the ones that answer it directly, and only those the reader may see. A repost's id stands for the post it passes on.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/posts/{id}/takes/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/takes//get(social_posts_takes_list)`.
+    public enum SocialPostsTakesList {
+        public static let id: Swift.String = "social_posts_takes_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsTakesList.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/query/attachments`.
+                @frozen public enum AttachmentsPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case full = "full"
+                    case summary = "summary"
+                }
+                /// How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/query/attachments`.
+                public var attachments: Operations.SocialPostsTakesList.Input.Query.AttachmentsPayload?
+                /// The position carried by the previous page's `next` link.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/query/cursor`.
+                public var cursor: Swift.String?
+                /// How many takes to return, at most 50.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/query/page_size`.
+                public var pageSize: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - attachments: How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
+                ///   - cursor: The position carried by the previous page's `next` link.
+                ///   - pageSize: How many takes to return, at most 50.
+                public init(
+                    attachments: Operations.SocialPostsTakesList.Input.Query.AttachmentsPayload? = nil,
+                    cursor: Swift.String? = nil,
+                    pageSize: Swift.Int? = nil
+                ) {
+                    self.attachments = attachments
+                    self.cursor = cursor
+                    self.pageSize = pageSize
+                }
+            }
+            public var query: Operations.SocialPostsTakesList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsTakesList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsTakesList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsTakesList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - query:
+            ///   - headers:
+            public init(
+                path: Operations.SocialPostsTakesList.Input.Path,
+                query: Operations.SocialPostsTakesList.Input.Query = .init(),
+                headers: Operations.SocialPostsTakesList.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/takes/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.PaginatedPostList)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.PaginatedPostList {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsTakesList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsTakesList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/takes//get(social_posts_takes_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsTakesList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsTakesList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Say "I tried this" about somebody else's post. It is the reader's own statement and is only ever made by this request: nothing they track -- a finished workout, a logged meal -- makes it for them. Saying it twice is not an error.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/posts/{id}/tried/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/tried//post(social_posts_tried_create)`.
+    public enum SocialPostsTriedCreate {
+        public static let id: Swift.String = "social_posts_tried_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsTriedCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsTriedCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsTriedCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsTriedCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialPostsTriedCreate.Input.Path,
+                headers: Operations.SocialPostsTriedCreate.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Post)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Post {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsTriedCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsTriedCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/tried//post(social_posts_tried_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsTriedCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsTriedCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Take back "I tried this". Answers with the post, not 204.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/posts/{id}/tried/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/tried//delete(social_posts_tried_destroy)`.
+    public enum SocialPostsTriedDestroy {
+        public static let id: Swift.String = "social_posts_tried_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// A unique integer value identifying this post.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id: A unique integer value identifying this post.
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialPostsTriedDestroy.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/DELETE/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsTriedDestroy.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPostsTriedDestroy.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPostsTriedDestroy.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialPostsTriedDestroy.Input.Path,
+                headers: Operations.SocialPostsTriedDestroy.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/DELETE/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/posts/{id}/tried/DELETE/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Post)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Post {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPostsTriedDestroy.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPostsTriedDestroy.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/posts/{id}/tried//delete(social_posts_tried_destroy)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPostsTriedDestroy.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPostsTriedDestroy.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
                             response: self
                         )
                     }
@@ -37390,6 +44755,912 @@ public enum Operations {
                     default:
                         try throwUnexpectedResponseStatus(
                             expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// The prompts a post can answer. Send a code as `prompt` when creating a post; browse one with `?prompt=` on the post list.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/prompts/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/prompts//get(social_prompts_list)`.
+    public enum SocialPromptsList {
+        public static let id: Swift.String = "social_prompts_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/prompts/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPromptsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialPromptsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialPromptsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.SocialPromptsList.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/prompts/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/prompts/GET/responses/200/content/application\/json`.
+                    case json([Components.Schemas.Prompt])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.Prompt] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialPromptsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialPromptsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/prompts//get(social_prompts_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialPromptsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialPromptsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Publish the audio of one of your own posts as a sound others may set their clips to. The post needs an approved video with audio. Asking again for the same post answers 200 with the sound already made. The audio is prepared shortly afterwards; until then `audio_url` is null.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/sounds/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds//post(social_sounds_create)`.
+    public enum SocialSoundsCreate {
+        public static let id: Swift.String = "social_sounds_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialSoundsCreate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/POST/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/POST/requestBody/content/application\/json`.
+                case json(Components.Schemas.CreateSoundRequest)
+            }
+            public var body: Operations.SocialSoundsCreate.Input.Body
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            ///   - body:
+            public init(
+                headers: Operations.SocialSoundsCreate.Input.Headers = .init(),
+                body: Operations.SocialSoundsCreate.Input.Body
+            ) {
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Created: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/POST/responses/201/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/sounds/POST/responses/201/content/application\/json`.
+                    case json(Components.Schemas.Sound)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Sound {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialSoundsCreate.Output.Created.Body
+                /// Creates a new `Created`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialSoundsCreate.Output.Created.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/sounds//post(social_sounds_create)/responses/201`.
+            ///
+            /// HTTP response code: `201 created`.
+            case created(Operations.SocialSoundsCreate.Output.Created)
+            /// The associated value of the enum case if `self` is `.created`.
+            ///
+            /// - Throws: An error if `self` is not `.created`.
+            /// - SeeAlso: `.created`.
+            public var created: Operations.SocialSoundsCreate.Output.Created {
+                get throws {
+                    switch self {
+                    case let .created(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "created",
+                            response: self
+                        )
+                    }
+                }
+            }
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/sounds/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Sound)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Sound {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialSoundsCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialSoundsCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/sounds//post(social_sounds_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialSoundsCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialSoundsCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// - Remark: HTTP `GET /api/v1/social/sounds/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//get(social_sounds_retrieve)`.
+    public enum SocialSoundsRetrieve {
+        public static let id: Swift.String = "social_sounds_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialSoundsRetrieve.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialSoundsRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialSoundsRetrieve.Input.Path,
+                headers: Operations.SocialSoundsRetrieve.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Sound)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Sound {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialSoundsRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialSoundsRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//get(social_sounds_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialSoundsRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialSoundsRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Rename your sound, or change who may use it. Closing it stops new uses; posts already set to it keep it.
+    ///
+    /// - Remark: HTTP `PATCH /api/v1/social/sounds/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//patch(social_sounds_partial_update)`.
+    public enum SocialSoundsPartialUpdate {
+        public static let id: Swift.String = "social_sounds_partial_update"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/PATCH/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/PATCH/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialSoundsPartialUpdate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/PATCH/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsPartialUpdate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsPartialUpdate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialSoundsPartialUpdate.Input.Headers
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/PATCH/requestBody`.
+            @frozen public enum Body: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/PATCH/requestBody/content/application\/json`.
+                case json(Components.Schemas.PatchedUpdateSoundRequest)
+            }
+            public var body: Operations.SocialSoundsPartialUpdate.Input.Body?
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            ///   - body:
+            public init(
+                path: Operations.SocialSoundsPartialUpdate.Input.Path,
+                headers: Operations.SocialSoundsPartialUpdate.Input.Headers = .init(),
+                body: Operations.SocialSoundsPartialUpdate.Input.Body? = nil
+            ) {
+                self.path = path
+                self.headers = headers
+                self.body = body
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/PATCH/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/PATCH/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Sound)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Sound {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialSoundsPartialUpdate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialSoundsPartialUpdate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//patch(social_sounds_partial_update)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialSoundsPartialUpdate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialSoundsPartialUpdate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Take your sound down. Posts set to it stay and lose its credit, its audio stops being served, and nobody new can use it. `restore` puts all of that back.
+    ///
+    /// - Remark: HTTP `DELETE /api/v1/social/sounds/{id}/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//delete(social_sounds_destroy)`.
+    public enum SocialSoundsDestroy {
+        public static let id: Swift.String = "social_sounds_destroy"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/DELETE/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/DELETE/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialSoundsDestroy.Input.Path
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            public init(path: Operations.SocialSoundsDestroy.Input.Path) {
+                self.path = path
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct NoContent: Sendable, Hashable {
+                /// Creates a new `NoContent`.
+                public init() {}
+            }
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//delete(social_sounds_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            case noContent(Operations.SocialSoundsDestroy.Output.NoContent)
+            /// No response body
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}//delete(social_sounds_destroy)/responses/204`.
+            ///
+            /// HTTP response code: `204 noContent`.
+            public static var noContent: Self {
+                .noContent(.init())
+            }
+            /// The associated value of the enum case if `self` is `.noContent`.
+            ///
+            /// - Throws: An error if `self` is not `.noContent`.
+            /// - SeeAlso: `.noContent`.
+            public var noContent: Operations.SocialSoundsDestroy.Output.NoContent {
+                get throws {
+                    switch self {
+                    case let .noContent(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "noContent",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// The posts set to this sound that the reader may see, newest first. A sound that has been taken down has no such list.
+    ///
+    /// - Remark: HTTP `GET /api/v1/social/sounds/{id}/posts/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}/posts//get(social_sounds_posts_list)`.
+    public enum SocialSoundsPostsList {
+        public static let id: Swift.String = "social_sounds_posts_list"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialSoundsPostsList.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/query`.
+            public struct Query: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/query/attachments`.
+                @frozen public enum AttachmentsPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case full = "full"
+                    case summary = "summary"
+                }
+                /// How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
+                ///
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/query/attachments`.
+                public var attachments: Operations.SocialSoundsPostsList.Input.Query.AttachmentsPayload?
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/query/cursor`.
+                public var cursor: Swift.String?
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/query/page_size`.
+                public var pageSize: Swift.Int?
+                /// Creates a new `Query`.
+                ///
+                /// - Parameters:
+                ///   - attachments: How much of each posted workout or recipe to send. `full`, the default, sends every exercise and food. `summary` sends the title and totals a card prints and leaves `exercises`, `entries` and `cooking_instructions` empty, with `details_included` false; read the post itself for the rest.
+                ///   - cursor:
+                ///   - pageSize:
+                public init(
+                    attachments: Operations.SocialSoundsPostsList.Input.Query.AttachmentsPayload? = nil,
+                    cursor: Swift.String? = nil,
+                    pageSize: Swift.Int? = nil
+                ) {
+                    self.attachments = attachments
+                    self.cursor = cursor
+                    self.pageSize = pageSize
+                }
+            }
+            public var query: Operations.SocialSoundsPostsList.Input.Query
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsPostsList.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsPostsList.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialSoundsPostsList.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - query:
+            ///   - headers:
+            public init(
+                path: Operations.SocialSoundsPostsList.Input.Path,
+                query: Operations.SocialSoundsPostsList.Input.Query = .init(),
+                headers: Operations.SocialSoundsPostsList.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.query = query
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/posts/GET/responses/200/content/application\/json`.
+                    case json([Components.Schemas.Post])
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: [Components.Schemas.Post] {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialSoundsPostsList.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialSoundsPostsList.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}/posts//get(social_sounds_posts_list)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialSoundsPostsList.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialSoundsPostsList.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
+        }
+    }
+    /// Put back a sound you took down. Not one a moderator removed.
+    ///
+    /// - Remark: HTTP `POST /api/v1/social/sounds/{id}/restore/`.
+    /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}/restore//post(social_sounds_restore_create)`.
+    public enum SocialSoundsRestoreCreate {
+        public static let id: Swift.String = "social_sounds_restore_create"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/restore/POST/path`.
+            public struct Path: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/restore/POST/path/id`.
+                public var id: Swift.Int
+                /// Creates a new `Path`.
+                ///
+                /// - Parameters:
+                ///   - id:
+                public init(id: Swift.Int) {
+                    self.id = id
+                }
+            }
+            public var path: Operations.SocialSoundsRestoreCreate.Input.Path
+            /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/restore/POST/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsRestoreCreate.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.SocialSoundsRestoreCreate.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.SocialSoundsRestoreCreate.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - path:
+            ///   - headers:
+            public init(
+                path: Operations.SocialSoundsRestoreCreate.Input.Path,
+                headers: Operations.SocialSoundsRestoreCreate.Input.Headers = .init()
+            ) {
+                self.path = path
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/restore/POST/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/social/sounds/{id}/restore/POST/responses/200/content/application\/json`.
+                    case json(Components.Schemas.Sound)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.Sound {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.SocialSoundsRestoreCreate.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.SocialSoundsRestoreCreate.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/social/sounds/{id}/restore//post(social_sounds_restore_create)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.SocialSoundsRestoreCreate.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.SocialSoundsRestoreCreate.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
                             response: self
                         )
                     }
@@ -41053,6 +49324,114 @@ public enum Operations {
             ///
             /// A response with a code that is not documented in the OpenAPI document.
             case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+    }
+    /// - Remark: HTTP `GET /api/v1/workouts/capabilities/`.
+    /// - Remark: Generated from `#/paths//api/v1/workouts/capabilities//get(workouts_capabilities_retrieve)`.
+    public enum WorkoutsCapabilitiesRetrieve {
+        public static let id: Swift.String = "workouts_capabilities_retrieve"
+        public struct Input: Sendable, Hashable {
+            /// - Remark: Generated from `#/paths/api/v1/workouts/capabilities/GET/header`.
+            public struct Headers: Sendable, Hashable {
+                public var accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.WorkoutsCapabilitiesRetrieve.AcceptableContentType>]
+                /// Creates a new `Headers`.
+                ///
+                /// - Parameters:
+                ///   - accept:
+                public init(accept: [OpenAPIRuntime.AcceptHeaderContentType<Operations.WorkoutsCapabilitiesRetrieve.AcceptableContentType>] = .defaultValues()) {
+                    self.accept = accept
+                }
+            }
+            public var headers: Operations.WorkoutsCapabilitiesRetrieve.Input.Headers
+            /// Creates a new `Input`.
+            ///
+            /// - Parameters:
+            ///   - headers:
+            public init(headers: Operations.WorkoutsCapabilitiesRetrieve.Input.Headers = .init()) {
+                self.headers = headers
+            }
+        }
+        @frozen public enum Output: Sendable, Hashable {
+            public struct Ok: Sendable, Hashable {
+                /// - Remark: Generated from `#/paths/api/v1/workouts/capabilities/GET/responses/200/content`.
+                @frozen public enum Body: Sendable, Hashable {
+                    /// - Remark: Generated from `#/paths/api/v1/workouts/capabilities/GET/responses/200/content/application\/json`.
+                    case json(Components.Schemas.WorkoutCapabilities)
+                    /// The associated value of the enum case if `self` is `.json`.
+                    ///
+                    /// - Throws: An error if `self` is not `.json`.
+                    /// - SeeAlso: `.json`.
+                    public var json: Components.Schemas.WorkoutCapabilities {
+                        get throws {
+                            switch self {
+                            case let .json(body):
+                                return body
+                            }
+                        }
+                    }
+                }
+                /// Received HTTP response body
+                public var body: Operations.WorkoutsCapabilitiesRetrieve.Output.Ok.Body
+                /// Creates a new `Ok`.
+                ///
+                /// - Parameters:
+                ///   - body: Received HTTP response body
+                public init(body: Operations.WorkoutsCapabilitiesRetrieve.Output.Ok.Body) {
+                    self.body = body
+                }
+            }
+            ///
+            ///
+            /// - Remark: Generated from `#/paths//api/v1/workouts/capabilities//get(workouts_capabilities_retrieve)/responses/200`.
+            ///
+            /// HTTP response code: `200 ok`.
+            case ok(Operations.WorkoutsCapabilitiesRetrieve.Output.Ok)
+            /// The associated value of the enum case if `self` is `.ok`.
+            ///
+            /// - Throws: An error if `self` is not `.ok`.
+            /// - SeeAlso: `.ok`.
+            public var ok: Operations.WorkoutsCapabilitiesRetrieve.Output.Ok {
+                get throws {
+                    switch self {
+                    case let .ok(response):
+                        return response
+                    default:
+                        try throwUnexpectedResponseStatus(
+                            expectedStatus: "ok",
+                            response: self
+                        )
+                    }
+                }
+            }
+            /// Undocumented response.
+            ///
+            /// A response with a code that is not documented in the OpenAPI document.
+            case undocumented(statusCode: Swift.Int, OpenAPIRuntime.UndocumentedPayload)
+        }
+        @frozen public enum AcceptableContentType: AcceptableProtocol {
+            case json
+            case other(Swift.String)
+            public init?(rawValue: Swift.String) {
+                switch rawValue.lowercased() {
+                case "application/json":
+                    self = .json
+                default:
+                    self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case let .other(string):
+                    return string
+                case .json:
+                    return "application/json"
+                }
+            }
+            public static var allCases: [Self] {
+                [
+                    .json
+                ]
+            }
         }
     }
 }

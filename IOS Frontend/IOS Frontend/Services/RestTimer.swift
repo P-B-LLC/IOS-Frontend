@@ -34,6 +34,32 @@ nonisolated struct RestTimer: Codable, Hashable, Sendable {
     /// an hour too, so nothing here can exceed what a plan could save.
     static let maximumSeconds: TimeInterval = 3600
 
+    /// The in-app completion notice expires relative to the actual end date,
+    /// not ten seconds after the screen happens to reappear.
+    static let finishedBannerSeconds: TimeInterval = 10
+
+    var finishedBannerDismissalDate: Date? {
+        guard pausedRemaining == nil else { return nil }
+        return endsAt?.addingTimeInterval(Self.finishedBannerSeconds)
+    }
+
+    func isFinishedBannerExpired(at now: Date = Date()) -> Bool {
+        guard phase(at: now) == .finished, let deadline = finishedBannerDismissalDate else { return false }
+        return now >= deadline
+    }
+
+    /// A delayed callback must not dismiss a replacement, paused, adjusted or
+    /// restarted timer, even when Reset deliberately keeps the same UUID.
+    func canDismissFinishedBanner(matching expected: RestTimer, at now: Date = Date()) -> Bool {
+        self == expected && isFinishedBannerExpired(at: now)
+    }
+
+    /// Remaining display time for the small completion-notice progress bar.
+    func finishedBannerProgress(at now: Date = Date()) -> Double {
+        guard let deadline = finishedBannerDismissalDate else { return 0 }
+        return min(1, max(0, deadline.timeIntervalSince(now) / Self.finishedBannerSeconds))
+    }
+
     static func start(seconds: TimeInterval, exerciseID: UUID?, at now: Date = Date()) -> RestTimer {
         let length = min(max(seconds, 0), maximumSeconds)
         return RestTimer(

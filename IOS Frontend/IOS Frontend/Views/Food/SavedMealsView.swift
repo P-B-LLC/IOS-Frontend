@@ -12,6 +12,7 @@ struct SavedMealsView: View {
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.workoutVisualPhase) private var phase
+    @Environment(\.scenePhase) private var scenePhase
 
     let referenceDate: Date
 
@@ -25,6 +26,10 @@ struct SavedMealsView: View {
     /// Nil when the library is opened on its own, from the food page or the
     /// quick actions, where the day and the slot really are unknown.
     var destination: Destination?
+    var cookbookID: Int? = nil
+
+    private var recipes: [SavedFoodMeal] { store.savedMeals.filter { $0.cookbookID == cookbookID } }
+    private var cookbook: Cookbook? { store.cookbooks.first { $0.id == cookbookID } }
 
     nonisolated struct Destination: Equatable {
         let date: Date
@@ -42,6 +47,9 @@ struct SavedMealsView: View {
     @State private var isCreatingMeal = false
     @State private var mealToEdit: SavedFoodMeal?
     @State private var mealToApply: SavedFoodMeal?
+    @State private var isPostingCookbook = false
+    @State private var recipeToMove: SavedFoodMeal?
+    @State private var isVisible = false
 
     /// Put `savedMeal` where the caller said, or ask when nobody said.
     private func apply(_ savedMeal: SavedFoodMeal) {
@@ -74,18 +82,27 @@ struct SavedMealsView: View {
 
     var body: some View {
         Group {
-            if store.savedMeals.isEmpty {
+            if cookbookID == nil {
+                CookbookLibraryView(referenceDate: referenceDate, destination: destination)
+            } else if store.isLoadingCookbooks && recipes.isEmpty {
+                ProgressView("Loading…")
+            } else if let error = store.cookbookError, recipes.isEmpty {
+                VStack(spacing: 16) {
+                    Text(error).font(.community(.body)).foregroundStyle(.secondary)
+                    Button("Retry") { Task { await store.reloadCookbookLibrary(cookbookID: cookbookID) } }
+                }.padding(RepbaseDesign.pageInset)
+            } else if recipes.isEmpty {
                 emptyLibrary
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         RepbaseScreenHeader(
                             eyebrow: "YOUR LIBRARY",
-                            title: "Saved meals",
-                            detail: "Recipes and combinations ready for another day."
+                            title: LocalizedStringKey(cookbook?.name ?? String(localized: "Cookbook", bundle: .app, locale: .app)),
+                            detail: "\(recipes.count) / 20 recipes"
                         )
                         VStack(spacing: 0) {
-                            ForEach(Array(store.savedMeals.enumerated()), id: \.element.id) { index, savedMeal in
+                            ForEach(Array(recipes.enumerated()), id: \.element.id) { index, savedMeal in
                             SavedMealRow(
                                 savedMeal: savedMeal,
                                 isApplied: appliedMealIDs.contains(savedMeal.id),
@@ -97,10 +114,15 @@ struct SavedMealsView: View {
                             } onDelete: {
                                 store.removeReusableMeal(id: savedMeal.id)
                             }
-                            if index < store.savedMeals.count - 1 { Divider().opacity(0.45) }
+                            .contextMenu {
+                                Button("Move to cookbook", systemImage: "books.vertical") { recipeToMove = savedMeal }
+                            }
+                            if index < recipes.count - 1 { Divider().opacity(0.45) }
                         }
                         }
                         .overlay(alignment: .top) { Divider() }
+                        Button("Post cookbook", systemImage: "square.and.arrow.up") { isPostingCookbook = true }
+                            .buttonStyle(RepbasePrimaryButtonStyle())
                         Text("Saved meals sync with your Rytivo account and are ready on every signed-in device. Deleting one leaves the days you already put it on alone.")
                             .font(.community(.caption))
                             .foregroundStyle(.secondary)
@@ -111,23 +133,48 @@ struct SavedMealsView: View {
             }
         }
         .repbaseScreen(phase)
-        .navigationTitle("Saved Meals")
+        .navigationTitle(cookbookID == nil ? String(localized: "Cookbooks", bundle: .app, locale: .app) : (cookbook?.name ?? String(localized: "Cookbook", bundle: .app, locale: .app)))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Done") { dismiss() }
             }
-            ToolbarItem(placement: .primaryAction) {
-                Button("New", systemImage: "plus") {
-                    isCreatingMeal = true
+            if cookbookID != nil {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("New", systemImage: "plus") { isCreatingMeal = true }
+                        .disabled(cookbook?.isFull == true)
                 }
             }
         }
         .fullScreenCover(isPresented: $isCreatingMeal) {
             NavigationStack {
-                SavedMealEditorView()
+                SavedMealEditorView(cookbookID: cookbookID)
             }
         }
+        .sheet(isPresented: $isPostingCookbook) {
+            if let cookbook { NavigationStack { CookbookPostComposer(cookbook: cookbook) } }
+        }
+        .sheet(item: $recipeToMove) { recipe in
+            NavigationStack {
+                CookbookPickerView(excluding: recipe.cookbookID) { book in
+                    await store.moveRecipe(recipe, to: book)
+                }
+            }
+        }
+        .task(id: store.isConnected) {
+            if store.isConnected { await store.reloadCookbookLibrary(cookbookID: cookbookID, minimumInterval: 15) }
+        }
+        .onAppear {
+            isVisible = true
+            if store.isConnected { Task { await store.reloadCookbookLibrary(cookbookID: cookbookID, minimumInterval: 15) } }
+        }
+        .onDisappear { isVisible = false }
+        .onChange(of: scenePhase) { _, value in
+            if value == .active && isVisible && store.isConnected {
+                Task { await store.reloadCookbookLibrary(cookbookID: cookbookID) }
+            }
+        }
+        .refreshable { await store.reloadCookbookLibrary(cookbookID: cookbookID) }
 #if DEBUG
         // Opens the editor on the first saved meal that carries a recipe.
         // It is a tap inside a list inside a tab, and simctl cannot tap, so
@@ -312,7 +359,7 @@ private struct SavedMealRow: View {
 
 }
 
-private struct SavedMealEditorView: View {
+struct SavedMealEditorView: View {
     @Environment(FoodTrackingStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.workoutVisualPhase) private var phase
@@ -325,10 +372,10 @@ private struct SavedMealEditorView: View {
     @State private var isAddingIngredient = false
     @State private var ingredientToEdit: FoodEntry?
 
-    init(existing: SavedFoodMeal? = nil) {
+    init(existing: SavedFoodMeal? = nil, cookbookID: Int? = nil) {
         recoveryKey = "recipe-" + (existing?.serverID.map(String.init) ?? "new")
         _draft = State(
-            initialValue: existing ?? SavedFoodMeal(name: "")
+            initialValue: existing ?? SavedFoodMeal(name: "", cookbookID: cookbookID)
         )
     }
 
@@ -351,6 +398,8 @@ private struct SavedMealEditorView: View {
                     .padding(.vertical, 10)
                     .overlay(alignment: .bottom) { Divider() }
                 }
+
+                CookbookSelectionField(selection: $draft.cookbookID)
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Ingredients")
@@ -496,6 +545,8 @@ private struct SavedMealEditorView: View {
     private var isValid: Bool {
         !draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !draft.ingredients.isEmpty
+            && draft.cookbookID != nil
+            && !isSaving
     }
 }
 
@@ -561,6 +612,7 @@ private struct RecipeIngredientEditorView: View {
     @Environment(\.workoutVisualPhase) private var phase
 
     private let ingredientID: FoodEntry.ID
+    private let originalFood: FoodEntry?
     private let onSave: (FoodEntry) -> Void
 
     @State private var name: String
@@ -572,13 +624,14 @@ private struct RecipeIngredientEditorView: View {
 
     init(existing: FoodEntry? = nil, onSave: @escaping (FoodEntry) -> Void) {
         ingredientID = existing?.id ?? UUID()
+        originalFood = existing
         self.onSave = onSave
         _name = State(initialValue: existing?.name ?? "")
-        _servings = State(initialValue: existing?.servings.nutritionText ?? "1")
-        _calories = State(initialValue: existing?.nutritionPerServing.calories.nutritionText ?? "")
-        _protein = State(initialValue: existing?.nutritionPerServing.proteinGrams.nutritionText ?? "")
-        _carbohydrates = State(initialValue: existing?.nutritionPerServing.carbohydrateGrams.nutritionText ?? "")
-        _fat = State(initialValue: existing?.nutritionPerServing.fatGrams.nutritionText ?? "")
+        _servings = State(initialValue: existing.map { Self.editable($0.servings) } ?? "1")
+        _calories = State(initialValue: existing.map { Self.editable($0.nutritionPerServing.calories) } ?? "")
+        _protein = State(initialValue: existing.map { Self.editable($0.nutritionPerServing.proteinGrams) } ?? "")
+        _carbohydrates = State(initialValue: existing.map { Self.editable($0.nutritionPerServing.carbohydrateGrams) } ?? "")
+        _fat = State(initialValue: existing.map { Self.editable($0.nutritionPerServing.fatGrams) } ?? "")
     }
 
     var body: some View {
@@ -686,9 +739,9 @@ private struct RecipeIngredientEditorView: View {
             return
         }
 
-        onSave(
-            FoodEntry(
+        var ingredient = FoodEntry(
                 id: ingredientID,
+                serverID: originalFood?.serverID,
                 name: name.trimmingCharacters(in: .whitespacesAndNewlines),
                 servings: servings,
                 nutritionPerServing: NutritionAmount(
@@ -698,8 +751,13 @@ private struct RecipeIngredientEditorView: View {
                     fatGrams: fat
                 )
             )
-        )
+        ingredient.preserveSourceDetails(ifNutritionMatches: originalFood)
+        onSave(ingredient)
         dismiss()
+    }
+
+    private static func editable(_ value: Decimal) -> String {
+        value.formatted(.number.locale(.app).precision(.fractionLength(0...6)).grouping(.never))
     }
 
     private func positiveDecimal(_ value: String) -> Decimal? {
@@ -713,7 +771,7 @@ private struct RecipeIngredientEditorView: View {
     }
 
     private func decimal(_ value: String) -> Decimal? {
-        Decimal(string: value.trimmingCharacters(in: .whitespacesAndNewlines), locale: .current)
+        FoodPortionMeasurement.nonnegative(value, locale: .app)
     }
 }
 

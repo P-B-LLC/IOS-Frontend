@@ -10,6 +10,9 @@ struct PlannerDaySchedule: View {
     let entries: [PlannerEntry]
     let onSelect: (PlannerEntry) -> Void
     var onOpenWorkout: ((Weekday) -> Void)?
+    var additionalItems: [CalendarMonthItem] = []
+    var additionalIsLoading = false
+    var onSelectShared: ((CalendarMonthItem) -> Void)? = nil
 
     @State private var positionedDate: String?
 
@@ -21,12 +24,13 @@ struct PlannerDaySchedule: View {
     var body: some View {
         let grouped = PlannerHourAgenda.grouped(entries, time: { $0.time })
         let date = PlannerStore.dateString(store.selectedDate)
+        let shared = PlannerHourAgenda.grouped(additionalItems.filter { $0.date == date }, time: { $0.time })
 
         ScrollViewReader { reader in
             ScrollView(.vertical) {
                 LazyVStack(spacing: 0) {
                     ForEach(PlannerHourAgenda.hours, id: \.self) { hour in
-                        hourRow(hour, entries: grouped[hour] ?? [])
+                        hourRow(hour, entries: grouped[hour] ?? [], shared: shared[hour] ?? [])
                             .id(hour)
                     }
                 }
@@ -35,12 +39,12 @@ struct PlannerDaySchedule: View {
             }
             .scrollIndicators(.visible)
             .accessibilityIdentifier("planner.hourlySchedule")
-            .task(id: Focus(date: date, isLoading: store.isLoading)) {
+            .task(id: Focus(date: date, isLoading: store.isLoading || additionalIsLoading)) {
                 // Wait for the selected day's data, and position only once.
                 // Completing a task or refreshing must not jump the scroll.
-                guard !store.isLoading, positionedDate != date else { return }
+                guard !store.isLoading, !additionalIsLoading, positionedDate != date else { return }
                 let hour = PlannerHourAgenda.initialHour(
-                    scheduledHours: Array(grouped.keys),
+                    scheduledHours: Array(Set(grouped.keys).union(shared.keys)),
                     isToday: Calendar.current.isDateInToday(store.selectedDate),
                     currentHour: Calendar.current.component(.hour, from: Date())
                 )
@@ -48,13 +52,13 @@ struct PlannerDaySchedule: View {
                 positionedDate = date
             }
         }
-        .background(timeOfDay.surfaceRaised)
-        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .background(CalendarMonthStyle.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
         .overlay {
-            RoundedRectangle(cornerRadius: 18).strokeBorder(timeOfDay.canvasBorder)
+            RoundedRectangle(cornerRadius: 20).strokeBorder(CalendarMonthStyle.border, lineWidth: 0.75)
         }
         .overlay {
-            if store.isLoading {
+            if store.isLoading || additionalIsLoading {
                 ProgressView("Loading your day…")
                     .padding(12)
                     .background(.regularMaterial, in: Capsule())
@@ -63,23 +67,38 @@ struct PlannerDaySchedule: View {
         }
     }
 
-    private func hourRow(_ hour: Int, entries: [PlannerEntry]) -> some View {
-        HStack(alignment: .top, spacing: 8) {
+    private struct Item: Identifiable {
+        let id: String
+        let time: String?
+        let own: PlannerEntry?
+        let shared: CalendarMonthItem?
+    }
+
+    private func hourRow(_ hour: Int, entries: [PlannerEntry], shared: [CalendarMonthItem]) -> some View {
+        let items = entries.map { Item(id: "own:" + $0.id.uuidString, time: $0.time, own: $0, shared: nil) }
+            + shared.map { Item(id: "shared:" + $0.id, time: $0.time, own: nil, shared: $0) }
+        return HStack(alignment: .top, spacing: 8) {
             Text(Self.label(for: hour))
                 .font(.community(.caption2, weight: .medium))
                 .foregroundStyle(timeOfDay.canvasSecondaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .typeSizeCeiling()
-                .frame(width: 48, alignment: .trailing)
+                .frame(width: 38, alignment: .leading)
                 .padding(.top, 6)
 
             VStack(alignment: .leading, spacing: 8) {
-                Rectangle().fill(timeOfDay.canvasBorder).frame(height: 1)
-                    .accessibilityHidden(true)
-                ForEach(entries) { entry in
-                    PlannerEntryRow(entry: entry, onEdit: { onSelect(entry) },
-                                    onOpenWorkout: onOpenWorkout)
+                if items.isEmpty {
+                    Rectangle().fill(CalendarMonthStyle.border).frame(height: 0.75)
+                        .accessibilityHidden(true)
+                }
+                ForEach(PlannerAgendaOrder.ordered(items, time: { $0.time })) { item in
+                    if let entry = item.own {
+                        PlannerEntryRow(entry: entry, onEdit: { onSelect(entry) },
+                                        onOpenWorkout: onOpenWorkout)
+                    } else if let shared = item.shared {
+                        CalendarSharedItemRow(item: shared, onSelect: onSelectShared)
+                    }
                 }
             }
             .frame(maxWidth: .infinity, minHeight: 76, alignment: .topLeading)

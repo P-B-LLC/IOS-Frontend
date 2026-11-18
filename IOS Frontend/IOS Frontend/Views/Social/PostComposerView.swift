@@ -89,10 +89,20 @@ struct PostComposerView: View {
     /// the ceiling the server puts on the same field.
     private static let instructionsLimit = 4000
 
+    /// The post this one answers, when it is being written as a take.
+    struct TakeTarget: Identifiable, Hashable {
+        let id: Int
+        let authorName: String
+    }
+
+    private var takeOf: TakeTarget?
+
     /// Opened from the feed: nothing chosen yet, and anything may be posted.
-    init() {
+    /// With `takeOf`, what is posted is a take of that post.
+    init(takeOf: TakeTarget? = nil) {
         fixedSubject = nil
         lockedSource = nil
+        self.takeOf = takeOf
     }
 
     /// Opened from one feature's page. The page already says what kind of thing
@@ -250,6 +260,17 @@ struct PostComposerView: View {
 
                     composerIntroduction(timeOfDay: timeOfDay)
 
+                    if let takeOf {
+                        // Said first, so it is never a surprise that what
+                        // is being written will carry somebody's name.
+                        Label {
+                            Text("Your take on \(takeOf.authorName)")
+                        } icon: {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                        }
+                        .font(.community(.subheadline, weight: .semibold))
+                        .foregroundStyle(timeOfDay.accent)
+                    }
                     if let fixedSubject {
                         subjectSection(fixedSubject, timeOfDay: timeOfDay)
                     } else {
@@ -398,7 +419,9 @@ struct PostComposerView: View {
 
     private func sourcePicker(timeOfDay: HomeTimeOfDay) -> some View {
         HStack(spacing: 7) {
-            ForEach(PostSource.allCases) { item in
+            // A calendar entry is not something to have a take on, and the
+            // server would refuse one.
+            ForEach(PostSource.allCases.filter { takeOf == nil || $0 != .planner }) { item in
                 Button {
                     select(item)
                 } label: {
@@ -1114,7 +1137,8 @@ struct PostComposerView: View {
                 // same thing, and they would eventually disagree.
                 cookingInstructions: cookingInstructions
                     .trimmingCharacters(in: .whitespacesAndNewlines),
-                video: videoDraft
+                video: videoDraft,
+                takeOf: takeOf?.id
             )
             // Left open when it failed, so the error is read beside the post it
             // belongs to and the caption is not lost.

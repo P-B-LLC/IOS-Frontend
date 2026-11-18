@@ -41,6 +41,7 @@ struct ActiveLiftingSessionView: View {
                 ForEach(Array(session.exercises.enumerated()), id: \.element.id) { index, exercise in
                     SessionExerciseCard(
                         day: day,
+                        sessionID: session.serverID,
                         exercise: exercise,
                         position: index + 1,
                         count: session.exercises.count,
@@ -65,9 +66,8 @@ struct ActiveLiftingSessionView: View {
                 discardButton
             }
             .animation(.snappy(duration: 0.25), value: session.exercises.map(\.id))
-            .onChange(of: store.preferences.weightUnit) {
-                // Typed text belongs to the unit it was typed in. What is
-                // shown is worked out again from the stored kilograms.
+            .onChange(of: session.serverID) {
+                focusedField = nil
                 weightInputs = [:]
             }
             .onChange(of: session.loggedSetCount) {
@@ -127,10 +127,9 @@ struct ActiveLiftingSessionView: View {
                 stat(value: "\(session.loggedSetCount)/\(session.totalSetCount)", label: "Sets")
                 stat(value: "\(session.completedExerciseCount)/\(session.exercises.count)", label: "Exercises")
                 if session.loggedVolumeKilograms > 0 {
-                    stat(value: store.preferences.weightUnit.formatted(kilograms: session.loggedVolumeKilograms), label: "Volume")
+                    stat(value: store.preferences.defaultWeightUnit.formatted(kilograms: session.loggedVolumeKilograms), label: "Volume")
                 }
                 Spacer(minLength: 0)
-                WeightUnitToggle(compact: true)
             }
 
             ProgressView(value: Double(session.loggedSetCount), total: Double(max(session.totalSetCount, 1)))

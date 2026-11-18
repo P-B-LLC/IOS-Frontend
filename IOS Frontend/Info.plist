@@ -117,11 +117,12 @@
 	  Apple's sheet still reads "access and update your Health data" either
 	  way. That header is Apple's own boilerplate, not something this file
 	  controls; the part that reflects the request says "Allow to read" and
-	  lists only Steps.
+	  lists only the requested read types: steps, workouts, distance, active
+	  energy and heart rate. The account upload is a separate, explicit opt-in.
 	-->
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Rytivo does not write to Health. It only reads your step count and workouts so your training shows up without entering it twice.</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Rytivo reads your step count and the runs, rides, and swims recorded by your iPhone or Apple Watch, so your training shows up here without entering it twice.</string>
+	<string>With sync enabled, Rytivo reads steps, completed workouts, distance, active energy and heart rate, then saves workout summaries and step totals to your account. Routes and individual heart-rate samples are not uploaded.</string>
 </dict>
 </plist>

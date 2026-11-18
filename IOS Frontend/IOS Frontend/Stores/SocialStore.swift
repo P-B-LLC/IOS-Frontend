@@ -161,9 +161,13 @@ final class SocialStore {
                 token: token
             )
             self.repository = repository
+            // Before the first feed is asked for, so it is asked for in the
+            // shape this account has been given. A failure leaves the last
+            // answer standing, for at most a day.
+            await refreshFeatures()
 
             let readRevision = publications.revision
-            let page = try await repository.feed()
+            let page = try await repository.feed(summaries: SocialFeedExperience.isEnabled)
             guard connectionGeneration == generation else { return }
             feed = reconcilePublicPage(page.posts, readRevision: readRevision, prependOwn: true)
             nextCursor = page.nextCursor
@@ -175,7 +179,21 @@ final class SocialStore {
         }
     }
 
+    /// Bumped when the server's answer changes, so a view can follow it.
+    private(set) var featuresRevision = 0
+
+    /// Asks the server which parts of the new Social this account has.
+    func refreshFeatures() async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        guard let features = try? await repository.features(),
+              connectionGeneration == generation else { return }
+        if features != SocialFeedExperience.server() { featuresRevision += 1 }
+        SocialFeedExperience.remember(features)
+    }
+
     func disconnect() {
+        SocialFeedExperience.forget()
         likes.reset()
         publications.reset()
         publicationReceipt = nil
@@ -215,6 +233,13 @@ final class SocialStore {
         comments = [:]
         locallyBlockedAuthorIDs = []
         openedPosts = [:]
+        takesByPost = [:]
+        takeCursors = [:]
+        loadingTakesFor = []
+        failedTakesFor = []
+        detailedPosts = [:]
+        loadingDetailsFor = []
+        failedDetailsFor = []
         authorPosts = [:]
         loadingCommentsFor = []
         loadingPostsFor = []
@@ -245,7 +270,8 @@ final class SocialStore {
         wantedPostIDs = []
         impressionFlush?.cancel()
         impressionFlush = nil
-        impressions.reset()
+        attention.reset()
+        attentionQueue.reset()
         forYouPreferences = nil
         forYouPreferencesError = nil
         isSavingForYouPreferences = false
@@ -265,7 +291,7 @@ final class SocialStore {
         clearError()
         let readRevision = publications.revision
         do {
-            let page = try await repository.feed()
+            let page = try await repository.feed(summaries: SocialFeedExperience.isEnabled)
             guard connectionGeneration == generation, followingReadID == readID else { return }
             feed = reconcilePublicPage(page.posts, readRevision: readRevision, prependOwn: true)
             nextCursor = page.nextCursor
@@ -296,7 +322,7 @@ final class SocialStore {
         defer { if connectionGeneration == generation { isLoadingMore = false } }
 
         do {
-            let page = try await repository.feed(after: cursor)
+            let page = try await repository.feed(after: cursor, summaries: SocialFeedExperience.isEnabled)
             guard connectionGeneration == generation, followingReadID == readID, nextCursor == cursor else { return }
             // Filtered against what is already held rather than appended
             // blindly: a post written between two page reads shifts the
@@ -565,7 +591,8 @@ final class SocialStore {
         showsWeights: Bool = true,
         photo: PostPhoto? = nil,
         cookingInstructions: String = "",
-        video: PostVideoDraft? = nil
+        video: PostVideoDraft? = nil,
+        takeOf: Int? = nil
     ) async -> Bool {
         guard !isPosting else { return false }
         guard let repository else {
@@ -595,7 +622,8 @@ final class SocialStore {
                 showsWeights: showsWeights,
                 photo: photo,
                 cookingInstructions: cookingInstructions,
-                expectsVideo: video != nil
+                expectsVideo: video != nil,
+                takeOf: takeOf
             )
             guard connectionGeneration == generation else { return false }
             publications.trackSubmission(id: posted.id, awaitingAttachment: video != nil)
@@ -736,6 +764,51 @@ final class SocialStore {
         }
     }
 
+    /// Posts whose "I tried this" is on its way, so a second tap waits.
+    private(set) var triedPending: Set<Int> = []
+
+    /// Says "I tried this" about a post, or takes it back.
+    ///
+    /// Only ever from this tap. Nothing the reader tracks -- a workout
+    /// finished from a saved copy, a meal logged -- calls this for them.
+    func toggleTried(_ post: FeedPost) async {
+        guard let repository else { return }
+        let generation = connectionGeneration
+        let id = post.id
+        guard post.repostOf == nil, !triedPending.contains(id) else { return }
+        let current = self.post(withID: id) ?? post
+        triedPending.insert(id)
+        defer { triedPending.remove(id) }
+        do {
+            let saved = try await repository.setTried(!current.viewerHasTried, postID: id)
+            guard connectionGeneration == generation else { return }
+            applyTried(tried: saved.viewerHasTried, count: saved.triedCount, originalID: id)
+        } catch {
+            guard connectionGeneration == generation else { return }
+            showFailure(error)
+        }
+    }
+
+    private func applyTried(tried: Bool, count: Int, originalID: Int) {
+        func update(_ post: inout FeedPost) {
+            guard post.id == originalID else { return }
+            post.viewerHasTried = tried
+            post.triedCount = max(0, count)
+        }
+        for index in feed.indices { update(&feed[index]) }
+        for index in forYou.indices { update(&forYou[index]) }
+        for index in discoverPosts.indices { update(&discoverPosts[index]) }
+        for index in searchedPosts.indices { update(&searchedPosts[index]) }
+        for id in Array(openedPosts.keys) {
+            if var post = openedPosts[id] { update(&post); openedPosts[id] = post }
+        }
+        for author in Array(authorPosts.keys) {
+            guard var posts = authorPosts[author] else { continue }
+            for index in posts.indices { update(&posts[index]) }
+            authorPosts[author] = posts
+        }
+    }
+
     private func applyLike(_ saved: SocialLikeCoordinator.Confirmation, originalID: Int) {
         func update(_ post: inout FeedPost) {
             guard post.id == originalID || post.repostOf?.id == originalID else { return }
@@ -829,7 +902,7 @@ final class SocialStore {
         guard connectionGeneration == generation, forYouReadID == readID else { return }
         let readRevision = publications.revision
         do {
-            let page = try await repository.forYou()
+            let page = try await repository.forYou(summaries: SocialFeedExperience.isEnabled)
             guard connectionGeneration == generation, forYouReadID == readID else { return }
             publications.acknowledgeFirstPage(readRevision: readRevision)
             forYou = ownRecommendation(reconcilePublicPage(page.posts, readRevision: readRevision, prependOwn: true))
@@ -869,7 +942,7 @@ final class SocialStore {
         // scrolled past is part of that.
         await flushImpressions()
         do {
-            let page = try await repository.forYou(after: cursor)
+            let page = try await repository.forYou(after: cursor, summaries: SocialFeedExperience.isEnabled)
             guard connectionGeneration == generation, forYouReadID == readID, forYouCursor == cursor else { return }
             // The server never repeats a post within a session; a session that
             // expired starts again from the top, and that can. A duplicate id
@@ -952,36 +1025,93 @@ final class SocialStore {
 
     // MARK: - What was on screen
 
-    /// Viewings waiting to be sent, and the open ones.
-    private var impressions = ImpressionTracker()
+    /// The measuring: a clock per card on screen. See `AttentionMeter`.
+    private var attention = AttentionMeter()
+    /// Summaries of finished exposures, waiting to be sent.
+    private var attentionQueue = AttentionQueue()
     /// The pending send, so a burst of cards leaving the screen becomes one
     /// request rather than one each.
     private var impressionFlush: Task<Void, Never>?
+    private var isSendingAttention = false
 
-    /// A For You card is mostly on screen.
-    func impressionShown(_ postID: Int) {
-        impressions.shown(postID)
+    /// Monotonic, so a wall clock set back mid-scroll cannot shorten a dwell.
+    private var uptime: TimeInterval { ProcessInfo.processInfo.systemUptime }
+
+    /// A card is at least sixty percent on screen. `clipMilliseconds` is the
+    /// length of its clip when it has one a reader can play.
+    func impressionShown(_ postID: Int, surface: String = "for_you", clipMilliseconds: Int? = nil) {
+        attention.shown(postID, surface: surface, at: uptime)
+        if let clipMilliseconds {
+            attention.hasClip(postID, durationMilliseconds: clipMilliseconds)
+        }
     }
 
-    /// It is not any more: one viewing, queued.
+    /// It is not any more: one exposure, summed up and queued.
     func impressionHidden(_ postID: Int) {
-        impressions.hidden(postID)
-        if impressions.pending.count >= ImpressionTracker.maxBatch {
+        guard let summary = attention.hidden(postID, at: uptime) else { return }
+        attentionQueue.add(summary)
+        if attentionQueue.hasFullBatch {
             Task { await flushImpressions() }
-        } else if impressions.hasPending {
+        } else {
             scheduleImpressionFlush()
         }
     }
 
-    /// How far into a post's clip playback got, and whether it finished.
-    func noteWatched(postID: Int, milliseconds: Int, completed: Bool) {
-        impressions.watched(postID, milliseconds: milliseconds, completed: completed)
+    /// The app came to the front or left it. Clocks stop while it is away.
+    func attentionAppActive(_ active: Bool) {
+        attention.appBecameActive(active, at: uptime)
     }
 
-    /// Closes every open viewing and sends everything: the feed is leaving
+    /// A sheet or another screen went over the feed, or came off it.
+    func attentionFeedCovered(_ covered: Bool) {
+        attention.feedCovered(covered, at: uptime)
+    }
+
+    /// The reader opened, or closed, a post's workout or recipe.
+    func attentionAttachment(postID: Int, isOpen: Bool) {
+        if isOpen {
+            attention.attachmentOpened(postID, at: uptime)
+        } else {
+            attention.attachmentClosed(postID, at: uptime)
+        }
+    }
+
+    /// What a post's player is doing, as it does it.
+    func attentionPlayback(postID: Int, _ event: PlaybackEvent) {
+        let now = uptime
+        switch event {
+        case .playing(let position):
+            attention.playing(true, postID: postID, positionMilliseconds: position, at: now)
+        case .notPlaying(let position):
+            attention.playing(false, postID: postID, positionMilliseconds: position, at: now)
+        case .progress(let position):
+            attention.progress(postID, positionMilliseconds: position, at: now)
+        case .seeked(let position):
+            attention.seeked(postID, toMilliseconds: position, at: now)
+        case .ended:
+            attention.ended(postID, at: now)
+        case .failed:
+            attention.failed(postID, at: now)
+        }
+    }
+
+    enum PlaybackEvent {
+        /// Frames are moving, from this position in the clip.
+        case playing(Double)
+        /// Paused or buffering, at this position.
+        case notPlaying(Double)
+        case progress(Double)
+        case seeked(Double)
+        case ended
+        case failed
+    }
+
+    /// Ends every open exposure and sends everything: the feed is leaving
     /// the screen, or the app is going to the background.
     func finishImpressions() async {
-        impressions.closeAll()
+        for summary in attention.hideAll(at: uptime) {
+            attentionQueue.add(summary)
+        }
         await flushImpressions()
     }
 
@@ -993,7 +1123,7 @@ final class SocialStore {
     }
 
     private func scheduleImpressionFlush() {
-        guard impressionFlush == nil else { return }
+        guard impressionFlush == nil, !attentionQueue.isEmpty else { return }
         impressionFlush = Task { [weak self] in
             try? await Task.sleep(for: .seconds(10))
             guard let self, !Task.isCancelled else { return }
@@ -1004,16 +1134,36 @@ final class SocialStore {
 
     private func sendImpressions() async {
         guard let repository else {
-            impressions.reset()
+            attentionQueue.reset()
             return
         }
-        while true {
-            let batch = impressions.nextBatch()
-            guard !batch.isEmpty else { return }
-            // Dropped on failure rather than retried: these are signals for
-            // ranking, and an old batch sent later would only describe a
-            // session that is over.
-            try? await repository.recordImpressions(batch)
+        // One sender at a time: two would each take the same unacknowledged
+        // batch. The server would recognise the repeat, but it is a wasted
+        // request every time a flush and the timer coincide.
+        guard !isSendingAttention else { return }
+        isSendingAttention = true
+        defer { isSendingAttention = false }
+        let generation = connectionGeneration
+        while let batch = attentionQueue.nextBatch() {
+            do {
+                // Measurement is its own switch. Off, the same exposures go
+                // as the plain view events the app sent before it existed.
+                try await repository.recordAttention(batch, measured: SocialFeedExperience.measures)
+                guard connectionGeneration == generation else { return }
+                attentionQueue.acknowledge(batch.id)
+            } catch APIServiceError.undocumentedStatus(let status)
+                where (400..<500).contains(status) && ![401, 408, 429].contains(status) {
+                // Refused as it stands: sending it again would be refused
+                // again, and it must not hold up what is behind it.
+                guard connectionGeneration == generation else { return }
+                attentionQueue.discard(batch.id)
+            } catch {
+                // No answer. The batch keeps its id and goes again with the
+                // next flush; the server adds it once however many arrive.
+                guard connectionGeneration == generation else { return }
+                scheduleImpressionFlush()
+                return
+            }
         }
     }
 
@@ -1343,8 +1493,8 @@ final class SocialStore {
     /// Not optimistic and not silent, for the same reason as the workout: the
     /// name it lands under is not always the one on the post, and only the
     /// server knows which.
-    func saveMeal(from post: FeedPost) async {
-        guard let repository, !savingMealFor.contains(post.id) else { return }
+    func saveMeal(from post: FeedPost, cookbookID: Int) async -> Bool {
+        guard let repository, !savingMealFor.contains(post.id) else { return false }
         let generation = connectionGeneration
         savingMealFor.insert(post.id)
         defer {
@@ -1354,15 +1504,49 @@ final class SocialStore {
         }
 
         do {
-            let outcome = try await repository.saveMeal(fromPost: post.id)
-            guard connectionGeneration == generation else { return }
+            let outcome = try await repository.saveMeal(fromPost: post.id, cookbookID: cookbookID)
+            guard connectionGeneration == generation else { return false }
             lastSavedWorkout = nil
             lastSavedMeal = outcome
             apply(to: post.id) { $0.viewerHasSaved = true }
             await onSavedMealsChanged?()
+            return true
         } catch {
-            guard connectionGeneration == generation else { return }
+            guard connectionGeneration == generation else { return false }
             showFailure(error)
+            return false
+        }
+    }
+
+    func loadCookbook(postID: Int) async -> PublishedCookbook? {
+        guard let repository else { return nil }
+        let generation = connectionGeneration
+        do {
+            let cookbook = try await repository.cookbook(postID: postID)
+            guard connectionGeneration == generation else { return nil }
+            return cookbook
+        } catch {
+            guard connectionGeneration == generation else { return nil }
+            showFailure(error)
+            return nil
+        }
+    }
+
+    func saveCookbook(from post: FeedPost) async -> Bool {
+        guard let repository, !savingMealFor.contains(post.id) else { return false }
+        let generation = connectionGeneration
+        savingMealFor.insert(post.id)
+        defer { if connectionGeneration == generation { savingMealFor.remove(post.id) } }
+        do {
+            _ = try await repository.saveCookbook(postID: post.id)
+            guard generation == connectionGeneration else { return false }
+            apply(to: post.id) { $0.viewerHasSaved = true }
+            await onSavedMealsChanged?()
+            return true
+        } catch {
+            guard generation == connectionGeneration else { return false }
+            showFailure(error)
+            return false
         }
     }
 
@@ -1881,6 +2065,94 @@ final class SocialStore {
             ?? forYou.first { $0.id == id }
             ?? discoverPosts.first { $0.id == id }
             ?? openedPosts[id]
+    }
+
+    // MARK: - Takes
+
+    /// The takes of a post, as last read, by the post they answer.
+    private(set) var takesByPost: [Int: [FeedPost]] = [:]
+    private var takeCursors: [Int: String] = [:]
+    private(set) var loadingTakesFor: Set<Int> = []
+    private(set) var failedTakesFor: Set<Int> = []
+
+    func hasMoreTakes(of postID: Int) -> Bool { takeCursors[postID] != nil }
+
+    /// Reads the first page of a post's takes, or the next when `more`.
+    func loadTakes(of postID: Int, more: Bool = false) async {
+        guard let repository, !loadingTakesFor.contains(postID) else { return }
+        let cursor = more ? takeCursors[postID] : nil
+        if more, cursor == nil { return }
+        let generation = connectionGeneration
+        loadingTakesFor.insert(postID)
+        failedTakesFor.remove(postID)
+        defer { if connectionGeneration == generation { loadingTakesFor.remove(postID) } }
+        do {
+            let page = try await repository.takes(ofPost: postID, after: cursor)
+            guard connectionGeneration == generation else { return }
+            let shown = page.posts.filter { !locallyBlockedAuthorIDs.contains($0.author.id) }
+            let known = more ? takesByPost[postID] ?? [] : []
+            let ids = Set(known.map(\.id))
+            takesByPost[postID] = known + shown.filter { !ids.contains($0.id) }
+            takeCursors[postID] = page.nextCursor
+        } catch {
+            guard connectionGeneration == generation else { return }
+            failedTakesFor.insert(postID)
+        }
+    }
+
+    // MARK: - Details on demand
+
+    /// Posts read whole because somebody opened their workout or recipe. A
+    /// feed page carries summaries; the rows are fetched for the one post
+    /// that was asked about, once, and kept while the account is connected.
+    private(set) var detailedPosts: [Int: FeedPost] = [:]
+    private(set) var loadingDetailsFor: Set<Int> = []
+    /// Posts whose details could not be read, so the sheet can say so and
+    /// offer to try again rather than spin.
+    private(set) var failedDetailsFor: Set<Int> = []
+
+    /// The post with its exercises or foods, when they are on hand: from the
+    /// feed if the page carried them, otherwise from a read made for them.
+    func detailed(_ post: FeedPost) -> FeedPost? {
+        let shown = post.displayed
+        if shown.workout?.detailsIncluded ?? shown.meal?.detailsIncluded ?? true { return post }
+        return detailedPosts[shown.id]
+    }
+
+    /// The post as held, with the rows of its workout or recipe put in when
+    /// they have been read. Everything else -- counts, whether the reader
+    /// liked or saved it -- stays the live copy's, which is the one that
+    /// changes as they tap.
+    func withDetails(_ post: FeedPost) -> FeedPost {
+        guard let full = detailedPosts[post.displayed.id]?.displayed else { return post }
+        var merged = post
+        if var original = merged.repostOf {
+            original.workout = full.workout ?? original.workout
+            original.meal = full.meal ?? original.meal
+            merged.repostOf = original
+        } else {
+            merged.workout = full.workout ?? merged.workout
+            merged.meal = full.meal ?? merged.meal
+        }
+        return merged
+    }
+
+    /// Reads a post's exercises or foods if they are not already on hand.
+    func loadDetails(for post: FeedPost) async {
+        let id = post.displayed.id
+        guard let repository, detailed(post) == nil, !loadingDetailsFor.contains(id) else { return }
+        let generation = connectionGeneration
+        loadingDetailsFor.insert(id)
+        failedDetailsFor.remove(id)
+        defer { if connectionGeneration == generation { loadingDetailsFor.remove(id) } }
+        do {
+            let loaded = try await repository.post(withID: id)
+            guard connectionGeneration == generation else { return }
+            detailedPosts[id] = loaded
+        } catch {
+            guard connectionGeneration == generation else { return }
+            failedDetailsFor.insert(id)
+        }
     }
 
     /// Fetches a post the feed does not have. Does nothing when it does.
