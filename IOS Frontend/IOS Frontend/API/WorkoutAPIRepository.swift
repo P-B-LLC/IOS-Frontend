@@ -260,7 +260,14 @@ actor WorkoutAPIRepository {
         }
     }
 
-    private func confirmPlan(_ expected: [Exercise], templateID: Int) async throws {
+    /// Reads the saved workout back and checks it holds the plan that was sent.
+    ///
+    /// `exerciseIDs` are the exercises the request named, in order. A row is
+    /// the right one when it points at that exercise: the server resolves a
+    /// name it knows by another spelling -- "Biking" is the library's
+    /// "Cycling", "pull-up" its "Pull Up" -- so comparing names refused a plan
+    /// that had saved exactly as asked.
+    private func confirmPlan(_ expected: [Exercise], exerciseIDs: [Int], templateID: Int) async throws {
         let output = try await client.workoutsRetrieve(path: .init(id: templateID))
         let template: Components.Schemas.WorkoutTemplate
         switch output {
@@ -268,12 +275,12 @@ actor WorkoutAPIRepository {
         case .undocumented(let status, _): throw APIServiceError.undocumentedStatus(status)
         }
         let actual = template.exercises.sorted { ($0.order ?? 1, $0.id) < ($1.order ?? 1, $1.id) }
-        guard template.id == templateID, expected.count == actual.count else { throw PlannedSetFailure.unconfirmed }
-        for (draft, row) in zip(expected, actual) {
+        guard template.id == templateID, expected.count == actual.count,
+              exerciseIDs.count == expected.count else { throw PlannedSetFailure.unconfirmed }
+        for ((draft, row), sentExerciseID) in zip(zip(expected, actual), exerciseIDs) {
             let reloaded = try Self.plannedExercise(from: row)
-            guard (draft.serverID == nil || Self.normalized(draft.serverName ?? draft.name) != Self.normalized(draft.name) || draft.serverID == row.exercise),
+            guard row.exercise == sentExerciseID,
                   (draft.workoutExerciseID == nil || draft.workoutExerciseID == row.id),
-                  Self.normalized(draft.name) == Self.normalized(row.exerciseName),
                   draft.plannedSetTypes == reloaded.plannedSetTypes,
                   WorkoutPlannedSetPolicy.sameTargets(draft.plannedSets, reloaded.plannedSets)
             else { throw PlannedSetFailure.unconfirmed }
@@ -517,9 +524,12 @@ actor WorkoutAPIRepository {
             throw error
         }
         if intent.draft != draft {
+            // Confirmed inside, against the plan that update sent.
             try await updateWorkout(draft, existing: intent.draft, workoutID: template.id)
+        } else {
+            let sent = (intent.request.initialExercises ?? []).map(\.exercise)
+            try await confirmPlan(draft.exercises, exerciseIDs: sent, templateID: template.id)
         }
-        try await confirmPlan(draft.exercises, templateID: template.id)
         // Keep the original request until the store confirms the saved
         // template/date by ID. A failed readback must remain retry-safe.
         return template.id
@@ -599,7 +609,7 @@ actor WorkoutAPIRepository {
             body: .json(.init(exercisePlan: plan, plannedSetsVersion: 1))
         )
         switch output {
-        case .ok: try await confirmPlan(exercises, templateID: workoutID)
+        case .ok: try await confirmPlan(exercises, exerciseIDs: plan.map(\.exercise), templateID: workoutID)
         case .undocumented(let statusCode, let payload):
             throw await RepbaseAPIHTTPError.decode(statusCode: statusCode, payload: payload)
         }
@@ -653,7 +663,7 @@ actor WorkoutAPIRepository {
             ))
         )
         switch output {
-        case .ok: try await confirmPlan(draft.exercises, templateID: workoutID)
+        case .ok: try await confirmPlan(draft.exercises, exerciseIDs: plan.map(\.exercise), templateID: workoutID)
         case .undocumented(let statusCode, _):
             throw APIServiceError.undocumentedStatus(statusCode)
         }
