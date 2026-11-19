@@ -392,11 +392,22 @@ private struct NotificationReadVisibility: ViewModifier {
 }
 
 private enum NotificationTime {
+    /// One formatter per language rather than one per row per render. Keyed
+    /// on the identifier because the app's language can change while it runs.
+    private static var cached: (identifier: String, formatter: RelativeDateTimeFormatter)?
+
     static func label(_ date: Date?) -> String? {
         guard let date else { return nil }
-        let formatter = RelativeDateTimeFormatter()
-        formatter.locale = .app
-        formatter.unitsStyle = .abbreviated
+        let locale = Locale.app
+        let formatter: RelativeDateTimeFormatter
+        if let cached, cached.identifier == locale.identifier {
+            formatter = cached.formatter
+        } else {
+            formatter = RelativeDateTimeFormatter()
+            formatter.locale = locale
+            formatter.unitsStyle = .abbreviated
+            cached = (locale.identifier, formatter)
+        }
         return formatter.localizedString(for: date, relativeTo: Date())
     }
 }

@@ -183,11 +183,12 @@ struct PlannerMonthCalendar: View {
         return stride(from: 0, to: days.count, by: 7).map { Array(days[$0..<min($0 + 7, days.count)]) }
     }
 
+    /// Read per weekday cell, so it builds no formatter: the calendar carries
+    /// the same symbols for the app's language.
     private var weekdaySymbols: [String] {
-        let formatter = DateFormatter()
-        formatter.locale = .app
-        formatter.calendar = calendar
-        return formatter.shortStandaloneWeekdaySymbols
+        var localized = calendar
+        localized.locale = .app
+        return localized.shortStandaloneWeekdaySymbols
     }
 
     private func accessibilityLabel(_ date: Date, own: [PlannerEntry], shared: [CalendarMonthItem], sharedTotal: Int) -> String {

@@ -61,13 +61,7 @@ nonisolated enum FoodCataloguePolicy {
     /// generic diary mapper's default is appropriate for a typed entry, not
     /// for claiming an external product's nutrition has been verified.
     static func nutrition(calories: String, protein: String, carbs: String, fat: String) -> NutritionAmount? {
-        func number(_ text: String) -> Decimal? {
-            guard let match = text.range(of: #"^[0-9]+(?:\.[0-9]+)?$"#, options: .regularExpression),
-                  match.lowerBound == text.startIndex, match.upperBound == text.endIndex,
-                  let value = Decimal(string: text, locale: Locale(identifier: "en_US_POSIX")),
-                  !value.isNaN, value >= 0 else { return nil }
-            return value
-        }
+        let number = FoodSnapshotPolicy.decimal
         guard let calories = number(calories), let protein = number(protein),
               let carbs = number(carbs), let fat = number(fat) else { return nil }
         return NutritionAmount(calories: calories, proteinGrams: protein, carbohydrateGrams: carbs, fatGrams: fat)
