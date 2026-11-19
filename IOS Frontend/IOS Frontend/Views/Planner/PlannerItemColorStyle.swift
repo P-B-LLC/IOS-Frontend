@@ -1,7 +1,7 @@
 import SwiftUI
 
 extension PlannerItemColor {
-    var tint: Color {
+    nonisolated var tint: Color {
         Color("Calendar" + rawValue.prefix(1).uppercased() + rawValue.dropFirst())
     }
 }

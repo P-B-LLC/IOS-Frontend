@@ -273,9 +273,9 @@ actor ProfileAPIRepository {
                 showsWeight: payload.showsWeight ?? false,
                 showsTargetWeight: payload.showsTargetWeight ?? false,
                 isProfilePublic: payload.isProfilePublic ?? true,
-                isReadable: payload.isReadable ?? true,
-                viewerFollows: payload.viewerFollows ?? false,
-                viewerHasRequested: payload.viewerHasRequested ?? false,
+                isReadable: payload.isReadable,
+                viewerFollows: payload.viewerFollows,
+                viewerHasRequested: payload.viewerHasRequested,
                 followsViewer: payload.followsViewer,
                 // Already strings here, unlike on /me/ where the contract
                 // gives a closed enum.

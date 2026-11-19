@@ -62,7 +62,7 @@ struct SavedMealsView: View {
             to: [destination.date],
             mealNumber: destination.mealNumber
         )
-        withAnimation(.snappy(duration: 0.2)) {
+        _ = withAnimation(.snappy(duration: 0.2)) {
             appliedMealIDs.insert(savedMeal.id)
         }
         // The tick says it landed, then the plus comes back.
@@ -74,7 +74,7 @@ struct SavedMealsView: View {
         // Done is there for when it was.
         Task {
             try? await Task.sleep(for: .seconds(1.4))
-            withAnimation(.snappy(duration: 0.2)) {
+            _ = withAnimation(.snappy(duration: 0.2)) {
                 appliedMealIDs.remove(savedMeal.id)
             }
         }

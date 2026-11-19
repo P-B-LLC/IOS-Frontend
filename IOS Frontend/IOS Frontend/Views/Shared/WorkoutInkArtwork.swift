@@ -22,7 +22,7 @@ enum ActivityIconKind: String, CaseIterable, Sendable {
     case runningShoe
     case bikeGear
 
-    var systemName: String {
+    nonisolated var systemName: String {
         switch self {
         case .lifting: "figure.strengthtraining.traditional"
         case .running: "figure.run"

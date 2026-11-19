@@ -1346,7 +1346,7 @@ actor SocialAPIRepository {
                     totalCalories: FoodDecimal.value(entry.totalCalories)
                 )
             },
-            cookingInstructions: payload.cookingInstructions ?? "",
+            cookingInstructions: payload.cookingInstructions,
             entryCount: payload.entryCount,
             detailsIncluded: payload.detailsIncluded ?? true
         )

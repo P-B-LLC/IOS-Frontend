@@ -488,7 +488,7 @@ struct SocialFeedView: View {
             }
     }
 
-    private static func verticalOffset(_ geometry: ScrollGeometry) -> CGFloat {
+    nonisolated private static func verticalOffset(_ geometry: ScrollGeometry) -> CGFloat {
         geometry.contentOffset.y
     }
 

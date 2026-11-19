@@ -288,7 +288,7 @@ extension Color {
         repbaseDynamic(light: Color(hex: light), dark: Color(hex: dark))
     }
 
-    init(hex: UInt32, alpha: Double = 1) {
+    nonisolated init(hex: UInt32, alpha: Double = 1) {
 
         self.init(
             .sRGB,

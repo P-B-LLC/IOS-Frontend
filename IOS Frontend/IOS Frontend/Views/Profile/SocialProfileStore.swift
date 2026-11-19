@@ -358,7 +358,7 @@ final class SocialProfileStore {
             // stay where they were until the next launch.
             let phoneZone = TimeZone.current.identifier
             if remote.timeZone != phoneZone {
-                try? await repository.saveTimeZone(phoneZone)
+                _ = try? await repository.saveTimeZone(phoneZone)
             }
 
             // Started together: neither depends on the other, and run one
@@ -560,11 +560,6 @@ final class SocialProfileStore {
         }
     }
 
-    /// Somebody else's profile, read once and kept.
-    ///
-    /// Returns what is already held straight away, so opening a profile a
-    /// second time draws immediately rather than blanking while it asks again.
-    @discardableResult
     /// Opens or closes the profile to everybody else.
     ///
     /// Its own call rather than a whole-profile save. This is one switch in

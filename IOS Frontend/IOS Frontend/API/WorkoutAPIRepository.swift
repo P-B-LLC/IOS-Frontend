@@ -1235,7 +1235,7 @@ actor WorkoutAPIRepository {
         return RoutePoint(
             latitude: latitude,
             longitude: longitude,
-            recordedAt: payload.recordedAt ?? Date(),
+            recordedAt: payload.recordedAt,
             speedMetersPerSecond: payload.speedMps.flatMap(Double.init),
             altitudeMeters: payload.altitudeM.flatMap(Double.init)
         )
@@ -1285,11 +1285,11 @@ actor WorkoutAPIRepository {
                 movingSeconds: session.movingSeconds,
                 elevationGainMeters: session.elevationGainM,
                 elevationLossMeters: session.elevationLossM,
-                splits: (session.splits ?? []).map {
+                splits: session.splits.map {
                     SessionSplit(
-                        number: Int($0.number ?? 0),
-                        seconds: $0.seconds ?? 0,
-                        distanceKilometers: $0.distanceKm ?? 1
+                        number: Int($0.number),
+                        seconds: $0.seconds,
+                        distanceKilometers: $0.distanceKm
                     )
                 }
             )
