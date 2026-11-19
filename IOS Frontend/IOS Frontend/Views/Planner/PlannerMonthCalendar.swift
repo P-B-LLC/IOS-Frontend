@@ -40,6 +40,10 @@ struct PlannerMonthCalendar: View {
             .overlay { dayColumnSeparators }
         }
         .typeSizeCeiling()
+        // A container of its own: an identifier on a plain stack is handed down
+        // to every element inside it, which renamed each day cell (and the
+        // month steppers) "planner.monthGrid" and hid their own identifiers.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("planner.monthGrid")
         .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: store.selectedDate)
     }
