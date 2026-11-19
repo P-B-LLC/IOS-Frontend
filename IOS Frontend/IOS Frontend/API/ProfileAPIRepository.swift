@@ -244,17 +244,6 @@ actor ProfileAPIRepository {
         }
     }
 
-    @discardableResult
-    func removePhoto() async throws -> RemoteProfile {
-        let output = try await client.mePhotoDestroy()
-        switch output {
-        case .ok(let response):
-            return Self.profile(from: try response.body.json)
-        case .undocumented(let statusCode, _):
-            throw APIServiceError.undocumentedStatus(statusCode)
-        }
-    }
-
     // MARK: - Gyms
 
     /// Gyms matching what the user typed. Searching before creating is what

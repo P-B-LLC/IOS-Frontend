@@ -1795,21 +1795,6 @@ struct DayWorkoutView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// What the day amounted to: when, how many sets, and how much was moved.
-    private static func overviewSummary(_ overview: SessionOverview) -> String {
-        var parts = [overview.performedAt.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened).locale(.app))]
-        parts.append(String(localized: "^[\(overview.loggedSetCount) set](inflect: true)", bundle: .app, locale: .app))
-        if let volume = overview.totalVolumeKilograms {
-            parts.append(String(
-                localized: "\(volume.nutritionText) kg moved",
-                bundle: .app,
-                locale: .app,
-                comment: "Total weight lifted in a session; kg is the abbreviation for kilograms"
-            ))
-        }
-        return parts.joined(separator: "  ·  ")
-    }
-
     /// Every exercise of the finished session with the sets as logged.
     private func sessionOverviewLines(_ overview: SessionOverview) -> some View {
         VStack(alignment: .leading, spacing: 0) {

@@ -205,10 +205,6 @@ nonisolated enum PlannerPriority: String, CaseIterable, Identifiable, Hashable, 
 /// count of minutes, and a closed set of cases would mean an entry saved on
 /// another client with 37 minutes on it had nowhere to live.
 nonisolated enum PlannerDuration {
-    /// Matches `MIN_PLANNER_DURATION_MINUTES` / `MAX…` on the server, which is
-    /// what actually refuses anything outside them.
-    static let minimumMinutes = 5
-    static let maximumMinutes = 1440
 
     /// What the picker offers. Short steps where people plan in short steps,
     /// coarser once a thing is long enough that ten minutes stops mattering.

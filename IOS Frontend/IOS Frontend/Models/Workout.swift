@@ -29,27 +29,6 @@ nonisolated enum WorkoutType: String, CaseIterable, Identifiable, Hashable, Coda
     /// Distance types log a distance covered and a session time instead of
     /// weighted reps.
     var tracksDistance: Bool { self != .lifting }
-
-    /// Plain-language label used when the action is the session itself rather
-    /// than the saved workout name.
-    var sessionTitle: String {
-        switch self {
-        case .lifting: return String(localized: "Strength session", bundle: .app, locale: .app)
-        case .running: return String(localized: "Run session", bundle: .app, locale: .app)
-        case .biking: return String(localized: "Ride session", bundle: .app, locale: .app)
-        case .swimming: return String(localized: "Swim session", bundle: .app, locale: .app)
-        }
-    }
-
-    /// How the logged distance is described for this type.
-    var distanceTitle: String {
-        switch self {
-        case .running: return String(localized: "Distance ran", bundle: .app, locale: .app)
-        case .biking: return String(localized: "Distance biked", bundle: .app, locale: .app)
-        case .swimming: return String(localized: "Distance swum", bundle: .app, locale: .app)
-        case .lifting: return String(localized: "Distance", bundle: .app, locale: .app)
-        }
-    }
 }
 
 /// A machine a workout can finish on.
@@ -292,9 +271,6 @@ nonisolated struct Workout: Identifiable, Hashable, Codable, Sendable {
 
     /// Whether this workout comes back on the same weekday every week.
     var repeatsWeekly: Bool { recurrenceID != nil }
-
-    /// Whether this workout ends with cardio on a machine.
-    var hasCardioFinisher: Bool { cardioMachine != nil }
 
     /// Total number of sets across all exercises.
     var totalSets: Int { exercises.reduce(0) { $0 + $1.sets } }

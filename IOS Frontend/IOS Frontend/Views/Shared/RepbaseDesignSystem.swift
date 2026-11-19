@@ -37,11 +37,6 @@ enum RepbaseDesign {
     // Tracks the bar's height. It was 118 when the bar carried labels; the
     // first icons-only pass cut both too far, so both came back part way.
     static let bottomBarClearance: CGFloat = 108
-    static let deepShadow = RepbasePalette.espresso.opacity(0.12)
-    static let softHighlight = Color.repbaseDynamic(
-        light: Color.white.opacity(0.82),
-        dark: Color.white.opacity(0.08)
-    )
 }
 
 /// A quiet bounded surface for a true interactive module.

@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import UIKit
 
 /// Which field of which set has the keyboard, so Next can move along a row
 /// and on to the next set without reaching for the screen.

@@ -44,37 +44,6 @@ struct WorkoutsView: View {
         }
     }
 
-    private var weekCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Label("Workout Plan", systemImage: "calendar")
-                    .font(.community(.headline))
-                Spacer()
-                Text("Tap a day")
-                    .font(.community(.caption))
-                    .foregroundStyle(phase.secondaryText)
-            }
-
-            HStack(alignment: .top, spacing: 6) {
-                ForEach(Weekday.allCases) { day in
-                    NavigationLink {
-                        DayWorkoutView(day: day)
-                    } label: {
-                        WorkoutDayTile(
-                            day: day,
-                            workout: store.workout(on: day),
-                            isToday: store.today == day,
-                            isSessionActive: store.activeSession?.day == day,
-                            workoutCount: store.workoutCount(on: day)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-        .workoutCard()
-    }
-
     @ViewBuilder
     private var focusCard: some View {
         if let session = store.activeSession {
@@ -102,24 +71,6 @@ struct WorkoutsView: View {
             }
             .buttonStyle(.plain)
         }
-    }
-
-    private var weeklySummary: some View {
-        let workouts = Weekday.allCases.compactMap { store.workout(on: $0) }
-        let exerciseCount = workouts.reduce(0) { $0 + $1.exercises.count }
-        let setCount = workouts.reduce(0) { $0 + $1.totalSets }
-
-        return VStack(alignment: .leading, spacing: 14) {
-            Text("Week at a Glance")
-                .font(.community(.headline))
-
-            HStack(spacing: 10) {
-                WeekStat(value: workouts.count, label: String(localized: "Planned", bundle: .app, locale: .app, comment: "Count of workouts planned this week"), icon: "calendar.badge.checkmark", accent: phase.accent)
-                WeekStat(value: exerciseCount, label: String(localized: "Exercises", bundle: .app, locale: .app), icon: "list.bullet", accent: phase.accent)
-                WeekStat(value: setCount, label: String(localized: "Target Sets", bundle: .app, locale: .app), icon: "checklist", accent: phase.accent)
-            }
-        }
-        .workoutCard()
     }
 
     private func persistenceErrorCard(_ message: String) -> some View {
@@ -258,33 +209,6 @@ private struct DumbbellObject: View {
             Circle().fill(Color(hex: 0x0C0D0E)).frame(width: 29, height: 29)
             Circle().fill(Color(hex: 0xA6AAB0)).frame(width: 12, height: 12)
         }
-    }
-}
-
-private struct WeekStat: View {
-    let value: Int
-    let label: String
-    let icon: String
-    let accent: Color
-
-    var body: some View {
-        VStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.community(.subheadline))
-                .foregroundStyle(accent)
-            Text("\(value)")
-                .font(.community(.title3, weight: .bold))
-            Text(label)
-                .font(.community(.caption2))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(Color.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 14))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(value) \(label)")
     }
 }
 

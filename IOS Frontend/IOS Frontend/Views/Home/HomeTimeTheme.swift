@@ -108,12 +108,6 @@ enum HomeTimeOfDay: String, Sendable, Equatable {
         .repbaseDynamic(light: RepbasePalette.oatmeal, dark: Color(hex: 0x2C2927))
     }
 
-    var emptyDaySurface: Color {
-        .repbaseDynamic(light: RepbasePalette.oatmeal, dark: Color(hex: 0x252220))
-    }
-
-    var plannedDaySurface: Color { RepbasePalette.espresso }
-    var completedDaySurface: Color { RepbasePalette.paper }
     /// The brand accent stays constant when appearance changes.
     var accent: Color { RepbasePalette.caramel }
     var ink: Color { RepbasePalette.charcoal }

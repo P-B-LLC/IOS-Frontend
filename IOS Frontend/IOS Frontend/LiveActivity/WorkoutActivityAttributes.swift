@@ -87,13 +87,6 @@ nonisolated struct WorkoutActivityAttributes: ActivityAttributes {
 }
 
 extension WorkoutActivityAttributes.ContentState {
-    /// The paused countdown's frozen value, for a `Text(timerInterval:)` that
-    /// must stop rather than run: the range ends this far after "now".
-    var pausedRange: ClosedRange<Date>? {
-        guard let left = restPausedRemaining else { return nil }
-        let now = Date()
-        return now...now.addingTimeInterval(left)
-    }
 
     var restRange: ClosedRange<Date>? {
         guard let start = restStartedAt, let end = restEndsAt, end > start else { return nil }

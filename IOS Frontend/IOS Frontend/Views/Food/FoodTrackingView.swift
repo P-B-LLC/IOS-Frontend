@@ -1008,15 +1008,6 @@ private struct MealRow: View {
         guard !meal.entries.isEmpty else { return String(localized: "What’s on your plate?", bundle: .app, locale: .app) }
         return meal.entries.map(\.name).joined(separator: ", ")
     }
-
-    private var mealSymbol: String {
-        let name = meal.name.lowercased()
-        if name.contains("breakfast") || name.contains("1") { return "sun.max" }
-        if name.contains("lunch") || name.contains("2") { return "sun.haze" }
-        if name.contains("dinner") || name.contains("3") { return "takeoutbag.and.cup.and.straw" }
-        if name.contains("snack") || name.contains("4") { return "moon" }
-        return "fork.knife"
-    }
 }
 
 private struct FoodLogSuccessToast: View {
@@ -1112,12 +1103,6 @@ private struct MacroRailSheen: View {
                 travel = 2.9
             }
         }
-    }
-}
-
-extension View {
-    func foodCard() -> some View {
-        repbaseCard(contentPadding: 12, cornerRadius: 16)
     }
 }
 

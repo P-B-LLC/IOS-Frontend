@@ -733,10 +733,3 @@ private struct TrainingRewardToast: View {
         .accessibilityAddTraits(.isStaticText)
     }
 }
-
-private extension View {
-    /// Dashboard-only surfaces, after the Sunrise review.
-    func dashboardSurface(radius: CGFloat) -> some View {
-        sunriseCard(radius: radius)
-    }
-}

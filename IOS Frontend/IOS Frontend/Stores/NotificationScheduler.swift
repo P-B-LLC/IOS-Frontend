@@ -380,12 +380,6 @@ final class NotificationScheduler: NSObject {
         removeToday(prefix: "rytivo.task.\(id).")
     }
 
-    func unmuteTask(_ id: Int) {
-        var muted = mutedTaskIDs
-        muted.remove(id)
-        defaults.set(Array(muted), forKey: Key.mutedTasks)
-    }
-
     /// Lets every muted task speak again.
     ///
     /// Muting happens from a notification, in a second, often to find out what

@@ -1581,9 +1581,6 @@ final class WorkoutStore {
         }
     }
 
-    func pauseRest() { mutateActiveSession { $0.restTimer?.pause() } }
-    func resumeRest() { mutateActiveSession { $0.restTimer?.resume() } }
-
     func toggleRestPause() {
         mutateActiveSession { session in
             guard var timer = session.restTimer else { return }
@@ -2475,12 +2472,6 @@ final class WorkoutStore {
             persistenceError = String(localized: "Cardio could not be saved: \(error.localizedDescription)", bundle: .app, locale: .app)
             return false
         }
-    }
-
-    func cancelCardio() {
-        cardioStartedAt = nil
-        cardioMachine = nil
-        cardioSessionID = nil
     }
 
     /// A distance workout is logged as a single effort, but the API records

@@ -1579,97 +1579,6 @@ struct PostCard: View {
         return sets == 1 ? "1 working set" : "\(sets) working sets"
     }
 
-    private func workoutBody(_ workout: PostWorkoutSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            shareHeader(
-                workout.routeDistanceKm == nil ? "Workout" : "Run",
-                symbol: workout.routeDistanceKm == nil
-                    ? ActivityIconKind.lifting.systemName
-                    : ActivityIconKind.running.systemName
-            )
-
-            workoutStatistics(workout)
-
-            if !workout.exercises.isEmpty {
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(Array(workout.exercises.enumerated()), id: \.element.id) { index, line in
-                        HStack(spacing: 6) {
-                            Text(line.displayName)
-                                .font(.community(size: 13, weight: .medium))
-                                .foregroundStyle(timeOfDay.primaryText)
-                            Spacer(minLength: 6)
-                            Text(Self.setSummary(line, showsWeights: post.showsWeights))
-                                .font(.community(size: 12).monospacedDigit())
-                                .foregroundStyle(timeOfDay.secondaryText)
-                        }
-                        .padding(.vertical, 8)
-                    }
-                }
-                .overlay(alignment: .leading) {
-                    Rectangle()
-                        .fill(timeOfDay.accent)
-                        .frame(width: 2)
-                        .offset(x: -10)
-                }
-            }
-        }
-    }
-
-    private func workoutStatistics(_ workout: PostWorkoutSnapshot) -> some View {
-        HStack(alignment: .top, spacing: 0) {
-            if let distance = workout.routeDistanceKm {
-                let miles = ImperialUnits.miles(fromKilometers: distance.nutritionDouble)
-                statistic(String(format: "%.2f", miles), "mi")
-                statistic(Self.pace(duration: workout.durationSeconds, miles: miles), "pace")
-                statistic(Self.duration(workout.durationSeconds), "time")
-            } else {
-                statistic("\(workout.exerciseCount)", "exercises")
-                statistic("\(workout.totalSetCount)", "sets")
-                statistic(Self.duration(workout.durationSeconds), "time")
-            }
-        }
-        .padding(.vertical, 10)
-    }
-
-    @ViewBuilder
-    private var postTitle: some View {
-        if let workout = shown.workout {
-            postTitleText(workout.title)
-        } else if let meal = shown.meal {
-            postTitleText(mealTitle(meal))
-        } else if let planner = shown.planner {
-            postTitleText(planner.title)
-        }
-    }
-
-    /// "Meal 1 · Chicken Bowl · 800 kcal".
-    ///
-    /// A meal's own name is a slot · Meal 1, Meal 2 · which says when it
-    /// was eaten and nothing about what was in it. So the title says the whole
-    /// meal: what was in it and what it came to.
-    ///
-    /// Everything the card used to repeat underneath. The items were listed
-    /// again below, and the calories again beside the macros, which meant a
-    /// one-item meal stated itself three times.
-    ///
-    /// Every item, joined: the title wraps rather than truncating, so a long
-    /// meal costs a second line instead of losing its ingredients.
-    private func mealTitle(_ meal: PostMealSnapshot) -> String {
-        var parts = [meal.name]
-        let eaten = meal.entries.map(\.name).joined(separator: ", ")
-        if !eaten.isEmpty { parts.append(eaten) }
-        parts.append("\(meal.totalCalories.nutritionText) kcal")
-        return parts.joined(separator: " · ")
-    }
-
-    private func postTitleText(_ text: String) -> some View {
-        Text(text)
-            .font(.community(size: 22, weight: .bold))
-            .tracking(-0.35)
-            .foregroundStyle(timeOfDay.primaryText)
-            .fixedSize(horizontal: false, vertical: true)
-    }
-
     /// Takes the workout into your own. Offered only on somebody else's post:
     /// your own is already in your workouts.
     @ViewBuilder
@@ -1680,52 +1589,6 @@ struct PostCard: View {
             tint: timeOfDay.accent
         ) {
             await store.saveWorkout(from: post)
-        }
-    }
-
-    private func mealBody(_ meal: PostMealSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            shareHeader("Meal", symbol: "fork.knife")
-
-            // The macros only. Calories moved to the title, and repeating
-            // them here was the same number twice on one card; the list of
-            // items that used to sit under this said nothing the title does
-            // not already say.
-            HStack(alignment: .top, spacing: 0) {
-                statistic("\(meal.totalProteinGrams.nutritionText)g", "protein")
-                statistic("\(meal.totalCarbohydrateGrams.nutritionText)g", "carbs")
-                statistic("\(meal.totalFatGrams.nutritionText)g", "fat")
-            }
-            .padding(.vertical, 10)
-        }
-    }
-
-    private func plannerBody(_ planner: PostPlannerSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            shareHeader(
-                planner.kind == "event" ? "Event" : "Task",
-                symbol: planner.kind == "event" ? "calendar" : "checkmark.circle"
-            )
-
-            VStack(alignment: .leading, spacing: 0) {
-                plannerLine("Date", value: planner.scheduledDate)
-                if let time = planner.scheduledTime {
-                    plannerLine("Time", value: time.hasSuffix(":00") ? String(time.dropLast(3)) : time)
-                }
-                plannerLine("Category", value: planner.category)
-            }
-            .overlay(alignment: .leading) {
-                Rectangle()
-                    .fill(timeOfDay.accent)
-                    .frame(width: 2)
-                    .offset(x: -10)
-            }
-
-            if planner.isComplete {
-                Label("Completed", systemImage: "checkmark.circle.fill")
-                    .font(.community(.caption, weight: .semibold))
-                    .foregroundStyle(RepbaseDesign.success)
-            }
         }
     }
 
@@ -1742,23 +1605,6 @@ struct PostCard: View {
     }
 
     // MARK: - Pieces
-
-    private func shareHeader(_ title: LocalizedStringKey, symbol: String) -> some View {
-        HStack(spacing: 8) {
-            Label(title, systemImage: symbol)
-                .font(.community(size: 10, weight: .bold))
-                .tracking(1.15)
-                .foregroundStyle(timeOfDay.accent)
-                .textCase(.uppercase)
-            Spacer(minLength: 0)
-            if post.offersWorkoutToSave {
-                saveWorkoutButton
-            }
-            if post.offersMealToSave {
-                saveMealButton
-            }
-        }
-    }
 
     /// The meal equivalent of Save workout. A meal is worth keeping for the
     /// same reason a workout is: you want to eat it again without typing it
@@ -1838,18 +1684,6 @@ struct PostCard: View {
                 .foregroundStyle(timeOfDay.secondaryText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func plannerLine(_ label: LocalizedStringKey, value: String) -> some View {
-        HStack {
-            Text(label)
-                .foregroundStyle(timeOfDay.secondaryText)
-            Spacer(minLength: 12)
-            Text(value)
-                .foregroundStyle(timeOfDay.primaryText)
-        }
-        .font(.community(size: 13, weight: .medium))
-        .padding(.vertical, 8)
     }
 
     private static func duration(_ seconds: Int?) -> String {

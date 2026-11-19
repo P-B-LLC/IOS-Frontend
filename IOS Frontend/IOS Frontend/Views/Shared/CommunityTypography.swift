@@ -12,9 +12,6 @@ import CoreText
 
 enum RepbaseTypography {
     static let family = "Nunito Sans"
-    static let regularWeight = "Regular"
-    static let semiboldWeight = "SemiBold"
-    static let boldWeight = "Bold"
 
     fileprivate static let regularPostScriptName = "NunitoSans-Regular"
     fileprivate static let semiboldPostScriptName = "NunitoSans-SemiBold"

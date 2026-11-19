@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import UIKit
 
 /// The fields for logging one activity: only what that activity asks about.
 ///
