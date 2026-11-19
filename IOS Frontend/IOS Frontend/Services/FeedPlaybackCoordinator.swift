@@ -150,8 +150,6 @@ final class FeedPlaybackCoordinator {
         replan()
     }
 
-    var isPausedByReader: Bool { pausedByReader }
-
     /// Stops everything and lets go of what was loaded: the feed is leaving.
     func stop() {
         settleTask?.cancel()

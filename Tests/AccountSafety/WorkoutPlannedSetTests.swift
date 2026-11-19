@@ -303,7 +303,10 @@ final class WorkoutPlannedSetTests: XCTestCase {
         let probe = try XCTUnwrap(create.range(of: "try await requirePlannedSetSupport()"))
         let resolve = try XCTUnwrap(create.range(of: "resolveExercise("))
         XCTAssertLessThan(probe.lowerBound, resolve.lowerBound)
-        XCTAssertTrue(create.contains("try await confirmPlan(draft.exercises, templateID: template.id)"))
+        XCTAssertTrue(create.contains("try await confirmPlan(draft.exercises, exerciseIDs: sent, templateID: template.id)"))
+        // Rows are matched to the exercise the request named, not by name: the
+        // server resolves "Biking" to the library's "Cycling".
+        XCTAssertTrue(source.contains("guard row.exercise == sentExerciseID"))
         XCTAssertTrue(source.contains("relation.workoutExerciseId"))
         XCTAssertTrue(source.contains("sessionRelations.allSatisfy({ $0.plannedSets != nil })"))
         XCTAssertTrue(source.contains("session.exercises[index].adoptPlanSnapshot(snapshot)"))

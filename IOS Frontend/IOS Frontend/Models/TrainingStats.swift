@@ -45,12 +45,6 @@ nonisolated struct TrainingStats: Hashable, Sendable {
         return min(1, max(0, Double(completedThisWeek) / Double(weeklyGoal)))
     }
 
-    var weeklyHeadline: String {
-        if completedThisWeek <= 0 { return String(localized: "Make space for your next session.", bundle: .app, locale: .app) }
-        if weeklyGoal > 0 && completedThisWeek >= weeklyGoal { return String(localized: "Your effort is adding up.", bundle: .app, locale: .app) }
-        return String(localized: "One session at a time.", bundle: .app, locale: .app)
-    }
-
     var weeklyEncouragement: String {
         if completedThisWeek <= 0 {
             return String(localized: "Choose a workout that fits today. A lighter day or a rest day belongs in your plan, too.", bundle: .app, locale: .app)
@@ -78,41 +72,10 @@ nonisolated struct TrainingStats: Hashable, Sendable {
             : String(localized: "\(currentStreakWeeks) weeks", bundle: .app, locale: .app)
     }
 
-    var bestStreakText: String {
-        bestStreakWeeks == 1
-            ? String(localized: "1 week", bundle: .app, locale: .app)
-            : String(localized: "\(bestStreakWeeks) weeks", bundle: .app, locale: .app)
-    }
-
     var monthDetail: String {
         completedThisMonth == 0
             ? String(localized: "None this month", bundle: .app, locale: .app)
             : String(localized: "+\(completedThisMonth) this month", bundle: .app, locale: .app)
-    }
-
-    /// Change between the last full week and this one.
-    private var trendPercent: Int {
-        guard sixWeekCounts.count >= 2 else { return 0 }
-        let prior = sixWeekCounts[sixWeekCounts.count - 2]
-        let current = sixWeekCounts[sixWeekCounts.count - 1]
-        guard prior > 0 else { return current > 0 ? 100 : 0 }
-        return Int(((Double(current - prior) / Double(prior)) * 100).rounded())
-    }
-
-    var trendPercentText: String { String(format: "%+d%%", trendPercent) }
-
-    var trendLabel: String {
-        trendPercent > 0
-            ? String(localized: "Improving", bundle: .app, locale: .app, comment: "Training trend: more workouts this week than last")
-            : trendPercent < 0
-                ? String(localized: "Easing", bundle: .app, locale: .app, comment: "Training trend: fewer workouts this week than last")
-                : String(localized: "Steady", bundle: .app, locale: .app, comment: "Training trend: as many workouts this week as last")
-    }
-
-    var trendSymbol: String {
-        trendPercent > 0
-            ? "arrow.up.right"
-            : trendPercent < 0 ? "arrow.down.right" : "arrow.right"
     }
 
     /// The next round number of workouts to aim at.

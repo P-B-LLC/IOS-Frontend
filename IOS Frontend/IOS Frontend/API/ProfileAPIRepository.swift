@@ -244,17 +244,6 @@ actor ProfileAPIRepository {
         }
     }
 
-    @discardableResult
-    func removePhoto() async throws -> RemoteProfile {
-        let output = try await client.mePhotoDestroy()
-        switch output {
-        case .ok(let response):
-            return Self.profile(from: try response.body.json)
-        case .undocumented(let statusCode, _):
-            throw APIServiceError.undocumentedStatus(statusCode)
-        }
-    }
-
     // MARK: - Gyms
 
     /// Gyms matching what the user typed. Searching before creating is what
@@ -284,9 +273,9 @@ actor ProfileAPIRepository {
                 showsWeight: payload.showsWeight ?? false,
                 showsTargetWeight: payload.showsTargetWeight ?? false,
                 isProfilePublic: payload.isProfilePublic ?? true,
-                isReadable: payload.isReadable ?? true,
-                viewerFollows: payload.viewerFollows ?? false,
-                viewerHasRequested: payload.viewerHasRequested ?? false,
+                isReadable: payload.isReadable,
+                viewerFollows: payload.viewerFollows,
+                viewerHasRequested: payload.viewerHasRequested,
                 followsViewer: payload.followsViewer,
                 // Already strings here, unlike on /me/ where the contract
                 // gives a closed enum.

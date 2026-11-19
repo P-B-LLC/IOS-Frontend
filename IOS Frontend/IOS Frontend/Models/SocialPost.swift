@@ -497,10 +497,6 @@ nonisolated enum PostReportReason: String, CaseIterable, Identifiable, Sendable 
         case .other: return String(localized: "Something else", bundle: .app, locale: .app)
         }
     }
-
-    /// Only the open-ended one asks for more. Making everyone explain a plain
-    /// "spam" would be a form where a tap would do.
-    var invitesDetail: Bool { self == .other }
 }
 
 /// What saving somebody's posted workout produced.

@@ -40,6 +40,10 @@ struct PlannerMonthCalendar: View {
             .overlay { dayColumnSeparators }
         }
         .typeSizeCeiling()
+        // A container of its own: an identifier on a plain stack is handed down
+        // to every element inside it, which renamed each day cell (and the
+        // month steppers) "planner.monthGrid" and hid their own identifiers.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("planner.monthGrid")
         .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: store.selectedDate)
     }
@@ -183,11 +187,12 @@ struct PlannerMonthCalendar: View {
         return stride(from: 0, to: days.count, by: 7).map { Array(days[$0..<min($0 + 7, days.count)]) }
     }
 
+    /// Read per weekday cell, so it builds no formatter: the calendar carries
+    /// the same symbols for the app's language.
     private var weekdaySymbols: [String] {
-        let formatter = DateFormatter()
-        formatter.locale = .app
-        formatter.calendar = calendar
-        return formatter.shortStandaloneWeekdaySymbols
+        var localized = calendar
+        localized.locale = .app
+        return localized.shortStandaloneWeekdaySymbols
     }
 
     private func accessibilityLabel(_ date: Date, own: [PlannerEntry], shared: [CalendarMonthItem], sharedTotal: Int) -> String {

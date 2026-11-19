@@ -304,15 +304,27 @@ final class RytivoE2ETests: XCTestCase {
         XCTAssertTrue(element(labelContaining: "Review workout").waitForExistence(timeout: 10), "review opens")
         shot("02 review")
         XCTAssertFalse(app.buttons["Move Bench Press up"].exists, "no arrow buttons on the cards")
-        app.buttons["Reorder"].firstMatch.tap()
-        let handle = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Reorder' AND label CONTAINS 'Cable Fly'")).firstMatch
-        XCTAssertTrue(handle.waitForExistence(timeout: 10), "drag handle for Cable Fly")
-        // Onto whichever row is first now: an earlier test may have reordered the plan.
-        handle.press(forDuration: 0.6, thenDragTo: app.cells.element(boundBy: 0))
+        // Order is changed on the exercise list, by holding and dragging a
+        // whole card; the review only links there.
+        app.buttons["Edit exercise order"].firstMatch.tap()
+        let cards = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier BEGINSWITH 'workout-builder-exercise-'"))
+        let fly = cards.matching(NSPredicate(format: "label CONTAINS 'Cable Fly'")).firstMatch
+        XCTAssertTrue(fly.waitForExistence(timeout: 10), "Cable Fly is on the exercise list")
+        // Onto whichever card is first now: an earlier test may have reordered the plan.
+        let top = cards.matching(NSPredicate(format: "label BEGINSWITH '1. '")).firstMatch
+        if !top.label.contains("Cable Fly") {
+            fly.coordinate(withNormalizedOffset: CGVector(dx: 0.35, dy: 0.5))
+                .press(forDuration: 1, thenDragTo: top.coordinate(withNormalizedOffset: CGVector(dx: 0.35, dy: 0.15)),
+                       withVelocity: .slow, thenHoldForDuration: 0.5)
+        }
+        waitUntil(10, "Cable Fly is first on the list") {
+            cards.matching(NSPredicate(format: "label BEGINSWITH '1. Cable Fly'")).firstMatch.exists
+        }
         shot("03 dragged")
-        app.buttons["Done"].firstMatch.tap()
+        app.buttons["workout-builder-primary"].tap()
         let first = app.otherElements.matching(NSPredicate(format: "label BEGINSWITH '1. '")).firstMatch
-        waitUntil(10, "Cable Fly is first") { first.label.hasPrefix("1. Cable Fly") }
+        waitUntil(10, "Cable Fly is first in the review") { first.label.hasPrefix("1. Cable Fly") }
         app.buttons["Save workout"].firstMatch.tap()
         XCTAssertTrue(element(labelContaining: "YOUR LIBRARY").waitForExistence(timeout: 20), "saved and closed")
 
@@ -1039,11 +1051,16 @@ final class RytivoE2ETests: XCTestCase {
     /// Opens the calendar on `date` and checks whether `name` is on its agenda.
     func expectOnCalendar(_ name: String, on date: Date, present: Bool) {
         app.buttons["tab.planner"].tap()
-        let day = app.buttons["planner.day.\(dateKey(date))"]
-        if !day.waitForExistence(timeout: 10) { app.buttons["planner.previousWeek"].tap() }
-        if !day.waitForExistence(timeout: 3) {
-            app.buttons["planner.nextWeek"].tap()
-            app.buttons["planner.nextWeek"].tap()
+        // The calendar opens on a month; a day left open from an earlier
+        // check is closed back to it first.
+        let backToMonth = app.buttons["planner.backToMonth"]
+        if backToMonth.waitForExistence(timeout: 3) { backToMonth.tap() }
+        // A day cell is one accessibility element of type Other, inside the grid.
+        let day = app.otherElements["planner.monthGrid"].otherElements["planner.date.\(dateKey(date))"]
+        if !day.waitForExistence(timeout: 10) {
+            // Within a week of today, so at most one month away either side.
+            let later = date > Calendar.current.startOfDay(for: Date())
+            app.buttons[later ? "Next month" : "Previous month"].firstMatch.tap()
         }
         XCTAssertTrue(day.waitForExistence(timeout: 5), "the calendar shows \(dateKey(date))")
         day.tap()

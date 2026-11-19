@@ -233,20 +233,6 @@ final class PlannerStore {
         entriesByDate[Self.dateString(date)] ?? []
     }
 
-    /// The day's entries that happen at a stated time, earliest first. These
-    /// are the ones a schedule can place.
-    func timedEntries(on date: Date) -> [PlannerEntry] {
-        entries(on: date)
-            .filter { $0.time != nil }
-            .sorted { ($0.time ?? "") < ($1.time ?? "") }
-    }
-
-    /// The day's entries with no time on them, which belong under the schedule
-    /// rather than at some arbitrary hour inside it.
-    func untimedEntries(on date: Date) -> [PlannerEntry] {
-        entries(on: date).filter { $0.time == nil }
-    }
-
     /// Whether a day has anything on it, which is what the calendar marks.
     func hasEntries(on date: Date) -> Bool {
         !(entriesByDate[Self.dateString(date)] ?? []).isEmpty

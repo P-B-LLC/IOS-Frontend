@@ -88,11 +88,6 @@ final class ActivityStore {
     /// Whether the device has Health at all.
     var isHealthSupported: Bool { health.isSupported }
 
-    /// Whether Apple's sheet has been shown. It cannot say whether the answer
-    /// was yes — HealthKit refuses to report that, since saying so would leak
-    /// a refusal — so this only distinguishes "never offered" from "asked".
-    var hasAskedHealth: Bool { health.hasAsked }
-
     var isRequestingHealthAccess: Bool { health.isRequestingAuthorization }
 
     /// Asks for access from a control the user tapped.
@@ -127,17 +122,6 @@ final class ActivityStore {
         } catch {
             if isCurrent(generation) { report(error) }
         }
-    }
-
-    func requestHealthAccess() async {
-        let generation = connectionGeneration
-        guard repository != nil else { return }
-        guard await health.requestAuthorization() else {
-            if isCurrent(generation) { persistenceError = health.errorMessage }
-            return
-        }
-        guard isCurrent(generation), healthSyncEnabled else { return }
-        await syncFromHealth(generation: generation)
     }
 
     /// Stop local uploads immediately, including writes queued by an older
@@ -190,19 +174,11 @@ final class ActivityStore {
     /// is nothing to scale against.
     var weekPeak: Int? { recentDays.map(\.steps).max() }
 
-    /// Averages only reported days. Missing Health data is not treated as zero.
-    var weekAverage: Int? {
-        guard !recentDays.isEmpty else { return nil }
-        return recentDays.reduce(0) { $0 + $1.steps } / recentDays.count
-    }
-
     /// Steps a day the user is aiming for. Eight thousand until the profile
     /// says otherwise, which is the figure the widget showed back when nobody
     /// could change it.
     private(set) var stepGoal: Int = 8_000
     private(set) var isSavingGoal = false
-
-    var goalDaysThisWeek: Int { recentDays.filter { $0.steps >= stepGoal }.count }
 
     /// Reads the goal off the profile. Quiet on failure: the default is a
     /// usable number, and a banner over the steps card because a target could
@@ -237,13 +213,6 @@ final class ActivityStore {
             guard connectionGeneration == generation else { return }
             persistenceError = error.userFacingMessage
         }
-    }
-
-    /// Direction of the latest reported day compared with the previous one.
-    var latestDayChange: Int? {
-        let ordered = recentDays.sorted { $0.day < $1.day }
-        guard ordered.count >= 2 else { return nil }
-        return ordered[ordered.count - 1].steps - ordered[ordered.count - 2].steps
     }
 
     // MARK: - Connection

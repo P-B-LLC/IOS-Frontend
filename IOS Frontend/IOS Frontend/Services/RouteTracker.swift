@@ -133,8 +133,6 @@ final class RouteTracker: NSObject, CLLocationManagerDelegate {
     /// iOS refuses the request outright if the two disagree.
     private static let temporaryAccuracyPurposeKey = "RouteTracking"
 
-    var hasRoute: Bool { points.count >= 2 }
-
     /// Asks for permission if it has never been requested. Returns immediately;
     /// the delegate callback updates `permission`.
     func requestPermission() {

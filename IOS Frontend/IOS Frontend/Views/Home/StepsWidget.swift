@@ -32,15 +32,6 @@ struct StepsWidget: View {
     /// Held while the sheet is open so cancelling leaves the saved goal alone.
     @State private var goalDraft = 8_000
 
-    /// "8K GOAL" while the number is round, the full figure when it is not:
-    /// 8,500 shown as "8K" would be wrong, and "8.5K" is harder to read at
-    /// nine points than the number itself.
-    static func goalText(_ goal: Int) -> String {
-        goal % 1_000 == 0
-            ? String(localized: "\(goal / 1_000)K GOAL", bundle: .app, locale: .app, comment: "A step goal in thousands, e.g. 8K GOAL")
-            : String(localized: "\(goal.formatted(.number)) GOAL", bundle: .app, locale: .app, comment: "A step goal, e.g. 8,500 GOAL")
-    }
-
     var body: some View {
         if store.week.isEmpty == false {
             if compact { compactCard } else { card.padding(.top, 22) }
@@ -100,24 +91,6 @@ struct StepsWidget: View {
                 Task { await store.updateStepGoal(chosen) }
             }
         }
-    }
-
-    private func compactInsight(_ value: String, _ label: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(value).font(.community(.caption, weight: .bold))
-            Text(label)
-                .font(.community(size: 8, weight: .bold))
-                .tracking(0.45)
-                .foregroundStyle(timeOfDay.secondaryText)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
-    }
-
-    private var changeText: String {
-        guard let change = store.latestDayChange else { return "—" }
-        if change == 0 { return String(localized: "Even", bundle: .app, locale: .app, comment: "No change in steps from the day before") }
-        return "\(change > 0 ? "+" : "")\(change.formatted(.number))"
     }
 
     /// Shown when there are no steps to draw.

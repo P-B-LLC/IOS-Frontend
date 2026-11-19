@@ -1,6 +1,5 @@
 import Foundation
 import SwiftUI
-import UIKit
 
 /// The review of a lifting session just finished: time, sets, volume, and
 /// every exercise with the sets it logged, in the order they were trained.

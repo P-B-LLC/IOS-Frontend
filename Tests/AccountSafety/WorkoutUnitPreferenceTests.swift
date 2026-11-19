@@ -275,7 +275,7 @@ final class WorkoutUnitPreferenceTests: XCTestCase {
         XCTAssertFalse(controls.contains("makeDefault("))
         XCTAssertFalse(controls.contains("useTemporarily("))
         XCTAssertFalse(controls.contains("workout.weight-unit-default"))
-        for file in ["GuidedWorkoutBuilder.swift", "FocusedLiftingSession.swift", "DayWorkoutView.swift"] {
+        for file in ["GuidedWorkoutBuilder.swift", "Session/FocusedLiftingSession.swift", "DayWorkoutView.swift"] {
             let source = try String(contentsOf: directory.appendingPathComponent(file), encoding: .utf8)
             XCTAssertFalse(source.contains("WeightUnitToggle("), file)
             XCTAssertFalse(source.contains("WorkoutWeightUnitControl("), file)

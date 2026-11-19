@@ -9,7 +9,7 @@
   Check the current branch and working-tree status before making changes;
   preserve other developers' work. Separate `fix/...` or `feature/...`
   branches are optional for concurrent work.
-- Follow `TESTFLIGHT_WORKFLOW.md`. Opening a PR starts CI; merely pushing an
+- Follow `docs/TESTFLIGHT_WORKFLOW.md`. Opening a PR starts CI; merely pushing an
   integration/feature branch does not. Require successful checks on the
   current candidate and relevant simulator/device testing before promotion.
 - No teammate approval is required. Work and push on the integration branch;
@@ -64,7 +64,7 @@
 
 ## Localization
 
-- Follow `LOCALIZATION.md`. Text built as a `String` uses
+- Follow `docs/LOCALIZATION.md`. Text built as a `String` uses
   `String(localized: …, bundle: .app, locale: .app)`; SwiftUI literals need
   nothing. New strings must be translated into all ten languages in
   `Localizable.xcstrings` before the catalog tests pass.

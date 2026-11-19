@@ -43,8 +43,6 @@ final class CycleStore {
         cycles.first { $0.isActive }
     }
 
-    var hasCycle: Bool { activeCycle != nil }
-
     /// The rotations that are not the one running, newest first. What a
     /// "switch to" list is made of.
     var otherCycles: [WorkoutCycle] {

@@ -242,11 +242,6 @@ nonisolated struct SessionActivitySummary: Hashable, Sendable {
     var notes = ""
     var isManualEntry = false
 
-    var hasAnything: Bool {
-        perceivedEffort != nil || manualCaloriesKilocalories != nil || manualDistanceKilometers != nil
-            || !details.isEmpty || !notes.isEmpty
-    }
-
     /// The distance to show, preferring a measurement over an entry.
     var distanceKilometers: Double? { measuredDistanceKilometers ?? manualDistanceKilometers }
     var distanceIsMeasured: Bool { measuredDistanceKilometers != nil }

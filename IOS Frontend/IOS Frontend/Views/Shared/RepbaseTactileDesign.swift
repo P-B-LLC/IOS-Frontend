@@ -10,7 +10,6 @@ enum RepbaseTactileDesign {
 
     static let surface = Color("TactileSurface")
     static let cardTint = Color("TactileCardTint")
-    static let weekBackdrop = Color("TactileWeekBackdrop")
     static let ink = Color("TactileInk")
     static let secondaryText = Color("TactileSecondaryText")
     static let border = Color("TactileBorder")
@@ -217,11 +216,5 @@ struct RepbaseTactileProgressRing: View {
         }
         .frame(width: 52, height: 52)
         .accessibilityHidden(true)
-    }
-}
-
-extension View {
-    func repbaseTactileCard(tone: RepbaseTactileTone = .warm) -> some View {
-        background(RepbaseTactileCardBackground(tone: tone))
     }
 }

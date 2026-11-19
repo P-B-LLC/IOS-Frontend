@@ -126,10 +126,6 @@ final class ExerciseCatalog {
         }
     }
 
-    var muscleGroups: [String] {
-        Set((mine + items).map(\.muscleGroup).filter { !$0.isEmpty }).sorted()
-    }
-
     /// An exercise already in the catalogue under this name, so creating one
     /// with a name in use picks the existing record instead of a duplicate.
     func existing(named name: String) -> WorkoutExerciseChoice? {

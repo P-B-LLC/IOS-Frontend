@@ -78,16 +78,6 @@ struct SocialProfileView: View {
     /// the same screen serve somebody else's profile.
     private var subjectID: Int? { profile.id ?? store.viewerID }
 
-    /// Whether the signed-in user follows whoever this profile belongs to.
-    ///
-    /// Derived rather than stored, so it is right the moment the page opens
-    /// and stays right when the same follow is changed from Discover.
-    private var viewerFollowsSubject: Bool {
-        guard let viewerID = store.viewerID, let subjectID else { return false }
-        return social.followingByUser[viewerID]?
-            .contains { $0.id == subjectID } == true
-    }
-
     /// The signed-in user's own following list, which the Follow button reads.
     /// A function rather than an inline optional map: `Optional.map` cannot
     /// host an await.
@@ -462,18 +452,6 @@ struct SocialProfileView: View {
         }
     }
 
-    private func profileStat(_ value: String, label: String) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(value)
-                .font(.community(.subheadline, weight: .semibold))
-                .foregroundStyle(.primary)
-            Text(label.uppercased())
-                .font(.community(size: 9, weight: .semibold))
-                .tracking(0.3)
-                .foregroundStyle(.secondary)
-        }
-    }
-
     private func sectionPicker(timeOfDay: HomeTimeOfDay) -> some View {
         HStack(spacing: 6) {
             ForEach(ProfileSection.allCases) { section in
@@ -819,27 +797,6 @@ struct SocialProfileView: View {
         return metrics
     }
 
-    private func aboutMetric(_ metric: AboutMetric, timeOfDay: HomeTimeOfDay) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            HStack(spacing: 6) {
-                Text(metric.title)
-                    .font(.community(size: 8, weight: .bold))
-                    .tracking(0.8)
-                    .foregroundStyle(timeOfDay.secondaryText)
-                if let badge = metric.badge {
-                    Text(badge.uppercased())
-                        .font(.community(size: 7, weight: .bold))
-                        .foregroundStyle(timeOfDay.accent)
-                }
-            }
-            Text(metric.value)
-                .font(.community(.subheadline, weight: .semibold))
-                .foregroundStyle(timeOfDay.primaryText)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
     /// True only when there is nothing at all to show. The old copy blamed
     /// private measurements, which read as secretive on a profile that had
     /// simply never been filled in.
@@ -860,106 +817,12 @@ struct SocialProfileView: View {
             .joined(separator: " · ")
     }
 
-    /// One featured lift. The set is the evidence, so it is the biggest thing
-    /// in the row; the estimate is smaller beside it, because it is a
-    /// calculation rather than something that happened.
-    ///
-    /// A typed number says so. It is the whole reason the server sends a
-    /// source: a figure nobody logged must not read like one that was.
-    private func highlightRow(
-        _ lift: HighlightLift,
-        timeOfDay: HomeTimeOfDay
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("FEATURED LIFT")
-                    .font(.community(size: 9, weight: .bold))
-                    .tracking(0.9)
-                    .foregroundStyle(timeOfDay.accent)
-                Spacer()
-                Text(liftSourceLabel(lift))
-                    .font(.community(size: 8, weight: .bold))
-                    .tracking(0.7)
-                    .foregroundStyle(timeOfDay.secondaryText)
-            }
-
-            HStack(alignment: .lastTextBaseline, spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(lift.displayLabel)
-                        .font(.community(.title3, weight: .bold))
-                        .foregroundStyle(timeOfDay.primaryText)
-                    if let estimate = lift.estimatedOneRepMaxPounds {
-                        Text("Estimated 1RM · \(estimate) lb")
-                            .font(.community(.caption2))
-                            .foregroundStyle(timeOfDay.secondaryText)
-                    } else if let name = lift.exerciseName {
-                        Text(name)
-                            .font(.community(.caption2))
-                            .foregroundStyle(timeOfDay.secondaryText)
-                    }
-                }
-
-                Spacer(minLength: 8)
-
-                if let pounds = lift.displayPounds, let reps = lift.reps {
-                    HStack(alignment: .lastTextBaseline, spacing: 4) {
-                        Text("\(pounds)")
-                            .font(.community(size: 30, weight: .bold, design: .rounded))
-                        Text("lb × \(reps)")
-                            .font(.community(.subheadline, weight: .bold))
-                    }
-                    .foregroundStyle(timeOfDay.primaryText)
-                } else {
-                    Text("Nothing logged yet")
-                        .font(.community(.caption, weight: .medium))
-                        .foregroundStyle(timeOfDay.secondaryText)
-                }
-            }
-        }
-        .padding(16)
-        .background(
-            Color.repbaseDynamic(
-                light: RepbasePalette.caramel.opacity(0.08),
-                dark: RepbasePalette.caramel.opacity(0.09)
-            ),
-
-            in: RoundedRectangle(cornerRadius: 18)
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: 18)
-                .strokeBorder(timeOfDay.border, lineWidth: 1)
-        }
-    }
-
     private func liftSourceLabel(_ lift: HighlightLift) -> String {
         switch lift.source {
         case .logged: String(localized: "FROM YOUR LOG", bundle: .app, locale: .app)
         case .manual: String(localized: "ENTERED BY HAND", bundle: .app, locale: .app)
         case .none: String(localized: "SELECTED", bundle: .app, locale: .app)
         }
-    }
-
-    private func aboutRow(
-        _ title: String,
-        value: String,
-        symbol: String,
-        badge: String? = nil,
-        timeOfDay: HomeTimeOfDay? = nil
-    ) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: symbol).foregroundStyle(RepbasePalette.caramel).frame(width: 28)
-            Text(title).font(.community(.subheadline))
-            Spacer()
-            if let badge, let timeOfDay {
-                Text(badge)
-                    .font(.community(.caption2, weight: .bold))
-                    .foregroundStyle(timeOfDay.accent)
-            }
-            Text(value)
-                .font(.community(.subheadline, weight: .bold))
-                .multilineTextAlignment(.trailing)
-        }
-        .padding(.vertical, 15)
     }
 }
 
@@ -1541,36 +1404,6 @@ private struct ProfileSettingsView: View {
         .contentShape(Rectangle())
     }
 
-    private func settingsActivityRow(
-        _ title: String,
-        detail: String,
-        icon: ActivityIconKind
-    ) -> some View {
-        HStack(spacing: 14) {
-            ActivityIconArtwork(
-                kind: icon,
-                size: 21,
-                color: RepbasePalette.caramel
-            )
-            .frame(width: 42, height: 42)
-            .background(
-                Color.repbaseDynamic(
-                    light: RepbasePalette.caramel.opacity(0.09),
-                    dark: Color(hex: 0x241B18)
-                ),
-                in: RoundedRectangle(cornerRadius: 13, style: .continuous)
-            )
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.community(.headline))
-                Text(detail).font(.community(.caption)).foregroundStyle(.secondary)
-            }
-            Spacer(minLength: 8)
-        }
-        .padding(.vertical, 14)
-        .contentShape(Rectangle())
-    }
-
     private func settingsValueRow(
         _ title: LocalizedStringKey,
         value: String,
@@ -2111,32 +1944,6 @@ struct ProfileOnboardingView: View {
             .foregroundStyle(timeOfDay.secondaryText)
             .padding(.top, 8)
         }
-    }
-
-    private func providerButton(
-        _ provider: ConnectedAccountProvider,
-        symbol: String,
-        timeOfDay: HomeTimeOfDay
-    ) -> some View {
-        Button {
-            draft.provider = provider
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: symbol).font(.community(.title3))
-                Text("Continue with \(provider.title)").font(.community(.headline))
-                Spacer()
-                Image(systemName: draft.provider == provider ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(draft.provider == provider ? timeOfDay.accent : timeOfDay.secondaryText)
-            }
-            .padding(.horizontal, 18)
-            .frame(height: 62)
-            .background(timeOfDay.surfaceRaised, in: RoundedRectangle(cornerRadius: 20))
-            .overlay {
-                RoundedRectangle(cornerRadius: 20)
-                    .strokeBorder(draft.provider == provider ? timeOfDay.accent : timeOfDay.border, lineWidth: draft.provider == provider ? 2 : 1)
-            }
-        }
-        .buttonStyle(.plain)
     }
 
     private func nameStep(timeOfDay: HomeTimeOfDay) -> some View {

@@ -14,7 +14,6 @@ import SwiftUI
 private enum HomeWidgetColors {
     static var secondaryText: Color { RepbaseTactileDesign.secondaryText }
     static var border: Color { RepbaseTactileDesign.border }
-    static var progressTrack: Color { RepbaseTactileDesign.border }
 
     static var fatProgress: Color {
         .repbaseDynamic(light: RepbasePalette.cocoa, dark: Color(hex: 0xE5C5AC))
@@ -954,11 +953,6 @@ private struct GuidedDayFlow: View {
         return activeSession == nil ? "Start workout" : "Continue workout"
     }
 
-    private var workoutActionSymbol: String {
-        if workout == nil { return "calendar.badge.plus" }
-        return isTrained ? "checkmark" : "play.fill"
-    }
-
     private var workoutMetadata: String {
         guard let workout else { return String(localized: "Choose a plan or build something new", bundle: .app, locale: .app) }
         let exercises = workout.exercises.count
@@ -1001,11 +995,6 @@ private struct GuidedDayFlow: View {
             .filter { !$0.isComplete || !$0.isCompletable }
             .sorted { ($0.time ?? "99:99:99") < ($1.time ?? "99:99:99") }
             .first
-    }
-
-    private func nextEntryEyebrow(_ entry: PlannerEntry) -> String {
-        guard let time = entry.displayTime else { return String(localized: "UP NEXT", bundle: .app, locale: .app) }
-        return String(localized: "UP NEXT · \(time)", bundle: .app, locale: .app)
     }
 
     /// Whole phrases per level, since the level's word changes form with
@@ -1088,18 +1077,6 @@ private struct GuidedDayFlow: View {
         return min(max(Double(stats.completedThisWeek) / Double(stats.weeklyGoal), 0), 1)
     }
 
-    private var fuelAccent: Color {
-        .repbaseDynamic(light: Color(hex: 0x5DAA86), dark: Color(hex: 0x84CFA9))
-    }
-
-    private var foodWarmAccent: Color {
-        .repbaseDynamic(light: Color(hex: 0xC77756), dark: Color(hex: 0xEF946D))
-    }
-
-    private var trainingSurface: Color {
-        RepbasePalette.ink
-    }
-
     private var momentumSurface: Color {
         .repbaseDynamic(
             light: Color.white.opacity(0.72),
@@ -1145,56 +1122,6 @@ private struct GuidedDayFlow: View {
                 foodProgressPulse = false
             }
         }
-    }
-}
-
-private struct GuidedHomeFlowRail: View {
-    @Environment(\.homeTimeOfDay) private var timeOfDay
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    let progress: Double
-
-    var body: some View {
-        GeometryReader { proxy in
-            let segmentHeight = max(58, proxy.size.height * 0.28)
-            let availableTravel = max(proxy.size.height - segmentHeight, 0)
-
-            ZStack(alignment: .top) {
-                Capsule()
-                    .fill(HomeWidgetColors.border.opacity(0.72))
-
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                timeOfDay.accent,
-                                .repbaseDynamic(
-                                    light: Color(hex: 0x5DAA86),
-                                    dark: Color(hex: 0x84CFA9)
-                                )
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .frame(height: segmentHeight)
-                    .offset(y: availableTravel * min(max(progress, 0), 1))
-                    .shadow(
-                        color: timeOfDay.accent.opacity(0.18),
-                        radius: 5,
-                        x: 0,
-                        y: 0
-                    )
-            }
-        }
-        .frame(width: 3)
-        .animation(
-            reduceMotion
-                ? .easeOut(duration: 0.18)
-                : .spring(response: 0.72, dampingFraction: 0.86),
-            value: progress
-        )
-        .accessibilityHidden(true)
     }
 }
 

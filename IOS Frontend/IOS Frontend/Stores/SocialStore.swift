@@ -1340,22 +1340,6 @@ final class SocialStore {
     private(set) var searchErrorMessage: String?
     private var searchRequestID = UUID()
 
-    var isShowingSearchResults: Bool { !searchQuery.isEmpty }
-
-    /// Whether a finished search found nothing, as opposed to not having run.
-    ///
-    /// Separate from "both lists are empty", which is also true before the
-    /// first keystroke and while the first one is in flight. Drawing "no
-    /// results" in either of those says the search failed when it has not yet
-    /// been asked.
-    var searchFoundNothing: Bool {
-        isShowingSearchResults
-            && !isSearching
-            && searchErrorMessage == nil
-            && searchedPeople.isEmpty
-            && searchedPosts.isEmpty
-    }
-
     /// Ask the server who and what matches.
     ///
     /// Both halves are awaited together rather than separately: they are one
